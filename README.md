@@ -51,7 +51,13 @@ This repository focuses on critical problems faced in day-to-day development of 
 Each solution is battle-tested in production environments and optimized for iOS ecosystem constraints.
 ## 🧩 Generic Mobile Problems
 
-This section covers essential, platform-agnostic mobile design problems with a focus on what iOS engineers need to know.
+This section covers essential, platform-agnostic mobile design problems. Each generic problem page in this repository follows a consistent structure with:
+
+- a clear problem statement,
+- functional requirements,
+- non-functional requirements,
+- a standard MVVM-based iOS implementation pattern,
+- and a reference to [REPO_SPEC.md](REPO_SPEC.md) for repository guidelines.
 
 | Problem | Best Solution | iOS-Specific Notes |
 |---------|---------------|-------------------|

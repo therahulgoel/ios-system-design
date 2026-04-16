@@ -4,15 +4,30 @@
 
 This page covers the high-level design of search on mobile apps, with a focus on iOS implementation patterns, server interaction, and the architecture needed for a responsive user experience.
 
-### Goals
+### Problem Statement
 
-- Fast search input response
-- Minimal network usage
-- Efficient server interaction
-- Smooth results rendering in SwiftUI
-- Support for offline-friendly behavior and caching
+Users need a search experience that returns relevant results quickly, handles partial queries, and remains usable on low or intermittent network connectivity. The design should allow users to discover content fast while minimizing wasted requests and preserving smooth scrolling and UI updates.
+
+### Functional Requirements
+
+- Provide a search input field with real-time feedback and suggestions.
+- Trigger search queries only when the user has paused typing (debounce).
+- Display search results in a list that supports pagination or incremental loading.
+- Show loading state, empty state, and error state clearly.
+- Cache recent queries and results to serve repeat requests faster.
+- Support query term filtering, ranking, and lightweight suggestions from the server.
+
+### Non-functional Requirements
+
+- Maintain sub-second response feel for the UI.
+- Keep network usage minimal, especially for repeated queries.
+- Ensure the UI remains responsive during search and while loading results.
+- Handle offline or flaky network cases gracefully with cached fallback results.
+- Use a maintainable MVVM architecture with separate view, ViewModel, and data/service layers.
 
 This page follows the repository's MVVM convention; see [REPO_SPEC.md](../REPO_SPEC.md) for the authoritative architectural rule.
+
+> This page is the canonical example of the generic problem page style used across the repository.
 
 ## High-Level Design (HLD)
 
