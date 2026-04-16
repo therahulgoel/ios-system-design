@@ -4,6 +4,8 @@
 
 A personal collection of real interview experiences and system design questions from product companies, curated by Rahul Goel. This repository focuses on common problems faced in mobile engineering interviews and highlights proven solutions for scaling mobile apps. Keywords: iOS system design interviews, mobile engineering, interview preparation, system design questions.
 
+> See the repository architecture guideline: [REPO_SPEC.md](REPO_SPEC.md)
+
 ## 👨‍💻 About the Author
 
 I'm Rahul Goel, an Engineering Manager - iOS with 12 years of experience and roles at SonyLiv, ShareChat, Paytm, and Myntra. I've scaled iOS apps to 100M+ users across domains like Shorts, Streaming, Payments, and E-commerce. This repository represents my journey through technical interviews at product companies, documenting the challenges, solutions, and growth opportunities I've encountered.
@@ -15,6 +17,7 @@ I'm Rahul Goel, an Engineering Manager - iOS with 12 years of experience and rol
 - [Industry-Specific Challenges](#industry-specific-challenges)
 - [Interview Framework](#interview-framework)
 - [Key Learnings](#key-learnings)
+- [Repository Spec](#repository-spec)
 - [Resources](#resources)
 - [License](#license)
 
@@ -115,10 +118,15 @@ Through these interviews, I've gained deep insights into:
 - Adapting to different company cultures and expectations
 - Continuous learning in the fast-evolving mobile landscape
 
-## 📚 Resources
+## � Repository Spec
+
+This repository follows an architectural convention detailed in [REPO_SPEC.md](REPO_SPEC.md), including MVVM, SwiftUI with `ObservableObject`, `URLSession` networking, and custom search flow patterns.
+
+## �📚 Resources
 
 - [iOS Developer Documentation](https://developer.apple.com/documentation/)
 - [System Design Primer](https://github.com/donnemartin/system-design-primer)
+- [Repository Implementation Rules](REPO_SPEC.md)
 
 ## 📄 License
 
