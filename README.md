@@ -12,6 +12,7 @@ I'm Rahul Goel, an Engineering Manager - iOS with experience at SonyLiv, ShareCh
 
 - [About](#about)
 - [Essential Problems & Solutions](#essential-problems--solutions)
+- [Industry-Specific Challenges](#industry-specific-challenges)
 - [Interview Framework](#interview-framework)
 - [Key Learnings](#key-learnings)
 - [Resources](#resources)
@@ -46,7 +47,46 @@ This repository focuses on critical problems faced in day-to-day development of 
 
 Each solution is battle-tested in production environments and optimized for iOS ecosystem constraints.
 
-## 🏗️ Interview Framework
+## � Industry-Specific Challenges
+
+Drawing from my experience scaling apps across different domains, here are industry-specific challenges and their proven solutions.
+
+### Streaming (e.g., Video Platforms like SonyLiv)
+| Challenge | Best Solution | Key Benefits |
+|-----------|---------------|--------------|
+| **Video Buffering & Quality Adaptation** | Adaptive bitrate streaming (HLS/DASH) with prefetching and CDN optimization | Smooth playback across network conditions, reduced buffering, optimal bandwidth usage |
+| **Offline Viewing** | Encrypted local storage with DRM, background download management | Enables offline access while protecting content, manages storage efficiently |
+| **Real-time Sync & Recommendations** | WebSocket connections for live updates, ML-based recommendation engine | Keeps users engaged with personalized content, handles concurrent viewers |
+
+### Payments (e.g., Fintech Apps like Paytm)
+| Challenge | Best Solution | Key Benefits |
+|-----------|---------------|--------------|
+| **Security & Fraud Prevention** | End-to-end encryption, biometric authentication, transaction monitoring | Protects user data, prevents fraud, builds trust for financial transactions |
+| **Real-time Transaction Processing** | Optimized API calls with retry mechanisms, payment gateway integration | Ensures instant confirmations, handles network failures gracefully |
+| **Multi-currency & Compliance** | Localized payment methods, regulatory compliance frameworks | Supports global users, meets legal requirements, reduces chargeback risks |
+
+### E-commerce (e.g., Shopping Apps like Myntra)
+| Challenge | Best Solution | Key Benefits |
+|-----------|---------------|--------------|
+| **Product Catalog Management** | Efficient caching strategies, image optimization, search indexing | Fast loading times, smooth browsing, accurate search results |
+| **Cart & Checkout Optimization** | Persistent cart state, one-click checkout, payment integration | Reduces abandonment, improves conversion rates, enhances user experience |
+| **Inventory & Order Sync** | Real-time inventory updates, background sync, conflict resolution | Prevents overselling, ensures accurate stock levels, reliable order processing |
+
+### Social/Shorts (e.g., Content Platforms like ShareChat)
+| Challenge | Best Solution | Key Benefits |
+|-----------|---------------|--------------|
+| **Content Feed Personalization** | Algorithm-driven feed with caching, infinite scroll optimization | Keeps users engaged, reduces server load, personalized experience |
+| **Real-time Interactions** | WebSocket for likes/comments, push notifications, background refresh | Instant feedback, high engagement, seamless user interactions |
+| **Content Moderation & Safety** | AI-powered filtering, user reporting systems, community guidelines | Maintains platform integrity, protects users, scales with content volume |
+
+### Travel (e.g., Booking Apps)
+| Challenge | Best Solution | Key Benefits |
+|-----------|---------------|--------------|
+| **Dynamic Pricing & Availability** | Real-time API integration, caching with TTL, background updates | Accurate information, handles high concurrency, prevents booking conflicts |
+| **Location-based Services** | GPS optimization, map integration, offline maps | Enhanced user experience, works in low-connectivity areas, accurate navigation |
+| **Booking Flow Optimization** | Step-by-step wizard, form validation, payment integration | Reduces errors, improves completion rates, secure transactions |
+
+## �🏗️ Interview Framework
 
 Based on my experiences, here's a structured approach to mobile system design interviews (45-60 minutes):
 
