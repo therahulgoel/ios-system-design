@@ -2,11 +2,11 @@
 
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-A personal collection of real interview experiences and system design questions from top Indian product companies, curated by Rahul Goel. This repository focuses on common problems faced in mobile engineering interviews, with company tags to show where each challenge appears. Keywords: iOS system design interviews, mobile engineering, Paytm, Sharechat, SonyLiv, Myntra, interview preparation, system design questions.
+A personal collection of real interview experiences and system design questions from product companies, curated by Rahul Goel. This repository focuses on common problems faced in mobile engineering interviews and highlights proven solutions for scaling mobile apps. Keywords: iOS system design interviews, mobile engineering, interview preparation, system design questions.
 
 ## 👨‍💻 About the Author
 
-I'm Rahul Goel, an Engineering Manager - iOS with experience at SonyLiv, ShareChat, Paytm, and Myntra. I've scaled iOS apps to 100M+ users across domains like Shorts, Streaming, Payments, and E-commerce. This repository represents my journey through technical interviews at India's top product companies, documenting the challenges, solutions, and growth opportunities I've encountered.
+I'm Rahul Goel, an Engineering Manager - iOS with 12 years of experience and roles at SonyLiv, ShareChat, Paytm, and Myntra. I've scaled iOS apps to 100M+ users across domains like Shorts, Streaming, Payments, and E-commerce. This repository represents my journey through technical interviews at product companies, documenting the challenges, solutions, and growth opportunities I've encountered.
 
 ## 📋 Table of Contents
 
@@ -46,47 +46,38 @@ This repository focuses on critical problems faced in day-to-day development of 
 | **Networking and Data Synchronization** | URLSession with background sessions, exponential backoff for retries, and real-time sync via WebSockets | Ensures reliable connectivity, handles network fluctuations, and provides instant updates for collaborative features |
 
 Each solution is battle-tested in production environments and optimized for iOS ecosystem constraints.
+## 🧩 Generic Mobile Problems
 
+This section covers essential, platform-agnostic mobile design problems with a focus on what iOS engineers need to know.
+
+| Problem | Best Solution | iOS-Specific Notes |
+|---------|---------------|-------------------|
+| **[Designing Search in Mobile Apps](docs/generic-mobile-problems.md)** | Use a responsive search UI with debounce, incremental results loading, local caching, and lightweight token-based query filtering | Implement debounce using standard SwiftUI patterns or throttled DispatchWorkItem, build a custom search page, support search suggestions, and optimize results rendering using diffable data sources |
 ## � Industry-Specific Challenges
 
 Drawing from my experience scaling apps across different domains, here are industry-specific challenges and their proven solutions.
 
-### Streaming (e.g., Video Platforms like SonyLiv)
+### Payments (e.g., Fintech Apps)
 | Challenge | Best Solution | Key Benefits |
 |-----------|---------------|--------------|
-| **Video Buffering & Quality Adaptation** | Adaptive bitrate streaming (HLS/DASH) with prefetching and CDN optimization | Smooth playback across network conditions, reduced buffering, optimal bandwidth usage |
-| **Offline Viewing** | Encrypted local storage with DRM, background download management | Enables offline access while protecting content, manages storage efficiently |
-| **Real-time Sync & Recommendations** | WebSocket connections for live updates, ML-based recommendation engine | Keeps users engaged with personalized content, handles concurrent viewers |
+| **Server-driven UI for Home Screen SDK** | Remote configuration with server-driven cards and modular screens | Enables real-time UI updates, personalization, and faster release cycles without app updates |
 
-### Payments (e.g., Fintech Apps like Paytm)
+### E-commerce (e.g., Shopping Apps)
 | Challenge | Best Solution | Key Benefits |
 |-----------|---------------|--------------|
-| **Security & Fraud Prevention** | End-to-end encryption, biometric authentication, transaction monitoring | Protects user data, prevents fraud, builds trust for financial transactions |
-| **Real-time Transaction Processing** | Optimized API calls with retry mechanisms, payment gateway integration | Ensures instant confirmations, handles network failures gracefully |
-| **Multi-currency & Compliance** | Localized payment methods, regulatory compliance frameworks | Supports global users, meets legal requirements, reduces chargeback risks |
+| **Product Catalog Performance** | Efficient caching with optimized image delivery | Improves browsing speed and keeps users engaged during discovery |
 
-### E-commerce (e.g., Shopping Apps like Myntra)
+### Social/Shorts (e.g., Content Platforms)
 | Challenge | Best Solution | Key Benefits |
 |-----------|---------------|--------------|
-| **Product Catalog Management** | Efficient caching strategies, image optimization, search indexing | Fast loading times, smooth browsing, accurate search results |
-| **Cart & Checkout Optimization** | Persistent cart state, one-click checkout, payment integration | Reduces abandonment, improves conversion rates, enhances user experience |
-| **Inventory & Order Sync** | Real-time inventory updates, background sync, conflict resolution | Prevents overselling, ensures accurate stock levels, reliable order processing |
-
-### Social/Shorts (e.g., Content Platforms like ShareChat)
-| Challenge | Best Solution | Key Benefits |
-|-----------|---------------|--------------|
-| **Content Feed Personalization** | Algorithm-driven feed with caching, infinite scroll optimization | Keeps users engaged, reduces server load, personalized experience |
-| **Real-time Interactions** | WebSocket for likes/comments, push notifications, background refresh | Instant feedback, high engagement, seamless user interactions |
-| **Content Moderation & Safety** | AI-powered filtering, user reporting systems, community guidelines | Maintains platform integrity, protects users, scales with content volume |
+| **Optimizing for Low Network** | Adaptive image quality, progressive image loading, and local caching | Faster image load times and smoother feed experience on weak connections |
 
 ### Travel (e.g., Booking Apps)
 | Challenge | Best Solution | Key Benefits |
 |-----------|---------------|--------------|
-| **Dynamic Pricing & Availability** | Real-time API integration, caching with TTL, background updates | Accurate information, handles high concurrency, prevents booking conflicts |
-| **Location-based Services** | GPS optimization, map integration, offline maps | Enhanced user experience, works in low-connectivity areas, accurate navigation |
-| **Booking Flow Optimization** | Step-by-step wizard, form validation, payment integration | Reduces errors, improves completion rates, secure transactions |
+| **Shareable Wishlist Feature** | Cloud-synced wishlists with share links and real-time collaboration | Makes planning social trips easier, keeps wishlist state consistent, and boosts engagement |
 
-## �🏗️ Interview Framework
+## 🏗️ Interview Framework
 
 Based on my experiences, here's a structured approach to mobile system design interviews (45-60 minutes):
 
@@ -107,6 +98,12 @@ Deep dive into specific components like data storage, API design, or performance
 
 ### 6. Questions for Interviewer (5 min)
 Ask about team size, tech stack, or company-specific challenges.
+
+## ❓ Standard Interview Question
+
+- **How would you design a mobile feed that serves personalized content to millions of users while maintaining offline access and optimal performance?**
+
+This question tests your ability to balance user experience, data synchronization, caching, and scalability in a mobile-first system design.
 
 ## 🧠 Key Learnings
 
