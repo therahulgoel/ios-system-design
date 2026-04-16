@@ -11,7 +11,7 @@ I'm Rahul Goel, an Engineering Manager - iOS with experience at SonyLiv, ShareCh
 ## 📋 Table of Contents
 
 - [About](#about)
-- [Problem Categories](#problem-categories)
+- [Essential Problems & Solutions](#essential-problems--solutions)
 - [Interview Framework](#interview-framework)
 - [Key Learnings](#key-learnings)
 - [Resources](#resources)
@@ -19,10 +19,7 @@ I'm Rahul Goel, an Engineering Manager - iOS with experience at SonyLiv, ShareCh
 
 ## 🎯 About
 
-This repository is my personal archive of authentic interview experiences from mobile engineering roles at leading Indian tech companies. Experiences are organized by problem categories, with company tags indicating where each type of question was encountered. Each entry details:
-
-- System design questions and my approaches to solutions
-- Preparation tips and lessons learned from each experience
+This repository is my personal archive of authentic interview experiences from mobile engineering roles at leading Indian tech companies. It highlights proven solutions for day-to-day problems in building mobile apps that scale to millions of users, based on real-world implementation and interview insights.
 
 As someone passionate about mobile development, I created this to document my journey and provide valuable insights for others pursuing similar paths in the Indian tech ecosystem.
 
@@ -32,34 +29,22 @@ As someone passionate about mobile development, I created this to document my jo
 - **Expert Perspective**: Curated by someone who's scaled apps to 100M+ users
 - **Focused on iOS**: Deep dives into mobile-specific system design challenges
 - **Practical Framework**: Step-by-step interview approach based on proven experience
+- **Best Solutions**: Highlighted approaches that work for apps serving millions of users
 
-## 🔍 Problem Categories
+## 🔍 Essential Problems & Solutions for Scalable Mobile Apps
 
-This repository organizes interview experiences around common system design problems encountered in mobile engineering interviews. Each problem category includes real examples with company tags indicating where similar questions were asked.
+This repository focuses on critical problems faced in day-to-day development of mobile apps serving millions of users. Below is a curated table of key challenges and their proven best solutions, drawn from real-world experience scaling iOS apps.
 
-### App Architecture Design
-**Tags**: Paytm, Sharechat, Myntra  
-Designing scalable and maintainable app architectures, including MVVM, VIPER, and modularization strategies.
+| Problem | Best Solution | Key Benefits for Millions of Users |
+|---------|---------------|------------------------------------|
+| **App Architecture Design** | MVVM with modular components and dependency injection | Enables parallel development, easier testing, and seamless feature scaling without breaking existing code |
+| **Scalability Considerations** | Horizontal scaling with load balancers, CDN for static assets, and efficient caching strategies | Handles sudden user spikes, reduces server load, and ensures consistent performance during peak times |
+| **Database Design for Mobile Apps** | Core Data with offline-first sync using background tasks and conflict resolution | Provides reliable offline access, minimizes data loss, and syncs efficiently across devices |
+| **API Design and Integration** | RESTful APIs with GraphQL for complex queries, proper authentication (OAuth/JWT), and rate limiting | Reduces over-fetching, secures data transmission, and prevents API abuse while maintaining flexibility |
+| **Performance Optimization** | Lazy loading, image optimization (WebP/AVIF), memory management with ARC, and background processing | Minimizes battery drain, improves app responsiveness, and handles large datasets without crashes |
+| **Networking and Data Synchronization** | URLSession with background sessions, exponential backoff for retries, and real-time sync via WebSockets | Ensures reliable connectivity, handles network fluctuations, and provides instant updates for collaborative features |
 
-### Scalability Considerations
-**Tags**: Groupon, SonyLiv, Paytm  
-Handling user growth, load balancing, and performance optimization for millions of users.
-
-### Database Design for Mobile Apps
-**Tags**: Sharechat, Myntra, Paytm  
-Local storage solutions, synchronization strategies, and offline-first approaches.
-
-### API Design and Integration
-**Tags**: SonyLiv, Groupon, Sharechat  
-RESTful APIs, GraphQL, authentication, and third-party integrations.
-
-### Performance Optimization
-**Tags**: Myntra, Paytm, SonyLiv  
-Memory management, battery optimization, and UI rendering improvements.
-
-### Networking and Data Synchronization
-**Tags**: Paytm, SonyLiv, Sharechat  
-Handling network requests, caching, and real-time data updates.
+Each solution is battle-tested in production environments and optimized for iOS ecosystem constraints.
 
 ## 🏗️ Interview Framework
 
