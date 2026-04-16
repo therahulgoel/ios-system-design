@@ -12,30 +12,25 @@ This page covers the high-level design of search on mobile apps, with a focus on
 - Smooth results rendering in SwiftUI
 - Support for offline-friendly behavior and caching
 
+This page follows the repository's MVVM convention; see [REPO_SPEC.md](../REPO_SPEC.md) for the authoritative architectural rule.
+
 ## High-Level Design (HLD)
+
+This search design follows MVVM across the repository: a SwiftUI view, a dedicated ViewModel, and services for network and cache handling.
 
 The search flow is composed of three main layers:
 
 1. **UI Layer**: Search input, search results list, and loading state.
-2. **Client Layer**: Debounce logic, request orchestration, caching, and local filtering.
-3. **Server Layer**: Search API, query ranking, pagination, and result formatting.
+2. **ViewModel Layer**: Debounce logic, request orchestration, cache lookup, and model transformation.
+3. **Data Layer**: Network requests via URLSession, cache storage, and server API interaction.
 
 ### HLD Diagram
 
-```mermaid
-flowchart TD
-  A[Search Bar UI] --> B[Debounce / Input Processor]
-  B --> C[Search Request Manager]
-  C --> D[Cache Layer]
-  C --> E[Network Layer]
-  E --> F[Search API]
-  F --> G[Search Index + Ranking Engine]
-  G --> H[Search Results]
-  H --> I[Result Serializer]
-  I --> C
-  D --> C
-  C --> J[Search Results UI]
-  J --> A
+```text
+SearchView --> SearchViewModel --> SearchService --> URLSession --> Search API
+SearchViewModel <--> SearchCache
+SearchService <--> SearchResponse
+SearchViewModel --> SearchView
 ```
 
 ### Component Responsibilities
