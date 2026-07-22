@@ -325,3 +325,42 @@ actor CartManager {
 - **Explain Cursors Clearly:** Be ready to draw on the whiteboard how an offset-based feed breaks when a new item is inserted at the top.
 - **Differentiate Caches:** Mention both Memory Cache (fast, limited, flushed on memory pressure) and Disk Cache (slower, persistent, larger).
 - **Graceful Degradation:** Emphasize that if an image fails, the app shouldn't crash or show a popup. It should just show a placeholder.
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    User[User] --> VM[CatalogViewModel]
+    VM --> Repo[ProductRepository]
+    Repo --> Cache[(SQLite cache)]
+    Repo --> API[API]
+    Repo --> UI[UICollectionView compositional layout]
+    
+    User -- "Add to cart" --> Cart[CartManager]
+    Cart --> DB[(SQLite immediate)]
+    DB -.-> |"sync to server (background)"| Server[Server]
+    
+    User -- "Add to wishlist" --> Wishlist[WishlistManager]
+    Wishlist -- "Optimistic update" --> UI
+```
+
+## Common Mistakes
+- **Full images in grid:** Loading full-resolution product images in a grid view instead of thumbnails, leading to memory bloat and OOM crashes on large catalogs.
+- **Offset pagination for feeds:** Using offset pagination (page=1, page=2) for a dynamic catalog with stable products and new arrivals. This causes duplicate items when the catalog shifts.
+- **Blocking UI on cart add:** Blocking the "Add to Cart" action while waiting for the server response, which feels sluggish. It should be an optimistic local update.
+- **Over-polling for prices:** Polling for price updates on every scroll event instead of using ETag headers and conditional GETs to check for staleness efficiently.
+- **No skeleton loading:** Showing a blank screen or a simple spinner instead of a skeleton loading state, leading to janky perceived performance.
+
+## Mock Interview Q&A
+- **Q: A user adds an item to cart while offline. What happens?**
+  **A:** The `CartManager` immediately saves the item to the local SQLite database and updates the UI (optimistic update). A background sync task is queued. When the network becomes reachable, it syncs the local cart with the server.
+- **Q: How do you ensure prices are fresh on the product detail page?**
+  **A:** When navigating to the detail page, we show the cached price instantly, but trigger a background fetch using an ETag (Conditional GET). If the server responds with 304 Not Modified, we do nothing. If the price changed, we update the UI and the cache.
+- **Q: How do you handle a catalog of 10 million products efficiently on the client?**
+  **A:** The client never loads 10 million products. We use cursor-based pagination to load chunks of 20-50 items at a time. The `UICollectionView` reuses cells, and off-screen images are flushed from the memory cache to keep the footprint under 50MB.
+
+## Related Specs
+| Spec | Description |
+| :--- | :--- |
+| [Checkout Flow](checkout-flow.md) | What happens after items are added to the cart. |
+| [Image Pipeline](image-pipeline.md) | Deep dive into downsampling and caching strategies. |
+| [Offline Sync](offline-sync.md) | Detailed architecture for background syncing. |

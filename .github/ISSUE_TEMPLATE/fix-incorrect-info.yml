@@ -1,0 +1,35 @@
+name: Incorrect Information / Outdated Benchmark
+description: Report a factual error, outdated number, or incorrect Swift code
+title: "[FIX] "
+labels: ["outdated", "needs-fix"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mobile engineering evolves fast. Help keep this repo accurate.
+
+  - type: input
+    id: spec-file
+    attributes:
+      label: Which spec file?
+      placeholder: "e.g. docs/video-streaming-player.md"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-is-wrong
+    attributes:
+      label: What is incorrect?
+      placeholder: "The spec says HLS segment size is 10s but Apple's HLS Authoring Spec recommends 6s for most use cases."
+    validations:
+      required: true
+
+  - type: textarea
+    id: correct-info
+    attributes:
+      label: Correct information + source
+      placeholder: |
+        Correct: 6-second segments (Apple HLS Authoring Specification, 2023)
+        Source: https://developer.apple.com/documentation/http-live-streaming/hls-authoring-specification-for-apple-devices
+    validations:
+      required: true

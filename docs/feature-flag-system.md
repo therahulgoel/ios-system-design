@@ -321,3 +321,41 @@ class RemoteConfigFetcher {
 - **Timeouts are Critical**: If you suggest blocking the app launch to fetch configs, you will fail. Always use a strict timeout and fallback to cache.
 - **Impressions**: Do not forget to mention logging impressions. An A/B test is useless if the data science team doesn't know *when* the user actually saw the feature.
 - **Thread Safety**: Reading flags happens all over the app on different threads. Your `FeatureFlagStore` MUST be thread-safe (using actors or concurrent queues with barriers).
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    App[App launch] --> Fetcher[RemoteConfigFetcher]
+    Fetcher -- "async, 2s timeout" --> FetchOutcome{Outcome}
+    FetchOutcome -- "Success" --> Update[update cache]
+    FetchOutcome -- "Timeout" --> Cached[use cached]
+    Update --> Store[in-memory FlagStore]
+    Cached --> Store
+    
+    Eval[FeatureFlags.isEnabled] --> Store
+    Store -- "O(1) return" --> Eval
+    
+    KillSwitch[Kill Switch Flow] -.-> |Triggers flag update| Fetcher
+```
+
+## Common Mistakes
+- **Blocking app launch:** Waiting for a flag fetch on the splash screen instead of running it asynchronously with a strict timeout (e.g., 2s).
+- **Network evaluation on hot path:** Evaluating flags via network calls in UI code. It must always be a local, synchronous O(1) lookup.
+- **No kill switch:** Failing to implement an emergency kill switch (override to false) for every major new feature.
+- **Missing offline defaults:** Not caching the last-known-good config, meaning the app breaks or features disappear if the server is unreachable.
+- **Over-tracking experiments:** Logging experiment impression events on every single flag check instead of just the first evaluation or view event.
+
+## Mock Interview Q&A
+- **Q: The server is unreachable on app launch. What happens to all the features gated by flags?**
+  **A:** The `RemoteConfigFetcher` will fail or hit its 2-second timeout. The `FeatureFlagStore` instantly falls back to the disk-cached config from the previous session. If it's a fresh install, it falls back to the hardcoded defaults bundled in the app.
+- **Q: How do you ensure a flag kill switch takes effect within 5 minutes?**
+  **A:** The app periodically polls for config updates in the background (e.g., on `applicationDidBecomeActive` or via Background Fetch) or relies on the next app launch. When the new payload arrives, the flag is flipped to `false`, immediately disabling the feature.
+- **Q: How do you prevent the flag evaluation from slowing down the main thread?**
+  **A:** Flag evaluations read directly from an in-memory dictionary. We use a concurrent dispatch queue or an actor to ensure thread-safe O(1) read access without blocking the main thread.
+
+## Related Specs
+| Spec | Description |
+| :--- | :--- |
+| [App Modularization](app-modularization.md) | How feature flags intersect with separated module builds. |
+| [E-Commerce Catalog](e-commerce-catalog.md) | A/B testing different catalog UI layouts using flags. |
+| [Network Layer Design](network-layer.md) | Core networking infrastructure used by the config fetcher. |

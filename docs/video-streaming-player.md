@@ -311,3 +311,48 @@ class OfflineDownloadManager: NSObject, AVAssetDownloadDelegate {
 - **HLS Knowledge is Mandatory**: You must explain that HLS consists of a Master Playlist containing different bandwidth variant playlists, which contain pointers to 6-second `.ts` or `.fmp4` chunks.
 - **Don't fight AVFoundation**: A common mistake is proposing to download video chunks manually via `URLSession`. `AVPlayer` handles ABR and manifest parsing natively. Focus on configuring it (`preferredPeakBitRate`, `preferredForwardBufferDuration`) rather than rebuilding it.
 - **DRM**: Knowing that FairPlay uses SPC (Server Playback Challenge) and CKC (Content Key Context) shows senior-level domain expertise.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    A[CDN] -->|m3u8 / ts chunks| B[Manifest Parser]
+    B --> C[AVPlayer]
+    C --> D[BufferManager]
+    C --> E[BitrateAdaptor]
+    C --> F[StallRecovery]
+    G[Offline Download URL] --> H[DownloadManager]
+    H -->|AVAssetDownloadTask| I[Local Storage]
+    I --> C
+```
+
+## Common Mistakes
+❌ **Mistake**: Using `URLSession` to manually download HLS `.ts` chunks.
+✅ **Correct**: Use `AVPlayer` and AVFoundation directly for streaming, and `AVAssetDownloadURLSession` for offline downloads. Manually parsing HLS manifests is error-prone and fights OS-level optimizations.
+
+❌ **Mistake**: Not handling stall events or infinite buffering.
+✅ **Correct**: Observe `AVPlayerItem.isPlaybackLikelyToKeepUp`. If false for >3s, pause, show a loader, and adjust the `preferredPeakBitRate` to force a lower quality stream.
+
+❌ **Mistake**: Assuming video quality upgrade is always safe.
+✅ **Correct**: Rely on AVFoundation's ABR, but clamp the max bitrate based on `NWPathMonitor` (e.g., cap at 720p on cellular) to save user data and prevent stalling.
+
+❌ **Mistake**: Not persisting resume position locally.
+✅ **Correct**: Save the heartbeat position to SQLite every 10s. If the app is killed before the API syncs, you don't lose the user's progress.
+
+❌ **Mistake**: Polling the heartbeat API too frequently (e.g., every 1s).
+✅ **Correct**: Batch progress updates every 10-15s to conserve battery and reduce backend load, as syncing 25M live users every second will DDoS your API.
+
+## Mock Interview Q&A
+**Q: How does ABR (Adaptive Bitrate) work and when would you step down quality?**
+A: ABR works via an HLS master manifest containing multiple stream variants (e.g., 480p, 720p, 1080p). AVFoundation handles this automatically by estimating bandwidth. However, we can step down quality manually by capping the `preferredPeakBitRate` on the `AVPlayerItem` if we detect `NWPathMonitor` shifting to cellular, or if `isPlaybackLikelyToKeepUp` drops to false, ensuring a stall-free experience.
+
+> 🔍 *Interviewer follow-up: What's your strategy for offline download with DRM?*
+> A: We use `AVAssetDownloadURLSession` which runs in a background daemon, ensuring downloads continue even if the app is suspended. For DRM, we use `AVContentKeySession` to fetch a persistent offline FairPlay key (CKC) from the license server, which we bind to the downloaded asset on disk.
+
+**Q: A user is watching a movie on their TV, then opens your iOS app. How do you sync the state?**
+A: The TV client fires a heartbeat API every 10s. When the iOS app launches, it fetches the `/manifest` endpoint which includes a `resume_position` (e.g., 1245.5s). We instantiate the `AVPlayer` and immediately call `seek(to: CMTime(seconds: 1245.5))` before beginning playback.
+
+## Related Specs
+| Related Spec | Why It's Related |
+| :--- | :--- |
+| [Video Feed Streaming](file:///Users/rahulgoel/ios-system-design/docs/video-feed-streaming.md) | Explores managing multiple concurrent players vs one long-form player. |
+| [Payment Checkout](file:///Users/rahulgoel/ios-system-design/docs/payment-checkout.md) | Similar need for background persistence (heartbeats vs payment state). |

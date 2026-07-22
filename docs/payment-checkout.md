@@ -377,3 +377,50 @@ class PaymentManager: ObservableObject {
 - **Idempotency is king:** Be prepared to explain exactly how idempotency keys work, who generates them, and their lifecycle.
 - **State Machines:** Use a formal state machine for payments. Ad-hoc boolean flags (`isProcessing`, `isDone`) will lead to messy, buggy code.
 - **Security:** Mention `FileProtection.completeUnlessOpen` for the SQLite DB to ensure payment records are encrypted when the device is locked.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    A[Payment UI] --> B[PaymentViewModel]
+    B --> C[IdempotencyKeyGen]
+    C --> D[PaymentAPI]
+    D --> E{API Response}
+    E -->|Success| F[Update State & UI]
+    E -->|Timeout/5xx| G[State Machine]
+    G --> H[Payment Poller]
+    H -->|Polls Status| D
+    E -->|3DS Required| I[WKWebView Challenge]
+    I -->|Redirect| D
+```
+
+## Common Mistakes
+❌ **Mistake**: Showing a "Payment Failed" error on a 30s network timeout.
+✅ **Correct**: Treat timeouts as ambiguous. Transition the UI to a "Processing" state and background poll the server for the definitive state using the idempotency key.
+
+❌ **Mistake**: Not using a client-generated idempotency key.
+✅ **Correct**: Generate a UUID on the iOS client before the request. This guarantees exactly-once processing (preventing double charges) if you have to retry the request.
+
+❌ **Mistake**: Retrying 4xx errors.
+✅ **Correct**: A 4xx error (like 402 Payment Required or 400 Bad Request) is terminal. Only retry 5xx errors or network drops.
+
+❌ **Mistake**: Not persisting payment state locally.
+✅ **Correct**: Save the `Initiated` state to SQLite before the network call. If the app is killed mid-flow, you can read the DB on next launch and resume polling.
+
+❌ **Mistake**: Sending raw credit card numbers (PANs) through your own API.
+✅ **Correct**: Tokenize the card via Apple Pay or Stripe SDK first, then send the secure token to your backend to achieve PCI compliance.
+
+## Mock Interview Q&A
+**Q: A user loses network connection mid-payment. What does the client do?**
+A: If the request times out (e.g., >30s), we enter an ambiguous state. We NEVER assume failure. We persist the "Processing" state to SQLite, show a pending UI, and start a `PaymentPoller`. The poller queries the `/status` endpoint every 5s for up to 5 minutes using our client-generated Idempotency Key until we get a terminal Succeeded or Failed state.
+
+> 🔍 *Interviewer follow-up: How do you prevent double charges if the user aggressively taps the "Retry" button?*
+> A: The "Retry" button shouldn't fire a new payment. It should just trigger the poller. But even if a new payment is fired, because we generated a UUID `Idempotency-Key` and tied it to that transaction order, the backend will recognize the duplicate key and return the cached response of the first attempt, guaranteeing exactly-once processing.
+
+**Q: How do you handle 3DS (3D Secure) authentication?**
+A: If the initial API call returns a `requires_action` status with a challenge URL, the State Machine transitions to `requiresChallenge`. We open a `WKWebView` or SafariViewController with the URL. The user authenticates with their bank. The bank redirects to a specific app deep link (e.g., `app://payment/3ds-complete`), which our `SceneDelegate` intercepts to resume the polling flow.
+
+## Related Specs
+| Related Spec | Why It's Related |
+| :--- | :--- |
+| [Video Streaming Player](file:///Users/rahulgoel/ios-system-design/docs/video-streaming-player.md) | Requires similar background polling and local state persistence for reliability. |
+| [SDUI Engine](file:///Users/rahulgoel/ios-system-design/docs/sdui-engine.md) | Checkout forms often use SDUI to dynamically render varying required fields per country. |

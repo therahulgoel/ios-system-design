@@ -323,3 +323,46 @@ class EnvironmentMonitor {
 - **Fail Gracefully**: If the database is corrupted, delete it and lose the data. Do not crash.
 - **GZIP Compression**: Always mention this. It shows senior-level awareness of mobile network constraints.
 - **Low Power/Data Mode**: Showing awareness of `isLowPowerModeEnabled` and `NWPathMonitor` (`.isConstrained`) separates staff engineers from seniors.
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    A[Analytics.track] --> B[EventQueue Actor]
+    B --> C[ring buffer]
+    C -->|every 500ms| D[(SQLiteEventStore)]
+    D --> E[BatchUploader]
+    
+    F[NWPathMonitor] -.->|gate upload| E
+    
+    Trigger1[100 events] --> E
+    Trigger2[30s timer] --> E
+    Trigger3[willResignActive] --> E
+    
+    E --> G[POST /v1/events/batch]
+    G -- 200 OK --> H[delete sent events from SQLite]
+```
+
+## Common Mistakes
+- Calling `Analytics.track()` and doing disk I/O synchronously (main thread block)
+- Not persisting events to disk before crash (event loss)
+- Retrying failed batch uploads infinitely (event duplication)
+- Not compressing batch payloads (large network requests)
+- Uploading on constrained network (user data plan waste)
+
+## Mock Interview Q&A
+- **Q: How do you ensure no events are lost if the app crashes mid-batch?**
+  **A:** We only delete events from SQLite *after* receiving a 200 OK from the server. If a crash happens mid-upload, the events are still in SQLite and will be retried on next launch.
+- **Q: A user is in Low Data Mode. What happens to analytics?**
+  **A:** NWPathMonitor detects constrained networks. We halt background uploads and accumulate events in SQLite, waiting for an unconstrained connection.
+- **Q: How do you handle 100 events firing simultaneously without blocking the UI?**
+  **A:** `Analytics.track()` delegates work asynchronously to an Actor which maintains a pre-allocated ring buffer, avoiding lock contention and main thread blocking.
+- **Q: What happens if the SQLite database gets full?**
+  **A:** We set a hard limit (e.g., 10MB or 10k events). If reached, we drop the oldest events (FIFO) to prevent consuming all of the user's local storage.
+- **Q: How does the SDK behave when the app moves to the background?**
+  **A:** We listen to `willResignActive` and immediately flush the ring buffer to disk. We may also request background task time to flush pending events to the network.
+
+## Related Specs
+| Spec | Relationship |
+| :--- | :--- |
+| [Networking Layer](networking-layer.md) | Batch uploads require handling retries, backoff, and network errors gracefully. |
+| [Social Feed](social-feed.md) | Impression events from the feed are sent to this analytics SDK for batching. |

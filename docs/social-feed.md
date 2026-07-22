@@ -344,3 +344,46 @@ class FeedViewController: UICollectionViewController {
 - **Cursor vs Offset**: Have a crisp 2-sentence explanation ready for why cursor pagination is required for feeds.
 - **Optimistic Updates**: Interviewers love this. It shows you care about the end-user UX, not just the code.
 - **Memory Management**: Talk about releasing decoded images when cells go off-screen.
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    A[FeedViewModel] --> B[FeedRepository]
+    B --> C[Local SQLite]
+    B --> D[Remote API in parallel]
+    C --> A
+    D --> C
+    A --> E[DiffableDataSource]
+    E --> F[UICollectionView]
+    F -->|70% scroll| G[FeedPaginator]
+    G --> A
+    F --> H[PrefetchEngine]
+    H -->|next page| I[ImageLoader]
+    F --> J[ImpressionTracker]
+    J -->|dwell time| K[Analytics]
+```
+
+## Common Mistakes
+- Offset pagination on live feed (duplicates on new posts)
+- Not cancelling image prefetch on fast scroll (memory spike)
+- Blocking main thread on SQLite reads for feed render
+- Not debouncing pull-to-refresh (duplicate API calls)
+- Impression tracking on every frame instead of 1s dwell time
+
+## Mock Interview Q&A
+- **Q: How do you handle new posts inserted at the top while the user is scrolling?**
+  **A:** We use cursor-based pagination so offsets don't shift. For new items, we cache them locally and either show a "New Posts" pill or subtly insert them if the user is at the top.
+- **Q: What does the feed look like when there's no network?**
+  **A:** We immediately load the last ~200 cached posts from our SQLite database and display an "Offline" banner.
+- **Q: How do you track whether a feed item was actually seen by the user?**
+  **A:** We calculate the intersection of the cell's frame and the visible bounds. If it's >50% visible for more than 1 second, we log an impression event.
+- **Q: How do you ensure the main thread isn't blocked when loading from SQLite?**
+  **A:** Database reads are performed on a background queue or using async/await, and the resulting items are passed to the ViewModel on the MainActor.
+- **Q: What happens if an optimistic like fails?**
+  **A:** We revert the local like state, update the diffable data source to refresh the UI, and show a toast informing the user of the failure.
+
+## Related Specs
+| Spec | Relationship |
+| :--- | :--- |
+| [Image Loading Library](image-loading-library.md) | Handles the image prefetching and cell reuse logic for the feed. |
+| [Analytics SDK](analytics-sdk.md) | Handles the batched uploading of feed impression tracking events. |

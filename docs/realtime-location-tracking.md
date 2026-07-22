@@ -256,3 +256,42 @@ Like the chat app, the WebSocket must use exponential backoff (1s → 2s → 4s 
 - **Drive the dual-app narrative**: Explicitly separate your design into "Provider (Driver)" and "Consumer (Rider)". The constraints are completely different.
 - **Battery is everything**: The interviewer wants to hear about `distanceFilter`, `desiredAccuracy`, and batching. If you don't mention battery on the driver side, you fail.
 - **Interpolation**: Mention that cars shouldn't "teleport" on the map. This shows product-minded UI engineering.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    CLLocationManager --> KalmanFilter
+    KalmanFilter --> LocationBatcher
+    LocationBatcher --> WebSocketDriver[WebSocket]
+    WebSocketDriver --> Server
+    Server --> WebSocketRider[RiderApp WebSocket]
+    WebSocketRider --> MapRenderer[MapRenderer - Delta Diff]
+```
+
+## Common Mistakes
+- No Kalman filter (raw GPS ±15m noise in map).
+- Sending every location update over WebSocket without batching (battery drain).
+- Using CLLocationManager.startUpdatingLocation without distanceFilter (constant updates).
+- Redrawing entire polyline on each update (16ms per update).
+- Not handling WebSocket reconnection (trip tracking silently stops).
+
+## Mock Interview Q&A
+**Q: A driver goes through a tunnel — no GPS for 60 seconds. What does the rider's app show?**
+A: The rider app interpolates based on the last known speed and heading, effectively "dead reckoning" along the route polyline. Once out of the tunnel, the app smoothly animates to the new true coordinate over a few seconds to avoid teleporting.
+
+**Q: How do you make location tracking battery-efficient?**
+A: On the driver side, we rely heavily on `distanceFilter` to avoid processing micro-movements, batch location updates to reduce radio wake-ups, and dynamically downgrade `desiredAccuracy` if the device enters Low Power Mode.
+
+**Q: How do you handle the WebSocket dropping while the trip is active?**
+A: The client instantly starts an exponential backoff reconnect loop. While disconnected, we rely on local queuing for the driver, and HTTP polling for ETA updates for the rider.
+
+**Q: Why not send data over a simple REST API POST every 5 seconds?**
+A: Establishing a new TCP/TLS connection for every POST wastes battery and adds latency overhead. A persistent WebSocket keeps the radio state stable and allows bidirectional flow (like sending ETAs back down).
+
+**Q: How do you render 10,000 route points efficiently?**
+A: We don't. We slice the polyline array based on the driver's current index and only render the remaining delta. Redrawing the entire path on every 4-second tick will drop frames.
+
+## Related Specs
+| Spec | Reason |
+|------|--------|
+| [Messaging Chat](./messaging-chat.md) | Deep dive into WebSocket lifecycle and background processing. |

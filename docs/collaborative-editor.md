@@ -321,3 +321,43 @@ In offline mode, all local edits are appended to the SQLite `operation_log` as p
 - **CRDT vs OT**: You WILL be asked this. Know that CRDTs resolve conflicts mathematically without a central server by assigning unique IDs to every character. OT relies on a central server to dictate order.
 - **Optimistic UI**: Emphasize that the user should NEVER feel blocked by the network.
 - **Text Frameworks**: Acknowledge that standard SwiftUI bindings (`@State var text`) break down here; you need precise offset control via `UITextViewDelegate`.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    UserEdit[User Edit] --> DocumentViewModel
+    DocumentViewModel --> OperationTransformer
+    OperationTransformer --> OpLogRepository[(OpLogRepository SQLite)]
+    OperationTransformer --> WebSocket
+    WebSocket <--> Server[Server - OT Authority]
+    Server --> Merge[Merge]
+    Merge --> Broadcast[Broadcast to Peers]
+```
+
+## Common Mistakes
+- Using last-write-wins for text (data loss).
+- Not maintaining pendingOps queue (out-of-order application).
+- Applying remote ops before transforming against pending local ops.
+- Not storing op log locally (can't reconstruct state offline).
+- Using CRDT when server authority is available (unnecessary complexity).
+
+## Mock Interview Q&A
+**Q: Two users type in the same paragraph at the same time. Walk me through exactly what happens.**
+A: Both clients optimistically apply their edits locally. Client A sends `Insert(pos:5, "X")` and Client B sends `Insert(pos:5, "Y")`. The server receives A first, broadcasts it. B receives A's edit, transforms its pending "Y" against "X" (shifting position to 6), and applies it.
+
+**Q: Why would you choose OT over CRDTs for this?**
+A: We already have a central server. CRDTs carry a lot of metadata overhead (tombstones for every deleted character), which can bloat mobile memory. OT keeps the payload small and leverages the server as the source of truth.
+
+**Q: How do you handle offline editing for 20 minutes then reconnect?**
+A: Edits are appended to a local SQLite operation log. Upon reconnect, we batch these pending ops and send them to the server with our last known `baseRevision`. The server transforms them against the 20 minutes of history and broadcasts the result.
+
+**Q: What if the OT transformation fails or state diverges?**
+A: We implement a hash check. Periodically, the client sends a hash of its document state. If it mismatches the server, the client halts, discards pending ops, and forces a full snapshot reload.
+
+**Q: How do you handle cursor positions of other users?**
+A: Cursor positions are ephemeral state broadcast via a separate Redis Pub/Sub channel over WebSocket. They are transformed similarly to text edits so they don't drift as the document changes.
+
+## Related Specs
+| Spec | Reason |
+|------|--------|
+| [Offline Sync Engine](./offline-sync-engine.md) | Details local DB structure and conflict resolution paradigms. |

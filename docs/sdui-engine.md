@@ -401,3 +401,51 @@ struct SDUILayoutView: View {
 - **Protocol versioning**: Interviewers want to know how you prevent a backend deploy from breaking old app versions. Discuss `min_supported_version` headers and payload version checks.
 - **State Management**: Keep state local to components if possible. Only pass global state (like user login status) via `EnvironmentObject` in SwiftUI.
 - **Analytics**: Don't hardcode event names. Show how `analytics: ["event_name": "hero_tapped"]` is passed back from the server so product managers can change tracking without app updates.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    A[SDUI Backend / CMS] -->|JSON Schema| B[Network Layer]
+    B --> C{Offline or Error?}
+    C -->|Yes| D[Fallback Engine]
+    C -->|No| E[Schema Fetcher]
+    D --> E
+    E --> F[SDUI ViewModel]
+    F --> G[Layout Resolver]
+    G --> H[Component Registry]
+    H --> I[Component Catalog]
+    I --> J[SwiftUI Views]
+    J --> K[ActionHandler & Analytics]
+```
+
+## Common Mistakes
+❌ **Mistake**: Crashing when the server sends an unknown component type.
+✅ **Correct**: Map unknown types to an `EmptyView` and log a non-fatal error. The Component Registry must safely ignore unhandled strings.
+
+❌ **Mistake**: Not caching the last-known-good schema.
+✅ **Correct**: Cache the parsed layout in SQLite so the app can render immediately on launch or gracefully fallback offline.
+
+❌ **Mistake**: Hardcoding layout properties like fonts or padding in the client.
+✅ **Correct**: Design the schema to pass generic properties (e.g. `type: "primary_button"`) and let the client's Design System resolve the exact pixel values, keeping SDUI semantic.
+
+❌ **Mistake**: Tying analytics event tracking to client releases.
+✅ **Correct**: Include the analytics payload `[String: String]` directly in the SDUI component schema from the server, firing it dynamically on interaction.
+
+❌ **Mistake**: Forgetting schema versioning.
+✅ **Correct**: Pass `Client-Version` in headers and check `supported_version` in the payload. Ignore or upgrade if the server sends a breaking `v3` schema to a `v2` client.
+
+## Mock Interview Q&A
+**Q: How do you handle a new component type your app doesn't know about?**
+A: We use a `ComponentRegistry` pattern. The JSON decoder maps the component type to a string. The registry looks up a registered SwiftUI `ViewBuilder` for that string. If the type is missing (e.g., the backend shipped a new feature but the user hasn't updated the app), the registry safely returns an `EmptyView()` and fires a non-fatal error to Crashlytics. This guarantees a 99.9% crash-free rate despite dynamic payloads.
+
+> 🔍 *Interviewer follow-up: How would you version the schema to avoid breaking old clients entirely?*
+> A: We pass a `Supported-SDUI-Version: 2` header in the API request. The backend filters the layout, stripping `v3` components or replacing them with `v2` fallbacks. Alternatively, the client checks the root `version` field in the response; if it's unsupported, we fallback to our disk cache or force an app update prompt.
+
+**Q: How do you handle deep links or actions from these dynamic views?**
+A: We define an `action` object in the JSON with a `type` (e.g., `deeplink`, `api_call`). When a user taps the SwiftUI view, we pass this object to a central `ActionHandler`. For deep links, it hands the URL to the app's routing layer. This prevents business logic from leaking into our generic UI components.
+
+## Related Specs
+| Related Spec | Why It's Related |
+| :--- | :--- |
+| [Video Feed Streaming](file:///Users/rahulgoel/ios-system-design/docs/video-feed-streaming.md) | Uses similar caching and generic cell recycling strategies for dynamic content. |
+| [Payment Checkout](file:///Users/rahulgoel/ios-system-design/docs/payment-checkout.md) | Requires dynamic UI rendering based on server state (e.g., 3DS challenge rendering). |

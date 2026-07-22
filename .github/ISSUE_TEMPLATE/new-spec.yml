@@ -1,0 +1,85 @@
+name: New System Design Spec
+description: Add a new production-grade mobile system design problem
+title: "[SPEC] "
+labels: ["new-spec", "needs-review"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## New Spec Submission
+
+        Before submitting, confirm your spec meets the quality bar:
+        - [ ] All numbers are cited from real sources (not assumptions)
+        - [ ] Swift code is syntactically correct and compiles
+        - [ ] Includes failure modes and fallback strategies
+        - [ ] Has a Mermaid HLD diagram
+        - [ ] Includes a Mock Interview Q&A section
+        - [ ] Has a Common Mistakes section
+
+  - type: input
+    id: problem-title
+    attributes:
+      label: Problem Title
+      placeholder: "e.g. Design an App Store Client"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      options:
+        - Streaming
+        - Messaging & Collaboration
+        - Real-Time & Geospatial
+        - Payments & Dynamic UI
+        - Social & Feed
+        - Infrastructure & SDK
+        - E-commerce & Discovery
+        - Platform & Developer Tools
+    validations:
+      required: true
+
+  - type: input
+    id: target-companies
+    attributes:
+      label: Target Companies
+      placeholder: "e.g. Apple, Google, Shopify"
+    validations:
+      required: true
+
+  - type: textarea
+    id: hardest-parts
+    attributes:
+      label: What are the 3 hardest subsystems in this problem?
+      placeholder: |
+        1. Offline sync with conflict resolution
+        2. Real-time presence without battery drain
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: key-sources
+    attributes:
+      label: Primary Sources for Benchmarks
+      placeholder: |
+        - Apple WWDC 2023 Session 10164 — Advances in AVFoundation
+        - SQLite WAL documentation: https://sqlite.org/wal.html
+        - Firebase Analytics docs: https://firebase.google.com/docs/analytics
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Quality Checklist
+      options:
+        - label: "Numbers are sourced from official docs / engineering blogs, not estimates"
+          required: true
+        - label: "Swift code follows MVVM and compiles in Xcode 15+"
+          required: true
+        - label: "Includes Mermaid HLD diagram"
+          required: true
+        - label: "Covers at least 2 failure modes with fallback strategies"
+          required: true

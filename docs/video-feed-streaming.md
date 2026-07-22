@@ -311,3 +311,52 @@ class NetworkMonitor {
 - **The Pool is the key**: If you suggest instantiating a new `AVPlayer` for every cell, you will fail the interview. Emphasize the 3-item sliding window.
 - **Protocol distinction**: Know *why* MP4 is often used over HLS for short-form (HLS requires downloading a playlist manifest first, delaying startup. MP4 progressive download starts instantly).
 - **Edge cases**: Mention Low Power Mode (`ProcessInfo`) and Low Data Mode (`NWPathMonitor.isConstrained`). Interviewers love when you respect user device state.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    A[Feed API] --> B[FeedPaginator]
+    B --> C[Feed ViewModel]
+    C --> D[PrefetchEngine]
+    D --> E[AVPlayerPool]
+    E --> F[Previous AVPlayer]
+    E --> G[Current AVPlayer]
+    E --> H[Next AVPlayer]
+    E -->|Evicts unused| I[MemoryGuard]
+    F --> J[VideoCell]
+    G --> J
+    H --> J
+    J --> K[UICollectionView]
+```
+
+## Common Mistakes
+❌ **Mistake**: Creating a new `AVPlayer` for every cell in the feed.
+✅ **Correct**: Use a pool of 3 `AVPlayer` instances (previous, current, next). Re-instantiating players explodes memory (15MB each) and causes OOM crashes on fast scrolling.
+
+❌ **Mistake**: Loading full-resolution videos before the cell is fully visible.
+✅ **Correct**: Prefetch only the first few seconds of the next video, and rely on a low-res thumbnail until the cell intersects 80% of the screen.
+
+❌ **Mistake**: Using offset pagination (Page 1, Page 2) for the feed API.
+✅ **Correct**: Use cursor-based pagination. Offset pagination causes duplicate videos or skipped videos as the live feed constantly shifts.
+
+❌ **Mistake**: Decoding video thumbnails on the main thread.
+✅ **Correct**: Decode WebP/JPEG thumbnails on a background queue and cache them in `NSCache` to maintain 60FPS scroll performance.
+
+❌ **Mistake**: Not purging off-screen player items or aggressively prefetching on Low Power Mode.
+✅ **Correct**: Check `ProcessInfo.processInfo.isLowPowerModeEnabled` and downgrade to 1-item prefetch or pause prefetching entirely to save battery.
+
+## Mock Interview Q&A
+**Q: What happens to memory if a user fast-scrolls through 50 videos?**
+A: If not managed, the app will OOM crash. We prevent this by implementing a strict `AVPlayerPool` of exactly 3 players (previous, current, next). When a cell scrolls off-screen, its player is paused, its `AVPlayerItem` is set to nil, and the player is returned to the pool. This keeps AVFoundation memory overhead stable at around 45-50MB regardless of scroll depth.
+
+> 🔍 *Interviewer follow-up: How do you handle the case where the next video isn't buffered when the user swipes?*
+> A: We monitor the `playbackLikelyToKeepUp` flag. If the user swipes faster than the `PrefetchEngine` can download, we immediately display the cached WebP thumbnail and show a lightweight loading spinner. To mitigate this happening frequently, we trigger the prefetch of index N+1 when index N reaches 80% playback completion.
+
+**Q: How do you handle changing network conditions while swiping?**
+A: We use `NWPathMonitor` to detect drops from WiFi to Cellular or Low Data Mode. If bandwidth drops, our Feed API requests the lower-bitrate variant (e.g., 240p MP4 at 200Kbps) instead of the 1080p variant, prioritizing zero-stall playback over visual fidelity.
+
+## Related Specs
+| Related Spec | Why It's Related |
+| :--- | :--- |
+| [Video Streaming Player](file:///Users/rahulgoel/ios-system-design/docs/video-streaming-player.md) | Contrasts short-form MP4 pooling with long-form HLS and Adaptive Bitrate. |
+| [SDUI Engine](file:///Users/rahulgoel/ios-system-design/docs/sdui-engine.md) | Uses similar visibility tracking and dynamic rendering techniques. |

@@ -1,9 +1,11 @@
 <div align="center">
 
-# 📱 iOS Mobile System Design
+![iOS Mobile System Design](assets/banner.jpg)
 
-### The most comprehensive system design resource for senior iOS engineers.
-### Built for Engineering Manager & Staff Engineer interviews at Google, Uber, Meta, Apple & FAANG+.
+# iOS Mobile System Design
+
+### The most comprehensive mobile system design resource for senior iOS engineers.
+### Built for Engineering Manager & Staff Engineer interviews at top product companies at scale.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/therahulgoel/ios-system-design/pulls)
@@ -11,7 +13,7 @@
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All 15 Specs](#-complete-problem-catalog) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [📊 Benchmarks](#-production-benchmarks-cheatsheet) · [👤 Author](#-about-the-author)
+[📖 Browse All 15 Specs](#-complete-problem-catalog) · [📊 Benchmarks Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 

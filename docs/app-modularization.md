@@ -215,3 +215,48 @@ final class AppComponent: CheckoutDependency {
 - **Explain Interface Separation:** This is the most critical concept. Be able to diagram how Feature A calls Feature B without importing Feature B.
 - **Discuss Static vs Dynamic Linking:** Be prepared to explain how linking affects both build time and app launch time (dyld).
 - **Avoid Over-Engineering:** Acknowledge that a 5-screen app doesn't need 20 modules. Modularization introduces overhead (module mapping, cross-module boundaries).
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    App[App] --> FeatureA[FeatureA]
+    App --> FeatureB[FeatureB]
+    
+    FeatureA --> FeatureBInterface[FeatureBInterface]
+    FeatureB -.-> |Implements| FeatureBInterface
+    
+    FeatureA --> DomainX[DomainX]
+    FeatureB --> DomainY[DomainY]
+    
+    DomainX --> CoreNetwork[CoreNetwork]
+    DomainX --> CoreStorage[CoreStorage]
+    DomainX --> CoreUI[CoreUI]
+    
+    DomainY --> CoreNetwork
+    DomainY --> CoreStorage
+    DomainY --> CoreUI
+    
+    DI[DI Container] -.-> |Injects interface implementations| FeatureA
+```
+
+## Common Mistakes
+- **Circular module dependencies:** Feature A imports Feature B, which imports Feature A. This breaks the build graph and causes compilation failures.
+- **Singleton shared state:** Using singletons across module boundaries breaks testability and isolation, making it impossible to run modules independently.
+- **Storyboards across modules:** Using Storyboards that reference classes in other modules tightly couples the UI and breaks compile-time safety.
+- **No interface modules:** Depending directly on implementation modules instead of interface modules, leading to long, cascaded recompilations when a single implementation detail changes.
+- **Monolithic target:** Keeping all modules in one Xcode target defeats the build-time benefits of modularization since Xcode cannot parallelize the work.
+
+## Mock Interview Q&A
+- **Q: How do you prevent Feature A from importing Feature B directly?**
+  **A:** We use Interface modules. Feature B exposes a lightweight `FeatureBInterface` module containing only protocols and models. Feature A imports `FeatureBInterface`, and the actual implementation is injected at runtime by the App target.
+- **Q: Uber has 200+ modules. How do they manage build times?**
+  **A:** They use strict interface segregation so implementation changes don't trigger recompilation of dependents. They also use build systems like Bazel or Buck to cache artifacts remotely, so developers only compile the modules they actually changed.
+- **Q: How do you test a feature module in isolation when it has dependencies?**
+  **A:** Because dependencies are injected via interfaces (protocols), we can create a lightweight test host target that injects mock implementations for all dependencies, allowing the feature to be tested completely in isolation.
+
+## Related Specs
+| Spec | Description |
+| :--- | :--- |
+| [Feature Flag System](feature-flag-system.md) | How to toggle features across different modular boundaries. |
+| [E-Commerce Catalog](e-commerce-catalog.md) | Example of a feature module that depends on CoreNetwork. |
+| [Design System](design-system.md) | Core UI module implementation details. |

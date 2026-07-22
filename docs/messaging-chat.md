@@ -395,3 +395,51 @@ In a FAANG interview, understanding the concepts of E2EE is a strong signal:
 - **Network Resilience is Key**: Emphasize offline handling and idempotent operations. Do not assume the network is reliable.
 - **Don't overcomplicate E2EE**: Mention Signal protocol, Double Ratchet, and PFS, but don't dive into the cryptographic math unless asked.
 - **Pagination**: Explicitly call out why offset pagination fails in a chat app (messages shifting the array).
+
+## Architecture Diagram
+```mermaid
+stateDiagram-v2
+    [*] --> Pending : User hits send
+    Pending --> Sent : Server ACKs
+    Sent --> Delivered : Receiver ACKs
+    Delivered --> Read : Receiver opens thread
+    Pending --> Failed : Network timeout/retry exhaust
+    Failed --> Pending : User retries
+```
+```mermaid
+flowchart TD
+    User --> ChatViewModel
+    ChatViewModel --> MessageRepository
+    MessageRepository --> SQLite[(SQLite\npending)]
+    MessageRepository --> WebSocketManager
+    WebSocketManager --> Server
+```
+
+## Common Mistakes
+- Using main thread for SQLite writes, not using WAL mode (concurrent read lock).
+- Generating new UUID on message retry (duplicate messages).
+- Polling for messages instead of WebSocket.
+- Not implementing heartbeat (zombie connections).
+- Fetching all message history on load instead of paginating.
+
+## Mock Interview Q&A
+**Q: What happens when a user sends a message while offline?**
+A: The message is saved to the local SQLite DB immediately with a `pending` status. The UI updates optimistically. A background network monitor waits for connectivity to drain the pending queue.
+
+**Q: How do you guarantee messages are delivered in order?**
+A: We use a sequence number assigned by the server. Locally, we sort by `created_at` initially, but reconcile with the server's sequence to ensure deterministic ordering across all clients.
+
+**Q: How does the unread count stay accurate across devices?**
+A: Unread counts are derived from a `last_read_watermark` synchronized via the server. When device A reads a thread, it updates the watermark, and the server pushes this to device B.
+
+**Q: How do you handle zombie connections?**
+A: By implementing a client-side heartbeat. If the server doesn't respond to a ping within 30 seconds, the client actively drops the connection and initiates an exponential backoff reconnect.
+
+**Q: Why not use CoreData for this?**
+A: Chat apps require high write throughput and precise control over threading. CoreData's context merging and faulting can introduce overhead and unpredictability compared to a lean SQLite wrapper.
+
+## Related Specs
+| Spec | Reason |
+|------|--------|
+| [Offline Sync Engine](./offline-sync-engine.md) | Deep dive into background queues and optimistic UI. |
+| [Real-time Location](./realtime-location-tracking.md) | Shares WebSocket connection lifecycle and reconnection logic. |

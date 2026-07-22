@@ -417,3 +417,49 @@ For complex entities (e.g., collaborative rich text), a **CRDT (Conflict-free Re
 - **Never block the UI**: Emphasize that the UI *never* waits for a network request to finish. UI reads/writes to DB, DB syncs in background.
 - **Tombstones**: Candidates often forget how to handle deletions. You must explain the tombstone pattern (`is_deleted=true`), otherwise deleted records will just get re-downloaded from the server.
 - **Idempotency**: Ensure your sync APIs are idempotent. If a push request times out but actually succeeded on the server, a retry should not create duplicates.
+
+## Architecture Diagram
+```mermaid
+flowchart TD
+    subgraph Write Path
+    UIWrite[UI] --> SQLiteWrite[(SQLite)]
+    SQLiteWrite -->|dirty=1| Pending
+    end
+    
+    subgraph Read Path
+    SQLiteRead[(SQLite)] --> UIRead[UI]
+    end
+    
+    subgraph Sync Path
+    SyncEngine -->|dirty records| API
+    API -->|dirty=0| SQLiteSync[(SQLite)]
+    end
+```
+
+## Common Mistakes
+- Reading from network instead of local DB (UI blocks on network).
+- Not marking records dirty on write (sync misses local changes).
+- Not using tombstones for deletes (deleted items re-appear after sync).
+- BGAppRefreshTask doing more than 30s of work (system kills it).
+- Not handling server conflict response (silent data loss).
+
+## Mock Interview Q&A
+**Q: What's your conflict resolution strategy and when does each apply?**
+A: For simple records (like a task title), we use Last-Write-Wins (LWW) based on a server-side timestamp to ensure deterministic resolution. For collaborative text, we would need to step up to Operational Transformation (OT) or CRDTs to avoid dropping user data.
+
+**Q: How do you ensure the background sync task doesn't get killed by iOS?**
+A: We wrap our sync logic in a task with an expiration handler provided by `BGAppRefreshTask`. If the system gives us a 30-second warning, we gracefully cancel the network requests and save our sync cursor state.
+
+**Q: How do you sync a delete operation offline?**
+A: We use a tombstone pattern. Instead of dropping the row, we set `is_deleted = 1` and `is_dirty = 1`. The sync engine pushes this state to the server, which then propagates the deletion to other clients.
+
+**Q: What if the local database becomes corrupted?**
+A: We wrap all SQLite ops in transactions. If a fatal read/write error occurs, we wipe the local database file and initiate a full sync from the server using a zero cursor to rebuild state.
+
+**Q: Why not use Core Data?**
+A: Core Data's context merging and faulting behavior can make background syncing complex and opaque. A lean SQLite wrapper (like GRDB) provides explicit control over multithreaded transactions and predictable SQL behavior.
+
+## Related Specs
+| Spec | Reason |
+|------|--------|
+| [Collaborative Editor](./collaborative-editor.md) | Extends sync engine concepts with OT for complex conflict resolution. |

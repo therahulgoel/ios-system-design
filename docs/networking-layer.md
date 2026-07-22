@@ -338,3 +338,42 @@ class MockURLProtocol: URLProtocol {
 - **The Token Refresh Problem**: The atomic token refresh is the "trick" question of this topic. If you just retry wildly, you'll spam the auth server. Use an `actor` or `DispatchQueue` with a barrier/lock to freeze other requests.
 - **Protocol-Oriented**: Always define requests as structs adopting a protocol (`APIEndpoint`), not as raw strings or massive enum switches (which violate the Open-Closed Principle).
 - **Testability**: Explicitly mention `URLProtocol` mocking. It scores huge points with senior engineers.
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    A[URLRequest] --> B[RequestBuilder]
+    B --> C[AuthInterceptor]
+    C --> D[URLSession]
+    D --> E[ResponseDecoder]
+    E --> F[ErrorMapper]
+    
+    C -.->|detects 401| G[TokenRefresher]
+    G -.->|atomic, queues concurrent| C
+    G -.->|retry original request| D
+```
+
+## Common Mistakes
+- Not implementing atomic token refresh (multiple simultaneous 401 → multiple refresh calls → token invalidation race)
+- Retrying 4xx responses (client errors are not retriable)
+- Using certificate pinning instead of public key pinning (cert rotation = app update required)
+- Logging request/response bodies in debug (PII leak in logs)
+- Over-architecting with Combine when simple async/await suffices
+
+## Mock Interview Q&A
+- **Q: A user's token expires. How does your network layer handle it without the caller knowing?**
+  **A:** The AuthInterceptor detects the 401, suspends the request, acquires a lock via an actor to refresh the token (while queueing other requests), and then retries the original request with the new token.
+- **Q: How do you test the network layer without making real API calls?**
+  **A:** We subclass `URLProtocol`, inject it into the `URLSessionConfiguration`, and intercept outgoing requests to return mock data or specific errors synchronously.
+- **Q: What's the difference between certificate pinning and public key pinning?**
+  **A:** Certificate pinning checks the exact cert, breaking when it expires. Public key pinning checks the underlying public key, which can remain the same across certificate renewals, preventing forced app updates.
+- **Q: How do you handle requests that need to outlive a view controller?**
+  **A:** We use background `URLSession` tasks or simply detached Tasks that aren't tied to the view's lifecycle for operations that must complete, like telemetry.
+- **Q: Why use an interceptor pattern instead of putting auth logic directly in the executor?**
+  **A:** It decouples concerns. Interceptors allow us to easily add logging, custom headers, or caching logic without modifying the core `execute` method, honoring the Open-Closed Principle.
+
+## Related Specs
+| Spec | Relationship |
+| :--- | :--- |
+| [Image Loading Library](image-loading-library.md) | Images are fetched over the network but often bypass strict JSON decoding and authentication. |
+| [Analytics SDK](analytics-sdk.md) | Requires network batch uploads and exponential backoff retry logic. |

@@ -316,3 +316,47 @@ actor NetworkManager {
 - **Explain "CacheImmediately"**: Default UIImage behavior decodes lazily on the main thread when rendering. You MUST force decode on a background thread.
 - **Handle Cell Reuse**: Mention `prepareForReuse()` and how you cancel the in-flight network request so a fast-scrolling user doesn't download hundreds of off-screen images.
 - **Distinguish Cache Keys**: URL is not enough. `URL + Size + Transformations` is required.
+
+## Mermaid Architecture Diagram
+```mermaid
+graph TD
+    A[imageView.load_url] --> B{L1 NSCache check}
+    B -- Hit --> End[Return Image]
+    B -- Miss --> C{L2 DiskCache check}
+    C -- Miss --> D{Dedup check in-flight?}
+    D -- No --> E[URLSession fetch]
+    E --> F[background decode]
+    F --> G[downsample CGImageSourceCreateThumbnailAtIndex]
+    C -- Hit --> F
+    G --> H[store L1+L2]
+    H --> I[notify observers]
+    D -- Yes --> Wait[Wait for in-flight] --> I
+    
+    J[Memory Pressure] -.->|clear| B
+```
+
+## Common Mistakes
+- Using `UIImage(named:)` for remote images (no caching)
+- Not cancelling image loads on cell reuse (wrong image in cell)
+- Caching full-resolution decoded bitmap (4x memory waste)
+- Not deduplicating concurrent requests for same URL
+- Using main thread for image decoding (frame drops)
+- Not responding to memory warnings (OOM)
+
+## Mock Interview Q&A
+- **Q: Two UIImageViews request the same URL at the same time. What happens?**
+  **A:** Request deduplication kicks in. The second view attaches an observer to the in-flight URLSession task rather than starting a new network request.
+- **Q: How do you decide the L1 cache size?**
+  **A:** It depends on device memory, but typically capping at 50-100MB is safe. SDWebImage defaults to this to prevent jetsam (OOM) kills.
+- **Q: What's your cancellation strategy when a cell scrolls off screen?**
+  **A:** In `prepareForReuse()`, cancel the `CancellationToken` associated with the request. This halts network downloads and prevents obsolete image decoding.
+- **Q: Why use CGImageSource instead of UIImage rendering for downsampling?**
+  **A:** UIImage rendering often happens on the main thread and requires loading the full bitmap into memory first, which defeats the purpose of downsampling to save memory.
+- **Q: What happens if the disk cache gets too large?**
+  **A:** We use an LRU eviction policy, triggered when writing new files. If we exceed the 500MB threshold, we delete the least recently used files based on SQLite metadata.
+
+## Related Specs
+| Spec | Relationship |
+| :--- | :--- |
+| [Social Feed](social-feed.md) | Feeds rely heavily on prefetching images and cancelling off-screen cells. |
+| [Networking Layer](networking-layer.md) | Image downloader uses URLSession but requires a different caching strategy than REST APIs. |
