@@ -266,7 +266,8 @@ Found an issue, want to add a new problem, or have a better approach for a subsy
 
 Built by a mobile engineering leader with **12+ years** of experience scaling iOS apps to **100M+ users** across streaming, social, payments, and e-commerce.
 
-Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**
+Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**  
+Follow on X / Twitter: **[@therahulgoel](https://x.com/therahulgoel)**
 
 If this repository helped you level up or land an offer — a ⭐ star takes one second and helps this reach the engineers who need it most.
 
