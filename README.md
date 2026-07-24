@@ -8,12 +8,12 @@
 ### Built for Engineering Manager & Staff Engineer interviews at top product companies at scale.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/therahulgoel/ios-system-design/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/therahulgoel/ios-system-design?style=social)](https://github.com/therahulgoel/ios-system-design/stargazers)
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All 15 Specs](#-complete-problem-catalog) · [📊 Benchmarks Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
+[📖 Browse All 30 Specs](#-complete-problem-catalog) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 
@@ -21,19 +21,19 @@
 
 ## 🎯 Who Is This For?
 
-You are a **senior iOS or mobile engineer** with 7–15 years of experience preparing for:
+You are a **senior iOS or mobile engineer** preparing for:
 
-- **Engineering Manager (EM)** interviews at Google, Uber, Meta, Apple, or equivalent  
-- **Staff / Principal Engineer** interviews at FAANG-tier companies  
+- **Engineering Manager (EM)** interviews at Google, Uber, Meta, Apple, Salesforce, or equivalent
+- **Staff / Principal Engineer** interviews at FAANG-tier companies
 - Roles requiring mobile system design depth at **100M+ user scale**
 
-This is **not** a LeetCode repo. This is the resource that teaches you to architect production systems on iOS — the way interviewers at top companies actually expect you to.
+This is **not** a LeetCode repo. This teaches you to architect production systems on iOS — the way interviewers at top companies actually expect you to.
 
 ---
 
 ## ⚡ Why This Repository Is Different
 
-Most system design resources are backend-focused. This one is built from the ground up for **client-side mobile architecture**.
+Most system design resources are backend-focused. This is built ground-up for **client-side mobile architecture**.
 
 | What most resources cover | What this covers |
 | :--- | :--- |
@@ -44,85 +44,136 @@ Most system design resources are backend-focused. This one is built from the gro
 | MapReduce pipelines | Offline-first sync with BGTaskScheduler |
 | Message queues (Kafka) | WebSocket lifecycle, heartbeat & reconnect strategy |
 
-Every spec in this repository is written with:
-- ✅ **Real production numbers** (not estimates — from Netflix, Uber, Firebase, Apple WWDC, OWASP)
-- ✅ **Swift 5.9+ code sketches** (async/await, Actors, SwiftUI + MVVM)
-- ✅ **Actual SQLite schemas** and **API contracts** with request/response examples
-- ✅ **Trade-off tables** with defended decisions (the #1 signal at Staff/EM level)
-- ✅ **Interview tips** specific to each problem
+Every spec includes:
+- ✅ **Real production numbers** (Netflix, Uber, Firebase, Apple WWDC, OWASP)
+- ✅ **Swift 5.9+ code** (async/await, Actors, SwiftUI + MVVM)
+- ✅ **Actual SQLite schemas** and **API contracts**
+- ✅ **Mermaid architecture diagrams** (render natively on GitHub)
+- ✅ **Trade-off tables** with defended decisions
+- ✅ **FAANG-style Mock Interview Q&A** per problem
+- ✅ **Common Mistakes** (❌ Wrong → ✅ Correct)
 
 ---
 
 ## 🗂 Complete Problem Catalog
 
-**15 production-grade system design specs** organized by domain.
+**30 production-grade specs** across 8 domains. **11,500+ lines** of real content.
 
-### 🎬 Streaming Domain
-*Video-on-demand, live sports, podcast platforms*
+---
+
+### 🎬 Streaming
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
-| [📺 Long-form Video Streaming Player](docs/video-streaming-player.md) | HLS/DASH, AVPlayer, adaptive bitrate, FairPlay DRM, offline download | Google, Apple, Netflix-tier |
+| [📺 Long-form Video Streaming Player](docs/video-streaming-player.md) | HLS/DASH, AVPlayer, adaptive bitrate, FairPlay DRM, offline download | Google, Apple, Netflix |
 | [🎞 Short-form Video Feed](docs/video-feed-streaming.md) | AVPlayer pool (3-item), prefetch engine, low-bandwidth 240p, memory guard | Google, Meta, Snap |
+| [🎵 Spotify / Apple Music Audio Player](docs/spotify-audio-player.md) | AVQueuePlayer gapless, AVAssetDownloadURLSession DRM offline, MPNowPlayingInfoCenter, FairPlay | Apple, Spotify |
 
-### 💬 Messaging & Collaboration Domain
-*Real-time communication, document sync, collaborative tools*
+---
+
+### 💬 Messaging & Collaboration
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [💬 Instant Messaging & Chat](docs/messaging-chat.md) | SQLite WAL, message state machine, E2EE (Signal protocol), offline queue | Meta, Slack, Google |
-| [📝 Collaborative Document Editor](docs/collaborative-editor.md) | Operational Transformation vs CRDTs, delta sync, presence/cursors, op log | Google, Notion, Dropbox |
+| [📝 Collaborative Document Editor](docs/collaborative-editor.md) | OT vs CRDTs, delta sync, presence/cursors, op log | Google, Notion, Dropbox |
+| [💼 Slack Multi-Workspace Channel Sync](docs/slack-channel-sync.md) | Per-workspace SQLite isolation, WebSocket per workspace, unread badge actor | Slack, Salesforce, Microsoft |
+| [📹 Google Meet / Zoom Video Calling](docs/google-meet-webrtc.md) | WebRTC SFU, ICE/STUN/TURN, thermal throttling, AVAudioSession, dynamic grid | Google, Meta, Zoom |
 
-### 📡 Real-Time & Geospatial Domain
-*Location tracking, live data feeds, geospatial systems*
+---
+
+### 📡 Real-Time & Geospatial
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [🗺 Real-Time Location & Ride Tracking](docs/realtime-location-tracking.md) | WebSocket, Kalman filter, GPS batching, map delta rendering, battery guard | Uber, Lyft, DoorDash |
+| [🍕 DoorDash Live Delivery Tracker](docs/doordash-delivery-tracker.md) | Order state machine, ActivityKit Dynamic Island, hybrid WebSocket+APNs+polling | DoorDash, Uber Eats, Swiggy |
 
-### 🏦 Payments & Dynamic UI Domain
-*Fintech, e-commerce, server-controlled interfaces*
+---
+
+### 🏦 Payments, E-Commerce & Marketplace
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [🖥 Server-Driven UI (SDUI) Engine](docs/sdui-engine.md) | Component registry, schema versioning, fallback engine, analytics injection | Uber, Meta, Google |
 | [💳 Payment Checkout Flow](docs/payment-checkout.md) | Tokenization, idempotency keys, payment state machine, PCI DSS, 3DS | Google Pay, Stripe, Square |
 | [🛍 Product Catalog & Discovery Feed](docs/e-commerce-catalog.md) | Image-heavy grid, cursor pagination, cart sync, wishlist offline queue | Amazon, Shopify, Etsy |
+| [🏠 Airbnb Search & Property Booking](docs/airbnb-search-booking.md) | Map+grid sync, 800ms debounce, blurhash, 15-min inventory hold, booking draft | Airbnb, Booking.com |
 
-### 🌐 Social & Feed Domain
-*News feeds, content discovery, social interactions*
+---
+
+### 🌐 Social & Feed
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [📰 Infinite Social Feed](docs/social-feed.md) | Cursor-based pagination, image pipeline, offline feed (200 items), impression tracking | Meta, Twitter/X, LinkedIn |
 
-### 🔧 Infrastructure & SDK Domain
-*Client-side libraries, platform tooling, developer infrastructure*
+---
+
+### 📅 Productivity
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
-| [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication, cancellation | Any image-heavy app |
-| [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | Any company |
+| [📅 Google Calendar Mobile Client](docs/google-calendar.md) | RFC 5545 RRule, infinite scroll UICollectionViewLayout, APNs silent sync, conflict resolution | Google, Apple, Microsoft |
+
+---
+
+### 🔐 Security & Identity
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🔐 Authentication: OAuth2 / SSO / Biometric](docs/authentication-oauth-biometric.md) | PKCE flow, Keychain storage, Secure Enclave, atomic token refresh actor, multi-device logout | All FAANG, Stripe, Salesforce |
+| [🔗 Deep Linking & Universal Links](docs/deep-linking-universal-links.md) | AASA file (no CDN!), deferred deep links, router/coordinator, cold-start race condition | Meta, Airbnb, Spotify |
+
+---
+
+### 🔧 Platform Infrastructure & SDKs
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
+| [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |
 | [📊 Mobile Analytics & Telemetry SDK](docs/analytics-sdk.md) | Ring buffer, SQLite journal, battery-aware batching, crash recovery, sampling | Uber, Meta, Google |
-| [🚩 Feature Flag & Experimentation System](docs/feature-flag-system.md) | Fallback chain, synchronous local evaluation, kill switch (<5min), A/B tracking | Uber, Airbnb, Meta |
+| [🚩 Feature Flag & Experimentation System](docs/feature-flag-system.md) | Fallback chain, synchronous local eval, kill switch (<5min), A/B tracking | Uber, Airbnb, Meta |
 | [🔄 Offline-First Data Sync Engine](docs/offline-sync-engine.md) | Local-first architecture, dirty-flag sync, LWW conflict resolution, BGTaskScheduler | Google, Apple, Dropbox |
 | [🧩 App Modularization & DI System](docs/app-modularization.md) | Module hierarchy, interface modules, DI (Needle pattern), build time, SPM | Uber, Google, Grab |
+| [🔔 Push Notification System](docs/push-notification-system.md) | APNs token lifecycle + FCM HTTP v1 cross-platform, silent push, deferred deep links | All FAANG, Airbnb, Spotify |
+| [💥 Crash Reporting & Observability SDK](docs/crash-reporting-sdk.md) | Signal handlers, OOM detection, breadcrumb ring buffer, dSYM symbolication | Google (Firebase), Meta, Uber |
+| [🧪 A/B Testing & Experimentation SDK](docs/ab-testing-experimentation-sdk.md) | Deterministic MurmurHash bucketing, sticky assignment, kill switch via silent push | Google, Airbnb, Spotify |
+| [⚡ App Performance Monitoring (APM)](docs/app-performance-monitoring.md) | MetricKit, pre-main cold start, hitch rate vs hang, URL template anti-pattern | All 10M+ user apps |
+| [🚀 Mobile CI/CD Pipeline & Release Eng](docs/mobile-ci-cd-pipeline.md) | Fastlane match, Xcode Cloud, code signing, phased rollout, auto-rollback | Uber, Meta, Google |
+| [🔍 Search with Autocomplete & Offline Index](docs/search-autocomplete.md) | Task-based debounce, SQLite FTS5 offline index, request race condition, trie vs FTS5 | Google, Amazon, Airbnb |
+
+---
+
+### 📈 Analytics & Growth
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [📈 User Analytics Event Pipeline](docs/user-analytics-event-pipeline.md) | 8-event taxonomy, DAU/MAU via HyperLogLog, Kafka→BigQuery, user journey, persona segmentation | Meta, Google, Uber, DoorDash |
+
+---
+
+### 📚 References & Cheatsheets
+
+| Resource | What's In It |
+| :--- | :--- |
+| [📊 Master Cheatsheet](docs/cheatsheet.md) | All key numbers, decisions, and anti-patterns in one page |
+| [🧩 Generic Mobile Problems](docs/generic-mobile-problems.md) | Cross-cutting patterns applicable to any mobile system design |
 
 ---
 
 ## 🏗 The 45-Minute Interview Framework
 
-Walk into any mobile system design interview with this structure. Drive it yourself — do not wait to be guided.
-
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Phase             │  Time      │  What You Must Achieve             │
 ├─────────────────────────────────────────────────────────────────────┤
-│  1. Clarify        │  0–5 min   │  Define scope, scale, constraints  │
-│  2. HLD            │  5–15 min  │  Draw full client-server component map │
+│  1. Clarify        │  0–5 min   │  Scope, scale (DAU), offline?, platform │
+│  2. HLD            │  5–15 min  │  Full client-server component map  │
 │  3. Data & API     │  15–25 min │  Entities, endpoints, pagination   │
 │  4. Deep Dives     │  25–40 min │  Own 2–3 hardest subsystems        │
-│  5. Ops & Scale    │  40–45 min │  Failures, metrics, rollout        │
+│  5. Ops & Scale    │  40–45 min │  Failures, metrics, rollout plan   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -136,7 +187,7 @@ Walk into any mobile system design interview with this structure. Drive it yours
 ├──────────────────────────────────────────────────────────────┤
 │  Domain / Use Case  (Business rules, repository protocols)    │
 ├──────────────────────────────────────────────────────────────┤
-│  Data Layer         (Repository: Remote Source + Local Source)│
+│  Data Layer         (Repository: Remote + Local)              │
 │     ├── Remote  → URLSession / gRPC / WebSocket               │
 │     └── Local   → SQLite / CoreData / NSCache / Keychain      │
 └──────────────────────────────────────────────────────────────┘
@@ -144,139 +195,102 @@ Walk into any mobile system design interview with this structure. Drive it yours
 
 ---
 
-## 📊 Production Benchmarks Cheatsheet
-
-Quote these numbers in interviews. Every figure is sourced from public engineering data.
+## 📊 Production Benchmarks (Quote These in Interviews)
 
 | Metric | Target | Source |
 | :--- | :--- | :--- |
-| Cold start (p50 device) | `< 1.2s` | Apple HIG, Uber Engineering |
+| Cold start (p50) | `< 1.2s` | Apple HIG, Uber Engineering |
 | Warm start | `< 400ms` | Google Play Vitals |
-| UI frame budget (60fps) | `16.6ms` | CoreAnimation |
+| UI frame budget (60Hz) | `16.6ms` | CoreAnimation |
 | UI frame budget (120Hz ProMotion) | `8.3ms` | ProMotion / CADisplayLink |
-| Memory before OOM warning | `~250MB` | WWDC 2018 — iOS Memory Deep Dive |
-| Hard OOM crash threshold | `~350–400MB` | iOS crash telemetry |
-| Decoded image footprint | `width × height × 4 bytes` | UIImage ARGB8888 |
-| Feed page payload | `< 15KB compressed` | Instagram/Facebook Newsfeed engineering |
-| API p99 latency target | `< 200ms` client-side | Uber API design principles |
-| Search debounce | `300ms` | Apple Human Interface Guidelines |
-| WebSocket heartbeat | `30s` | RFC 6455, Uber production |
-| SQLite WAL checkpoint | Every `1,000 writes` or `5s` | SQLite documentation |
-| Analytics flush | `30s` or `100 events` | Firebase Analytics production behavior |
+| Memory before OOM warning | `~250MB` | WWDC 2018 |
+| Hard OOM crash threshold | `~350MB` | iOS crash telemetry |
+| API p99 latency target | `< 200ms` client-side | Uber API principles |
+| Search debounce | `300ms` | Apple HIG |
+| WebSocket heartbeat | `30s` | RFC 6455 |
+| Analytics flush | `30s or 100 events` | Firebase Analytics |
 | HLS segment size | `6s` | Apple HLS Authoring Spec |
-| Video pre-buffer target | `10s` within `3s` of play start | Netflix Tech Blog |
-| AVPlayer instance overhead | `~15MB` | Measured AVFoundation profiling |
-| Cert pinning rotation | Every `60 days` | OWASP Mobile Security Standard |
-| BGAppRefreshTask window | Max `30s` runtime | Apple Background Tasks |
-| Crash-free session target | `> 99.9%` | Firebase Crashlytics baseline |
+| APNs max payload | `4KB` | Apple docs |
+| FCM messages/day | `400B+` | Firebase I/O 2023 |
+| Redis HyperLogLog error | `0.81%` | Redis docs |
+| Redis HLL memory | `max 12KB/counter` | Redis docs |
+| Session timeout | `30 min inactivity` | Google Analytics, Amplitude |
+| DAU/MAU stickiness (great) | `> 40%` | Instagram, Slack |
+| Crash-free session target | `> 99.9%` | Firebase Crashlytics |
+| BGAppRefreshTask window | `Max 30s` | Apple Background Tasks |
+| OAuth2 PKCE code_verifier | `43 char min` | RFC 7636 |
+| App Store phased rollout | `7 days to 100%` | App Store Connect |
 
 ---
 
 ## 🔑 Core Technical Decision Reference
 
-### When to Use Which Storage
+### Storage
 
 | Data Type | Solution | Why |
 | :--- | :--- | :--- |
 | Structured / relational | SQLite (WAL mode) | Concurrent reads, fast writes, indexed queries |
-| Graph / object graph | Core Data | Apple-native, relationship traversal |
-| Secrets / tokens | Keychain | Hardware-backed encryption, survives app reinstall |
+| Secrets / tokens | Keychain | Hardware-backed encryption, survives reinstall |
 | User preferences | UserDefaults | Fast synchronous reads, small data only |
-| Large media / files | FileManager (`/Caches` or `/Application Support`) | Managed by OS, not in DB |
+| Large media / files | FileManager (`/Application Support`) | Persists across reinstall for purchases |
 | In-session objects | NSCache | Auto-evicts under memory pressure |
 
-### Real-Time Transport Selection
+### Real-Time Transport
 
 | Protocol | Choose When | iOS API |
 | :--- | :--- | :--- |
 | **WebSocket** | Bidirectional, low-latency (chat, location) | `URLSessionWebSocketTask` |
-| **Server-Sent Events** | One-way server push, simpler than WS | `URLSession` streaming |
-| **gRPC Streaming** | High-frequency, strongly typed, internal | `gRPC-Swift` |
 | **APNs Push** | App backgrounded, infrequent alerts | `UserNotifications` |
 | **HTTP/2** | Multiple concurrent API requests | `URLSession` (automatic) |
+| **gRPC Streaming** | High-frequency, strongly typed | `gRPC-Swift` |
 
-### Pagination: Always Cursor-Based for Feeds
+### Pagination
 
 ```
 ✅  Cursor-based:  GET /feed?after_cursor=eyJpZCI6MTIzfQ==&limit=20
-    → Stable during inserts | O(1) server cost | No duplicates
+    → Stable on inserts | O(1) server cost | No duplicates
 
 ❌  Offset-based:  GET /feed?page=5&limit=20
-    → Items shift on insert | O(n) server scan | Duplicates on fast-moving feeds
-```
-
----
-
-## 📁 Repository Structure
-
-```
-ios-system-design/
-├── README.md                          ← You are here
-├── REPO_SPEC.md                       ← Architecture conventions (MVVM, URLSession, SwiftUI)
-└── docs/
-    ├── Streaming
-    │   ├── video-streaming-player.md  ← Long-form VOD (HLS, ABR, Offline Download)
-    │   └── video-feed-streaming.md   ← Short-form Feed (AVPlayer Pool, Prefetch)
-    ├── Messaging & Collaboration
-    │   ├── messaging-chat.md          ← Chat (SQLite, E2EE, WebSocket, Offline Queue)
-    │   └── collaborative-editor.md   ← Docs (OT vs CRDTs, Delta Sync, Presence)
-    ├── Real-Time & Geospatial
-    │   └── realtime-location-tracking.md ← Ride Tracking (Kalman, WebSocket, Map Delta)
-    ├── Payments & Dynamic UI
-    │   ├── sdui-engine.md             ← Server-Driven UI (Schema, Registry, Fallback)
-    │   ├── payment-checkout.md        ← Payments (Idempotency, 3DS, State Machine)
-    │   └── e-commerce-catalog.md     ← Catalog (Grid, Cart, Wishlist, Image Pipeline)
-    ├── Social & Feed
-    │   └── social-feed.md             ← Feed (Cursor Pagination, Offline, Impressions)
-    └── Infrastructure & SDK
-        ├── image-loading-library.md   ← Image Loader (3-tier Cache, Dedup, Cancellation)
-        ├── networking-layer.md        ← HTTP SDK (Auth Interceptor, Pinning, Retry)
-        ├── analytics-sdk.md           ← Telemetry SDK (Ring Buffer, Battery-aware)
-        ├── feature-flag-system.md     ← Feature Flags (Kill Switch, A/B, Local Eval)
-        ├── offline-sync-engine.md     ← Offline Sync (Dirty Flag, LWW, BGTask)
-        └── app-modularization.md     ← Modularization (DI, Interface Modules, SPM)
+    → Items shift on insert | O(n) server scan | Duplicates on fast feeds
 ```
 
 ---
 
 ## 🧠 What Makes a Staff/EM Answer Different
 
-The same question gets different ratings at different levels. Here's what separates L5 from L6/L7:
-
 | Dimension | Senior (L5) | Staff / EM (L6/L7) |
 | :--- | :--- | :--- |
-| **Scope** | Designs what's asked | Explicitly defines in-scope AND out-of-scope |
-| **Numbers** | "We'll use a cache" | "L1 NSCache 50MB, 7-day TTL on disk, evict on `didReceiveMemoryWarning`" |
+| **Scope** | Designs what's asked | Explicitly states in-scope AND out-of-scope |
+| **Numbers** | "We'll use a cache" | "NSCache 50MB L1, 7-day TTL on disk, evict on `didReceiveMemoryWarning`" |
 | **Trade-offs** | Lists options | Defends a choice with cost/complexity/team reasoning |
-| **Failure modes** | Mentions errors | Proactively covers stale cache, offline fallback, circuit breaker |
-| **Observability** | "We'd add logging" | Names specific metrics: p99 render time, OOM rate, crash-free sessions |
-| **API design** | Shows endpoint paths | Defines cursor pagination, field masking, versioning, idempotency |
-| **Drive** | Answers questions | Owns the interview, states agenda, moves through phases themselves |
+| **Failure modes** | Mentions errors | Covers stale cache, offline fallback, circuit breaker |
+| **Observability** | "We'd add logging" | Names specific metrics: p99 render, OOM rate, crash-free sessions |
+| **Drive** | Answers questions | Owns the interview, states agenda, moves through phases |
 
 ---
 
 ## 🤝 Contributing
 
-Found an issue, want to add a new problem, or have a better approach for a subsystem?  
-**PRs are welcome.** Please follow the spec format in [REPO_SPEC.md](REPO_SPEC.md).
+Found an issue or want to add a new problem? **PRs are welcome.**  
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for quality standards and the spec format.
 
 ---
 
 ## 👤 About the Author
 
-Built by a mobile engineering leader with **12+ years** of experience scaling iOS apps to **100M+ users** across streaming, social, payments, and e-commerce.
+Built by a mobile engineering leader with **12+ years** scaling iOS apps to **100M+ users** across streaming, social, payments, and e-commerce.
 
 Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**  
 Follow on X / Twitter: **[@therahulgoel](https://x.com/therahulgoel)**
 
-If this repository helped you level up or land an offer — a ⭐ star takes one second and helps this reach the engineers who need it most.
+If this helped you level up or land an offer — a ⭐ takes one second and helps this reach engineers who need it.
 
 ---
 
 <div align="center">
 
-**📱 iOS System Design · Built for Staff & EM interviews · 15 Production-Grade Specs**
+**📱 iOS Mobile System Design · 30 Production-Grade Specs · 11,500+ Lines of Real Content**
 
-[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Share on Twitter](https://twitter.com/intent/tweet?text=The+most+comprehensive+iOS+mobile+system+design+resource+for+Staff+%26+EM+interviews+at+FAANG%2B.+15+production-grade+specs+with+real+numbers.&url=https://github.com/therahulgoel/ios-system-design)
+[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Share on Twitter](https://twitter.com/intent/tweet?text=The+most+comprehensive+iOS+mobile+system+design+resource+for+Staff+%26+EM+interviews.+30+production-grade+specs+with+real+numbers.&url=https://github.com/therahulgoel/ios-system-design)
 
 </div>
