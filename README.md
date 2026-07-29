@@ -66,6 +66,7 @@ Every spec includes:
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [🤖 On-Device LLM & Mobile AI Assistant Engine](docs/on-device-llm-ai-engine.md) | INT4 quantization, CoreML/ExecuTorch runtime, local RAG (USearch/SQLite VSS), token streaming, thermal throttling | Apple, Meta, Google, Microsoft, Snap |
+| [📝 How AI Text Summarization Agents Work Under the Hood](docs/how-ai-summarization-agents-work.md) | BPE tokenization, vector embeddings, Self-Attention equations, KV-cache math, Map-Reduce chunking | All FAANG, OpenAI, Anthropic |
 
 ---
 
