@@ -171,6 +171,60 @@ URLSession fetch on background queue
 
 ---
 
+## 🤖 AI, LLM & Mobile AI Tech Stack Reference
+
+### 1. Core Terms & Architecture Checklist
+| Concept | Definition & Mobile Context | Key Equation / Reference |
+| :--- | :--- | :--- |
+| **Token** | Chunks of characters processed by LLMs | $1\text{ token} \approx 0.75\text{ words}$ (English) |
+| **Context Window** | Max token limit per prompt + completion | $2,048 - 4,096$ tokens on-device |
+| **Quantization** | Weight compression from FP16 (16-bit) to INT4 (4-bit) | FP16: $6\text{GB} \rightarrow$ INT4: $1.5\text{GB}$ file / $\le 500\text{MB}$ RAM |
+| **RAG** | Retrieval-Augmented Generation via local vector search | Cosine Similarity $\ge 0.80$ match |
+| **MCP** | Model Context Protocol — JSON-RPC 2.0 tool calling protocol | Host $\leftrightarrow$ MCP Client $\leftrightarrow$ Native iOS Tools |
+| **KV-Cache** | Pre-computed Key-Value attention states stored in RAM | $\text{KV Cache RAM} \approx 2 \cdot L \cdot H \cdot D \cdot S \cdot \text{Bytes}$ |
+| **Embeddings** | Dense vector numerical array representing text semantics | 384 dimensions (MobileBERT / MiniLM) |
+| **Hardware Scheduling** | Execution dispatch across ANE, GPU, and CPU | ANE (Neural Engine) $\rightarrow$ Metal GPU $\rightarrow$ CPU fallback |
+
+### 2. Internals & Memory Math (Quote in Interviews)
+* **Model Weight Memory Equation**:
+  $$\text{RAM Footprint} = \frac{\text{Parameter Count (Billions)} \times \text{Bits per weight}}{8}$$
+  * **3B FP16**: $3 \times 2 = 6\text{ GB RAM}$ $\rightarrow$ **Fails on iOS (OOM crash)**
+  * **3B INT4**: $3 \times 0.5 = 1.5\text{ GB File}$ $\rightarrow$ Memory-mapped (`mmap`) execution $\mathbf{\le 500\text{MB RAM}}$.
+* **KV-Cache Memory Equation**:
+  $$\text{KV Cache RAM (Bytes)} = 2 \times N_{\text{layers}} \times N_{\text{heads}} \times d_{\text{head}} \times N_{\text{seq}} \times \text{BytesPerElement}$$
+  * *Example*: Llama-3-8B FP16 with 2048 sequence length $= 1.07\text{GB}$.
+  * *On-Device Optimization*: Use **Grouped-Query Attention (GQA)** + **INT8 Quantized KV-Cache** $\rightarrow$ shrinks KV-Cache to **$\sim 128\text{MB}$**.
+
+### 3. Model Context Protocol (MCP) Client Architecture
+```ascii
++-------------------------------------------------------------------------+
+|                              iOS Host App                               |
+|                                                                         |
+|  +--------------------+   JSON-RPC 2.0   +---------------------------+  |
+|  | Local LLM (CoreML) | <---------------> | MCP Client Coordinator    |  |
+|  +--------------------+                   +-------------+-------------+  |
+|                                                         |                |
+|                                           Dispatches    v                |
+|                                           +---------------------------+  |
+|                                           | Native iOS Tool Handlers  |  |
+|                                           |  - SQLite Database Tool   |  |
+|                                           |  - Event Calendar Tool    |  |
+|                                           |  - Location Service Tool  |  |
+|                                           +---------------------------+  |
++-------------------------------------------------------------------------+
+```
+
+### 4. On-Device Hardware Execution Decision Tree
+```
+Is Apple Neural Engine (ANE) available & model in CoreML format?
+├── YES ──> Dispatch to ANE (Zero CPU usage, max power efficiency, TTFT < 100ms)
+└── NO  ──> Is Metal Performance Shaders (MPS) GPU runtime available?
+             ├── YES ──> Dispatch to Metal GPU (ExecuTorch / llama.cpp MPS backend)
+             └── NO  ──> Fallback to Multi-threaded CPU (High thermal wear, battery drain)
+```
+
+---
+
 ## Security Checklist (Fintech / Healthcare / Enterprise)
 
 | Concern | Solution | Standard |

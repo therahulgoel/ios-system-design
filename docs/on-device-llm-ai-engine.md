@@ -47,8 +47,128 @@ With the advent of Apple Intelligence, Meta ExecuTorch, and Google Gemini Nano/A
 | Time to First Token (TTFT) | $< 100\text{ms}$ (Local NPU) | Apple Neural Engine / Snapdragon NPU Benchmark |
 | Generation Speed | $\ge 25\text{ tokens/sec}$ | ExecuTorch 4-bit Llama-3 benchmark |
 | Local Vector Search Latency | $< 15\text{ms}$ for $10,000$ vectors | USearch / HNSW C++ Benchmark on iOS |
-| Thermal Throttling Action | Downscale / Fallback to Cloud @ `.serious` thermal state | iOS `ProcessInfo.thermalState` API |
-| Battery Drain Protection | Pause background indexing when battery $< 20\%$ or Low Power Mode | `ProcessInfo.isLowPowerModeEnabled` |
+---
+
+## 🧠 Primer for Beginners: AI, LLM & On-Device Concepts
+
+If you are new to AI engineering or transitioning from traditional iOS development, here are the foundational building blocks explained simply:
+
+### 1. Tokens & Vocabulary
+* **What is a Token?**: LLMs do not read words or characters directly; they process text as numerical chunks called **Tokens**.
+* **Real Data Math**: In English text, $1\text{ token} \approx 0.75\text{ words}$ (or $\sim 4\text{ characters}$). For example, `"Antigravity"` is broken into tokens: `["Anti", "gra", "vity"]` $\rightarrow$ `[3481, 10245, 874]`.
+* **Vocabulary Size**: An on-device model like Llama-3 has a fixed vocabulary of **128,256 tokens**.
+
+### 2. Quantization (FP16 vs INT4)
+* **What is Quantization?**: Compression of the model's mathematical weights from high precision (16-bit floating point `FP16`) to lower precision (4-bit integers `INT4`).
+* **Why it Matters on Mobile**:
+  * $\text{FP16 (16-bit) 3B Model} = 3\text{B} \times 2\text{ bytes} = \mathbf{6.0\text{ GB RAM}}$ (Crashes immediately on iPhone due to Jetsam OOM limits).
+  * $\text{INT4 (4-bit) 3B Model} = 3\text{B} \times 0.5\text{ bytes} = \mathbf{1.5\text{ GB File / } \le 500\text{MB Execution RAM}}$ (Runs smoothly on Apple Neural Engine via `mmap`).
+
+### 3. Vector Embeddings & Cosine Similarity
+* **What is an Embedding?**: A mathematical representation of text meaning formatted as a dense array of numbers (e.g., $384$ floats).
+* **Semantic Vector Search**: Sentences with similar meanings produce vectors close together in space. Searching for *"airplane ticket"* matches *"flight booking"* based on the **Cosine Similarity** angle between their vectors:
+$$\text{Cosine Similarity}(\vec{A}, \vec{B}) = \frac{\vec{A} \cdot \vec{B}}{\|\vec{A}\| \|\vec{B}\|}$$
+
+### 4. RAG (Retrieval-Augmented Generation)
+* **What is RAG?**: LLMs do not know your personal private data (e.g., your local SQLite notes or emails). RAG retrieves relevant local text chunks via vector search and injects them into the prompt before asking the LLM to generate an answer.
+
+### 5. Model Context Protocol (MCP)
+* **What is MCP?**: An open standard protocol (JSON-RPC 2.0) that enables an AI Assistant (Host) to safely discover and call external tools or query data sources (e.g., search local iOS calendar, read SQLite database, execute web fetch).
+
+### 6. Key-Value (KV) Cache
+* **What is KV-Cache?**: During token generation, computing attention for previously generated tokens is expensive. The **KV-Cache** stores attention key and value tensors in memory so the model only calculates the newest token, speeding up generation from $2\text{ tokens/sec}$ to $>25\text{ tokens/sec}$.
+
+---
+
+## 🎨 System Architecture Diagrams
+
+### Diagram 1: Text Tokenization & Vector Embedding Pipeline
+
+```mermaid
+graph TD
+    A["Raw User Text Input"] --> B["BPE Tokenizer (Byte-Pair Encoding)"]
+    B --> C["Token IDs Array: [15496, 995, 3481]"]
+    C --> D["On-Device Embedding Model (MobileBERT)"]
+    D --> E["384-Dimensional Dense Vector Array: [0.12, -0.45, ..., 0.89]"]
+    E --> F["SQLite VSS / USearch HNSW Index"]
+```
+
+---
+
+### Diagram 2: On-Device RAG Retrieval & Cosine Similarity Flow
+
+```ascii
+User Prompt: "What time is my flight tomorrow?"
+       |
+       v
++-------------------------------------------------------------------+
+|  1. Generate 384-dim Query Vector via Local Embedding Model       |
++-------------------------------------------------------------------+
+       |
+       v
++-------------------------------------------------------------------+
+|  2. Execute USearch HNSW Cosine Similarity Search on SQLite VSS   |
++-------------------------------------------------------------------+
+       |
+       |--> Match 1 (Score 0.92): "Flight UA123 departs at 10:30 AM"
+       |--> Match 2 (Score 0.85): "Hotel check-in at 3:00 PM"
+       v
++-------------------------------------------------------------------+
+|  3. Construct Augmented Prompt:                                  |
+|     "Context: Flight UA123 departs at 10:30 AM.                   |
+|      Question: What time is my flight tomorrow?"                  |
++-------------------------------------------------------------------+
+       |
+       v
++-------------------------------------------------------------------+
+|  4. Execute Local CoreML LLM on Apple Neural Engine (ANE)         |
++-------------------------------------------------------------------+
+```
+
+---
+
+### Diagram 3: Model Context Protocol (MCP) Client-Host Tool Execution
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant UI as SwiftUI User Interface
+    participant Host as Assistant Host Coordinator
+    participant LLM as Local LLM Engine (CoreML)
+    participant MCP as MCP Tool Client
+    participant Tool as Local iOS Tool (SQLite / Calendar)
+
+    UI->>Host: User asks: "How many notes did I write today?"
+    Host->>LLM: Pass prompt + Available MCP Tool Definitions
+    LLM-->>Host: Generates MCP Tool Call: `execute_tool("search_notes", {date: "today"})`
+    Host->>MCP: Dispatch JSON-RPC 2.0 Request
+    MCP->>Tool: Execute SQLite query: `SELECT COUNT(*) FROM notes WHERE created_at = today`
+    Tool-->>MCP: Returns Result: `{ count: 4 }`
+    MCP-->>Host: Return JSON-RPC Response: `{ result: "4 notes" }`
+    Host->>LLM: Resume generation with Tool Output Context
+    LLM-->>UI: Streams response: "You wrote 4 notes today."
+```
+
+---
+
+### Diagram 4: KV-Cache Memory & Context Window Buffer
+
+```ascii
++-----------------------------------------------------------------------------------+
+|                            4096-Token Context Window                              |
+|                                                                                   |
+|  +------------------------+--------------------------+-------------------------+  |
+|  | System Prompt + RAG    | User Query Tokens        | Generated Response      |  |
+|  | Context (1024 Tokens)  | (256 Tokens)             | KV-Cache Buffer         |  |
+|  +------------------------+--------------------------+-------------------------+  |
+|                                                      |                            |
+|                                                      v                            |
+|                                        +-------------------------------+          |
+|                                        | INT8 Quantized KV-Cache       |          |
+|                                        | Allocation: ~128MB RAM        |          |
+|                                        +-------------------------------+          |
++-----------------------------------------------------------------------------------+
+```
 
 ---
 
@@ -319,6 +439,75 @@ public actor HybridAIRouter {
                     }
                 }
             }
+        }
+    }
+}
+```
+
+---
+
+### Subsystem 5: Model Context Protocol (MCP) Swift Tool Coordinator
+
+The Model Context Protocol (MCP) allows the local LLM to dynamically call native iOS tools (e.g., SQLite query, Calendar event lookup, Location service) via standard JSON-RPC 2.0 requests.
+
+```swift
+import Foundation
+
+// MARK: - MCP Protocol Models
+public struct MCPToolDefinition: Codable {
+    public let name: String
+    public let description: String
+    public let inputSchemaJSON: String
+}
+
+public struct MCPRequest: Codable {
+    public let jsonrpc: String = "2.0"
+    public let id: String
+    public let method: String
+    public let params: MCPParams
+    
+    public struct MCPParams: Codable {
+        public let name: String
+        public let arguments: [String: String]
+    }
+}
+
+public struct MCPResponse: Codable {
+    public let jsonrpc: String = "2.0"
+    public let id: String
+    public let result: String?
+    public let error: String?
+}
+
+// MARK: - Local MCP Client Engine
+public actor MCPToolCoordinator {
+    private var registeredTools: [String: ( [String: String] ) async throws -> String] = [:]
+    
+    public init() {}
+    
+    /// Register a native iOS capability as an MCP Tool
+    public func registerTool(name: String, handler: @escaping ([String: String]) async throws -> String) {
+        registeredTools[name] = handler
+    }
+    
+    /// Executes JSON-RPC 2.0 tool invocation from LLM
+    public func handleMCPRequest(_ requestData: Data) async -> Data {
+        let decoder = JSONDecoder()
+        let encoder = JSONEncoder()
+        
+        guard let request = try? decoder.decode(MCPRequest.self, from: requestData),
+              let handler = registeredTools[request.params.name] else {
+            let errorResponse = MCPResponse(id: "0", result: nil, error: "Tool not found or invalid JSON-RPC")
+            return (try? encoder.encode(errorResponse)) ?? Data()
+        }
+        
+        do {
+            let output = try await handler(request.params.arguments)
+            let successResponse = MCPResponse(id: request.id, result: output, error: nil)
+            return (try? encoder.encode(successResponse)) ?? Data()
+        } catch {
+            let failureResponse = MCPResponse(id: request.id, result: nil, error: error.localizedDescription)
+            return (try? encoder.encode(failureResponse)) ?? Data()
         }
     }
 }
