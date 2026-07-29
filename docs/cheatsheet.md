@@ -26,8 +26,13 @@
 | Secrets, tokens, keys | Keychain | `kSecAttrAccessibleAfterFirstUnlock` for background access |
 | Simple preferences | UserDefaults | Non-sensitive only; do NOT store tokens here |
 | Large binary / media | FileManager `/Caches` | OS can purge; use `/Application Support` for user data |
-| In-session, auto-evict | NSCache | Responds to `didReceiveMemoryWarningNotification` automatically |
+| In-session, auto-evict | NSCache / LRUCache | Responds to `didReceiveMemoryWarningNotification` or max cost bounds |
 | Concurrent in-session | Actor (Swift 5.5+) | Compile-time data race protection |
+
+**LRU Cache Implementation Math & Design**:
+- **Data Structure**: `DoublyLinkedList` + `Dictionary<Key, Node>` $\rightarrow$ $O(1)$ lookup, $O(1)$ insertion, $O(1)$ eviction.
+- **Thread Safety**: Wrap inside a Swift `actor` or `NSLock` for concurrent access.
+- **Cost-Based Eviction**: Track total byte cost (`width * height * 4` for images) and auto-evict least recently used node when exceeding max cost (e.g., 50MB).
 
 **SQLite WAL numbers**: 2–3x faster writes than DELETE journal mode. Checkpoint every 1,000 writes or 5s. Supports concurrent readers + one writer. Source: [sqlite.org/wal.html](https://sqlite.org/wal.html)
 
@@ -210,6 +215,11 @@ URLSession fetch on background queue
 | ANR / Hang rate target | < 0.1% sessions | Google Play Vitals P1 threshold |
 | Feature flag kill switch | < 5 min to 100% users | Uber/Airbnb feature flag SLA |
 | Token bucket refill (search) | 2 tokens/second, max 10 | Standard rate limit for search APIs |
+| On-Device LLM Model RAM Budget | $\le 500\text{MB}$ RAM (INT4 3B model) | Apple WWDC 2024 / Meta ExecuTorch |
+| LLM Time to First Token (TTFT) | $< 100\text{ms}$ (Local NPU) | Apple Neural Engine / Snapdragon NPU Benchmark |
+| Local Vector Search Latency | $< 15\text{ms}$ for 10,000 vectors | USearch / HNSW C++ Benchmark |
+| Mobile CI Clean Build Budget | $< 6\text{ minutes}$ | Bazel / Tuist Remote Cache Benchmark |
+| Secure Enclave Key Generation | $< 80\text{ms}$ | Apple Secure Enclave Hardware Spec |
 
 ---
 
@@ -247,31 +257,32 @@ URLSession fetch on background queue
 - ❌ Multiple concurrent 401 responses each trigger a token refresh → race condition  
 - ✅ Atomic token refresh with request queue — one refresh, pending requests wait
 
+### On-Device AI / LLM
+- ❌ Loading unquantized 16-bit FP weights directly into RAM (`Data(contentsOf: url)`).  
+- ✅ Memory-map INT4 4-bit weights (`mmap`) & limit model execution memory to $< 500\text{MB}$.
+
 ---
 
 ## Related Specs Map
 
 ```
-Image Loading Library ←─── Social Feed
-                      ←─── E-commerce Catalog
-                      ←─── Short-form Video Feed
+On-Device LLM & AI Engine ←─── Local Vector DB (SQLite VSS / USearch)
+                           ←─── Streaming UI (AsyncSequence)
+                           ←─── Hybrid Cloud Fallback Router
 
-Networking Layer ←──────── All 15 specs (foundation)
+Mobile Security Engine    ←─── Secure Enclave Hardware Key Derivation
+                           ←─── App Attest (Apple DeviceCheck)
+                           ←─── SPKI TLS 1.3 Pinning & SQLCipher
 
-Offline Sync Engine ←────── Messaging Chat (pending message queue)
-                    ←────── Collaborative Editor (op log)
-                    ←────── E-commerce Catalog (cart/wishlist)
+Mobile Platform Eng (EM)   ←─── Module Interface vs Implementation Graph
+                           ←─── Core Release Train & Canary Rollout (1% -> 100%)
+                           ←─── Sev-1 Incident Triage & Kill Switches
 
-Analytics SDK ←──────────── Feature Flag System (impression tracking)
-              ←──────────── SDUI Engine (component events)
-              ←──────────── Social Feed (impression events)
-
-Feature Flag System ←─────── All specs (kill switch for every major feature)
-
-SDUI Engine ←────────────── E-commerce Catalog (home screen cards)
-            ←────────────── Payment Checkout (dynamic payment methods)
+Image Loading Library      ←─── Social Feed, E-commerce Catalog, Video Feed
+Networking Layer           ←─── All specs (foundation)
+Offline Sync Engine        ←─── Messaging Chat, Collaborative Editor, Catalog
 ```
 
 ---
 
-*This cheatsheet is a companion to the 15 full specs in `docs/`. For deep dives, API contracts, and Swift code, read the individual spec files.*
+*This cheatsheet is a companion to the full production specs in `docs/`. For deep dives, API contracts, and Swift code, read the individual spec files.*

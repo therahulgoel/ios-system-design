@@ -13,7 +13,7 @@
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All 30 Specs](#-complete-problem-catalog) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
+[📖 Browse All 33 Specs](#-complete-problem-catalog) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 
@@ -57,7 +57,15 @@ Every spec includes:
 
 ## 🗂 Complete Problem Catalog
 
-**30 production-grade specs** across 8 domains. **11,500+ lines** of real content.
+**33 production-grade specs** across 10 domains. **13,000+ lines** of real content.
+
+---
+
+### 🤖 AI, LLM & On-Device ML
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🤖 On-Device LLM & Mobile AI Assistant Engine](docs/on-device-llm-ai-engine.md) | INT4 quantization, CoreML/ExecuTorch runtime, local RAG (USearch/SQLite VSS), token streaming, thermal throttling | Apple, Meta, Google, Microsoft, Snap |
 
 ---
 
@@ -123,14 +131,16 @@ Every spec includes:
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [🔐 Authentication: OAuth2 / SSO / Biometric](docs/authentication-oauth-biometric.md) | PKCE flow, Keychain storage, Secure Enclave, atomic token refresh actor, multi-device logout | All FAANG, Stripe, Salesforce |
+| [🛡 Security, Cryptography & Zero-Trust Engine](docs/mobile-security-privacy-engine.md) | Apple App Attest, Secure Enclave key derivation, SPKI TLS 1.3 pinning, SQLCipher encryption | Stripe, Square, Apple, Signal, Meta |
 | [🔗 Deep Linking & Universal Links](docs/deep-linking-universal-links.md) | AASA file (no CDN!), deferred deep links, router/coordinator, cold-start race condition | Meta, Airbnb, Spotify |
 
 ---
 
-### 🔧 Platform Infrastructure & SDKs
+### 🔧 Platform Infrastructure & Engineering Leadership (EM / Staff)
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
+| [🏛 Mobile Platform Eng, Release & Governance (EM)](docs/mobile-platform-engineering-em.md) | Interface vs Implementation graph, 7-day canary train, Sev-1 triage & remote kill switch | Uber, Meta, Airbnb, Stripe |
 | [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
 | [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |
 | [📊 Mobile Analytics & Telemetry SDK](docs/analytics-sdk.md) | Ring buffer, SQLite journal, battery-aware batching, crash recovery, sampling | Uber, Meta, Google |
@@ -220,6 +230,11 @@ Every spec includes:
 | BGAppRefreshTask window | `Max 30s` | Apple Background Tasks |
 | OAuth2 PKCE code_verifier | `43 char min` | RFC 7636 |
 | App Store phased rollout | `7 days to 100%` | App Store Connect |
+| On-Device LLM RAM budget | `≤ 500MB` | Apple WWDC 2024 / ExecuTorch |
+| LLM Time-to-First-Token | `< 100ms` | Apple Neural Engine / Snapdragon NPU |
+| Local Vector Search Latency | `< 15ms` | USearch / HNSW Benchmark |
+| Mobile CI Clean Build Budget | `< 6 min` | Bazel / Tuist Remote Cache |
+| Secure Enclave Key Gen | `< 80ms` | Apple Secure Enclave Spec |
 
 ---
 
@@ -233,7 +248,7 @@ Every spec includes:
 | Secrets / tokens | Keychain | Hardware-backed encryption, survives reinstall |
 | User preferences | UserDefaults | Fast synchronous reads, small data only |
 | Large media / files | FileManager (`/Application Support`) | Persists across reinstall for purchases |
-| In-session objects | NSCache | Auto-evicts under memory pressure |
+| In-session objects | NSCache / LRU Cache | Auto-evicts under memory pressure / max cost ($O(1)$ operations via Hash Map + Doubly Linked List) |
 
 ### Real-Time Transport
 
@@ -289,8 +304,8 @@ If this helped you level up or land an offer — a ⭐ takes one second and help
 
 <div align="center">
 
-**📱 iOS Mobile System Design · 30 Production-Grade Specs · 11,500+ Lines of Real Content**
+**📱 iOS Mobile System Design · 33 Production-Grade Specs · 13,000+ Lines of Real Content**
 
-[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Share on Twitter](https://twitter.com/intent/tweet?text=The+most+comprehensive+iOS+mobile+system+design+resource+for+Staff+%26+EM+interviews.+30+production-grade+specs+with+real+numbers.&url=https://github.com/therahulgoel/ios-system-design)
+[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Share on Twitter](https://twitter.com/intent/tweet?text=The+most+comprehensive+iOS+mobile+system+design+resource+for+Staff+%26+EM+interviews.+33+production-grade+specs+with+real+numbers.&url=https://github.com/therahulgoel/ios-system-design)
 
 </div>
