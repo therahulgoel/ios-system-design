@@ -104,6 +104,88 @@ graph TD
 
 ---
 
+## 🤖 The GPT Evolution & High-Level ChatGPT Architecture
+
+### 1. GPT Evolution: What, How & Why
+
+The Generative Pre-trained Transformer (GPT) lineage created by **OpenAI** (founded by Ilya Sutskever, Sam Altman, Greg Brockman, Wojciech Zaremba, Elon Musk, et al. in 2015) transformed AI from specialized tools to general-purpose conversational & agentic intelligence.
+
+```mermaid
+graph TD
+    GPT1["GPT-1 (2018)<br/>117M Params<br/>Proof of Concept (Unsupervised + Fine-tuning)"] --> GPT2["GPT-2 (2019)<br/>1.5B Params<br/>Zero-Shot Task Transfer"]
+    GPT2 --> GPT3["GPT-3 (2020)<br/>175B Params<br/>Few-Shot In-Context Learning"]
+    GPT3 --> Instruct["InstructGPT / ChatGPT (2022)<br/>RLHF Alignment<br/>Conversational & Intent Following"]
+    Instruct --> GPT4["GPT-4 / 4o (2023-2024)<br/>Multimodal (Vision/Audio)<br/>Tool Calling & Native Voice"]
+    GPT4 --> Reasoning["o1 / o3 / DeepSeek-R1 (2024-2026)<br/>Inference-Time Search & GRPO<br/>Self-Correction Reasoning Loops"]
+```
+
+| Model | Release | Key Creator / Lab | Key Innovation | Why It Mattered |
+| :--- | :--- | :--- | :--- | :--- |
+| **GPT-1** | 2018 | Alec Radford et al. (OpenAI) | Unsupervised Generative Pre-training + Supervised Fine-Tuning | Proved that pre-training a decoder Transformer on unlabeled text yields transfer learning. |
+| **GPT-2** | 2019 | Alec Radford et al. (OpenAI) | Scaling to 1.5B parameters, "Zero-Shot" task transfer | Showed that models learn tasks (translation, summarization) automatically simply by predicting next words. |
+| **GPT-3** | 2020 | Tom Brown et al. (OpenAI) | 175B parameters, In-Context Few-Shot Prompting | Proved that emergent reasoning appears at scale without modifying model weights. |
+| **InstructGPT / ChatGPT** | 2022 | Long Ouyang, John Schulman et al. (OpenAI) | RLHF (Reinforcement Learning from Human Feedback) via PPO | Fixed raw text completion ("hallucinated rambling") into a helpful, safe, conversational assistant. |
+| **GPT-4 / GPT-4o** | 2023–24 | OpenAI Team | Multimodal Mixture of Experts (MoE) & Native Audio/Vision | Enabled real-time vision, low-latency audio interaction, and complex tool execution. |
+| **o1 / o3 / DeepSeek-R1** | 2024–26 | OpenAI / DeepSeek AI | Inference-Time Search & GRPO RL Reasoning Loops | Shifted paradigm: models think/verify internally *before* responding, solving PhD-level math & code. |
+
+---
+
+### 2. High-Level ChatGPT System Architecture
+
+How does a web or mobile request to ChatGPT actually work under the hood?
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as User (Web / Mobile App)
+    participant Edge as API Gateway & Auth Interceptor
+    participant Moderation as Safety & PII Guardrail
+    participant Orchestrator as Prompt & Context Manager
+    participant VectorDB as RAG / Vector Store
+    participant ModelCluster as LLM Inference Cluster (GPUs/vLLM)
+    participant Tools as External Tools (Web Search, Code Exec)
+
+    User->>Edge: Send User Prompt (HTTPS / WebSockets)
+    Edge->>Moderation: Inspect prompt for safety violations & PII
+    Moderation-->>Orchestrator: Sanitized Prompt + User Context
+    
+    opt Retrieval-Augmented Generation (RAG)
+        Orchestrator->>VectorDB: Query relevant conversation history / docs
+        VectorDB-->>Orchestrator: Return Top-K context chunks
+    end
+
+    Orchestrator->>ModelCluster: Send System Prompt + History + Augmented Context
+    
+    alt Model Decides to Call a Tool
+        ModelCluster-->>Orchestrator: Emit Tool Call Signal (e.g., `web_search(query)`)
+        Orchestrator->>Tools: Execute API / Python Sandbox
+        Tools-->>Orchestrator: Tool Result Data
+        Orchestrator->>ModelCluster: Resume Generation with Tool Output
+    end
+
+    ModelCluster-->>Edge: Stream Tokens (Server-Sent Events / SSE)
+    Edge-->>User: Real-time Output Streaming to UI (< 100ms TTFT)
+```
+
+---
+
+### 3. Step-by-Step Breakdown: What Happens When You Press "Send"
+
+1. **API Gateway & Auth**: The client app connects via TLS 1.3. Your token is authenticated, rate limits are evaluated (Token Bucket), and request is logged.
+2. **Safety & Moderation Guard**: High-speed lightweight classifiers (or regex rules) screen the input for malicious prompts, PII leaks, or policy violations.
+3. **Context Assembly (RAG & Session)**: The Orchestrator combines:
+   * **System Instruction**: `"You are a helpful assistant..."`
+   * **Conversation Memory**: Past $N$ turns of dialogue stored in database.
+   * **Retrieved Knowledge**: Relevant user files or memory entries retrieved via embedding vector search.
+4. **LLM Inference Execution**:
+   * The context is tokenized and fed into the GPU cluster running high-throughput inference engines (like vLLM, TensorRT-LLM, or SGLang).
+   * Key-Value (KV) Caching speeds up past context processing.
+5. **Autoregressive Token Streaming**:
+   * Tokens are generated sequentially ($25\text{--}100\text{ tokens/sec}$).
+   * Streamed back to the client UI in real time using **Server-Sent Events (SSE)** so the user sees text appear instantly without waiting for completion.
+
+---
+
 ### Era 4: Tool Calling, Claude & Model Context Protocol (2023 – 2024)
 
 ```mermaid
