@@ -166,11 +166,13 @@ Every spec includes:
 
 ---
 
-### 📚 References & Cheatsheets
+### 📚 References, Cheatsheets & Misc History
 
 | Resource | What's In It |
 | :--- | :--- |
 | [📊 Master Cheatsheet](docs/cheatsheet.md) | All key numbers, decisions, and anti-patterns in one page |
+| [📜 Complete History & Evolution of Agentic AI (1950–2026)](docs/history-of-agentic-loops.md) | Deep Blue, AlphaGo, Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) |
+| [📝 How AI Text Summarization Agents Work Under the Hood](docs/how-ai-summarization-agents-work.md) | BPE tokenization, vector embeddings, Self-Attention equations, KV-cache math, Map-Reduce chunking |
 | [🧩 Generic Mobile Problems](docs/generic-mobile-problems.md) | Cross-cutting patterns applicable to any mobile system design |
 
 ---

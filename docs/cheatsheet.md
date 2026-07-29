@@ -324,6 +324,9 @@ On-Device LLM & AI Engine ←─── Local Vector DB (SQLite VSS / USearch)
                            ←─── Streaming UI (AsyncSequence)
                            ←─── Hybrid Cloud Fallback Router
 
+History of Agentic Loops   ←─── Minimax (1997) -> MCTS/AlphaGo (2016) -> Transformer (2017)
+(Misc Reference Document)  ←─── CoT/ReAct (2022) -> Claude XML/MCP (2024) -> Test-Time Compute (2026)
+
 Mobile Security Engine    ←─── Secure Enclave Hardware Key Derivation
                            ←─── App Attest (Apple DeviceCheck)
                            ←─── SPKI TLS 1.3 Pinning & SQLCipher
