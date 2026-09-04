@@ -1,5 +1,7 @@
 # Mobile System Design — Master Cheatsheet
-### One-page reference for Staff & EM interviews. All numbers are real and sourced.
+### One-page reference for Staff, EM, Principal, Director & AVP interviews. All numbers are real and sourced.
+
+> 🎯 **Preparing for Leadership & Behavioral Rounds?** Review the [FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](behavioral-engineering-manager-staff-guide.md) covering the STAR framework, probing follow-ups, and real questions from Google, Meta, Amazon, Netflix, Apple & Salesforce.
 
 ---
 

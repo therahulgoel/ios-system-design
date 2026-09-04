@@ -5,7 +5,7 @@
 # iOS Mobile System Design
 
 ### The most comprehensive mobile system design resource for senior iOS engineers.
-### Built for Engineering Manager & Staff Engineer interviews at top product companies at scale.
+### Built for Engineering Manager (EM), Staff/Principal Engineer, Director of Engineering, Senior Director & AVP/VP interviews at top product & tech companies at scale.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -13,7 +13,7 @@
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All 33 Specs](#-complete-problem-catalog) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
+[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Leadership & Behavioral Guide](docs/behavioral-engineering-manager-staff-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 
@@ -21,13 +21,14 @@
 
 ## 🎯 Who Is This For?
 
-You are a **senior iOS or mobile engineer** preparing for:
+You are a **senior mobile engineer, architect, or engineering leader** preparing for:
 
-- **Engineering Manager (EM)** interviews at Google, Uber, Meta, Apple, Salesforce, or equivalent
-- **Staff / Principal Engineer** interviews at FAANG-tier companies
-- Roles requiring mobile system design depth at **100M+ user scale**
+- **Engineering Manager (EM / M1 / M2)** loops at Google, Meta, Uber, Apple, Salesforce, Amazon, or Stripe
+- **Staff / Principal Engineer (L6 / L7 / E6 / E7)** architecture, technical strategy & cross-team leadership rounds
+- **Director of Engineering, Senior Director & AVP / VP** executive system design, organizational scaling & behavioral loops
+- Roles requiring mobile system design depth, people leadership, and organizational scaling at **100M+ user scale**
 
-This is **not** a LeetCode repo. This teaches you to architect production systems on iOS — the way interviewers at top companies actually expect you to.
+This is **not** a LeetCode repo. This teaches you to architect production systems on iOS and lead high-performing engineering organizations — the way hiring committees, Bar Raisers, and VP interview panels at top tech companies actually evaluate candidates.
 
 ---
 
@@ -163,6 +164,14 @@ Every spec includes:
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [📈 User Analytics Event Pipeline](docs/user-analytics-event-pipeline.md) | 8-event taxonomy, DAU/MAU via HyperLogLog, Kafka→BigQuery, user journey, persona segmentation | Meta, Google, Uber, DoorDash |
+
+---
+
+### 🎯 Engineering Leadership, Behavioral & Executive Master Guide
+
+| Resource | Scope & Key Concepts | Target Roles & Companies |
+| :--- | :--- | :--- |
+| [🎯 FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](docs/behavioral-engineering-manager-staff-guide.md) | **The STAR Technique & Probing Dimensions ("Peeling the Onion")**, 5 Core Leadership Principles (Ownership, Bias for Action, Disagree & Commit, Learn & Be Curious, Dive Deep), People & Talent Management (PIP vs Coaching, Keeper Test), Salesforce V2MOM alignment model, and deep analysis of real LeetCode Discuss & Blind interview questions across Meta, Google, Amazon, Netflix, Apple & Salesforce. | Engineering Manager (EM / M1 / M2), Staff/Principal Engineer, Director of Engineering, Senior Director & AVP/VP at Google, Meta, Amazon, Apple, Netflix, Salesforce, Uber, Stripe |
 
 ---
 

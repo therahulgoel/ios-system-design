@@ -60,3 +60,8 @@ fastlane/report.xml
 fastlane/Preview.html
 fastlane/screenshots/**/*.png
 fastlane/test_output
+
+# Streaming Master Engineering Guide (Local Draft)
+streaming-guide/
+streaming_guide/
+streaming_media_apps_em_master_guide.md
