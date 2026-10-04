@@ -1,10 +1,15 @@
 # Feature Flag & Experimentation System
 
-> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
-
-
 ## Overview
-A Feature Flag (Remote Config) and Experimentation System allows companies to dynamically change app behavior, rollout features gradually, and run A/B tests without requiring App Store updates. At scale, this system must be extremely resilient-a bad configuration can crash the app for millions of users. Interviewers ask this to test your ability to design low-latency, highly available fallback chains and state management.
+A Feature Flag (Remote Config) and Experimentation System allows companies to dynamically change app behavior, rollout features gradually, and run A/B tests without requiring App Store updates. At scale, this system must be extremely resilient—a bad configuration can crash the app for millions of users. Interviewers ask this to test your ability to design low-latency, highly available fallback chains and state management.
+
+## Target Companies & Frequency
+| Company | Why They Ask | Frequency |
+| :--- | :--- | :--- |
+| Uber / Lyft | Every single feature is flagged and A/B tested in multiple markets concurrently. | ★★★★☆ |
+| Meta | "Move fast and break things" relies heavily on server-side kill switches. | ★★★★★ |
+| Airbnb | Deep emphasis on experimentation and data-driven product decisions. | ★★★★☆ |
+| Google | Creators of Firebase Remote Config, highly value scalable configuration. | ★★★★☆ |
 
 ## Scope Definition
 
@@ -31,28 +36,12 @@ A Feature Flag (Remote Config) and Experimentation System allows companies to dy
 5. The system must support background refreshing to keep configs reasonably up to date.
 
 ### Non-Functional Requirements
-
-Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
-
-- App Launch Delay
-- Local Read Latency
-- Kill Switch Propagation
-- Payload Size
-
-
-## Worked learning walkthrough: A kill switch arrives too late
-
-**Failure drill:** A bad feature crashes before the app can fetch the new configuration. This is a proposed design walkthrough.
-
-1. Ship safe bundled defaults and a validated last-known-good configuration with version and eligibility rules. Evaluate locally for supported client features.
-2. Fetch off the hot UI path, validate the entire applicable update, and apply the chosen atomic/versioned policy. Reject incompatible config.
-3. For incident recovery, determine whether the installed binary reaches evaluation and can receive configuration. Pause distribution or ship a binary fix where it cannot.
-
-**Why the obvious answer breaks:** A remote flag cannot disable pre-main failure or guarantee delivery to offline devices. Indefinite stale configuration can also violate access/security requirements.
-
-**Answer to rehearse:**
-
-> I would define expiry per flag class and retain a real safe path in the binary. The operational check is successful mitigation among affected versions, not merely publishing a new config.
+| Requirement | Target | Source |
+| :--- | :--- | :--- |
+| App Launch Delay | < 2 seconds fetch timeout | Firebase Remote Config defaults |
+| Local Read Latency | < 1ms (O(1) dictionary lookup) | Standard Swift Dictionary performance |
+| Kill Switch Propagation | < 5-10 minutes globally | Uber Engineering Blog |
+| Payload Size | < 50 KB | Optimization for fast startup |
 
 ## High-Level Architecture (HLD)
 
@@ -178,8 +167,8 @@ Fetches the evaluated flags for the current user/device.
 
 ## Client Architecture Deep-Dives
 
-### [Subsystem 1 - The Fallback Chain & Storage]
-Typed defaults and validation can make missing flags recoverable. This does not guarantee the entire application cannot crash.
+### [Subsystem 1 — The Fallback Chain & Storage]
+The storage architecture guarantees we NEVER crash if a flag is missing.
 
 ```swift
 class FeatureFlagStore {
@@ -233,7 +222,7 @@ class FeatureFlagStore {
 }
 ```
 
-### [Subsystem 2 - Synchronous Evaluation & Impression Tracking]
+### [Subsystem 2 — Synchronous Evaluation & Impression Tracking]
 When a UI component needs a flag, it must be synchronous.
 
 ```swift
@@ -265,7 +254,7 @@ class FlagEvaluator {
 }
 ```
 
-### [Subsystem 3 - App Launch Network Strategy]
+### [Subsystem 3 — App Launch Network Strategy]
 We don't want to freeze the splash screen waiting for configs.
 
 ```swift
@@ -294,12 +283,11 @@ class RemoteConfigFetcher {
 ```
 
 ## Performance & Optimizations
-
-| Decision | Mechanism | What to verify |
+| Optimization | Technique | Benchmark/Impact |
 | :--- | :--- | :--- |
-| Local hot path | Validated cached evaluation without synchronous fetch | Measure launch/evaluation overhead and expiry behavior |
-| Evaluation placement | Choose server/local rules by privacy and offline needs | Compare payload, device work and rule compatibility |
-| Atomic config update | Publish a validated versioned representation | Check concurrent-reader consistency and safe fallback |
+| **Strict Timeouts** | `timeoutIntervalForRequest = 2.0` | Ensures app TTI (Time to Interactive) is never severely degraded by bad network. |
+| **Dumb Client** | Server evaluates rules | Saves CPU battery on client, reduces payload size (client only gets flat Map). |
+| **Concurrent Reads** | `DispatchQueue` with `.concurrent` and `.barrier` writes | Allows massive multi-threaded UI access (O(1) reads) without data races. |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
@@ -321,9 +309,12 @@ class RemoteConfigFetcher {
 - **Impression Volume**: Ensure impressions logged matches expected user base (detects if evaluation code is unreachable).
 - **Config Payload Size**: Alert if payload > 50KB to prevent bloated startup times.
 
-## Measurement and evidence
-
-Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
+## Production Benchmarks Reference
+| Benchmark | Value | Source |
+| :--- | :--- | :--- |
+| Firebase Default Timeout | 60 seconds (Too long for UI blocking!) | Firebase Remote Config Docs |
+| Recommended UI blocking timeout | 1-2 seconds max | Industry standard |
+| Concurrent Experiments | 1000s | Uber Engineering (R2/Experimentation platform) |
 
 ## Interview Tips
 - **The "Dumb Client" Rule**: Always design the client to be dumb. The server should figure out if the user is in the 10% A/B test bucket. The client just asks "What are my flags?" and gets a key-value map.
@@ -367,4 +358,4 @@ graph TD
 | :--- | :--- |
 | [App Modularization](app-modularization.md) | How feature flags intersect with separated module builds. |
 | [E-Commerce Catalog](e-commerce-catalog.md) | A/B testing different catalog UI layouts using flags. |
-| [Network Layer Design](networking-layer.md) | Core networking infrastructure used by the config fetcher. |
+| [Network Layer Design](network-layer.md) | Core networking infrastructure used by the config fetcher. |

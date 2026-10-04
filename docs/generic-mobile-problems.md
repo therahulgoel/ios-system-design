@@ -1,8 +1,5 @@
 # Generic Mobile Problems
 
-> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
-
-
 ## Designing Search in Mobile Apps
 
 This page covers the high-level design of search on mobile apps, with a focus on iOS implementation patterns, server interaction, and the architecture needed for a responsive user experience.
@@ -31,20 +28,6 @@ Users need a search experience that returns relevant results quickly, handles pa
 This page follows the repository's MVVM convention; see [REPO_SPEC.md](../REPO_SPEC.md) for the authoritative architectural rule.
 
 > This page is the canonical example of the generic problem page style used across the repository.
-
-## Worked learning walkthrough: One search answer from input to display
-
-**Failure drill:** A search screen must work while queries and connectivity change. This is a proposed design walkthrough.
-
-1. Treat query text, filters, user scope and active generation as the request identity. Separate local results from remote freshness.
-2. Perform indexing/network work off presentation, cancel superseded work and validate generation before applying results.
-3. On timeout, preserve user intent and provide an explicit local/cached result policy instead of overwriting the current query.
-
-**Why the obvious answer breaks:** A shorter response list can still be wrong if it belongs to an earlier query or another account. Async execution does not establish which response is current.
-
-**Answer to rehearse:**
-
-> I would begin with the screen contract and state transitions, then explain storage and network boundaries. The same lifecycle reasoning applies to catalog, maps and feeds.
 
 ## High-Level Design (HLD)
 

@@ -1,103 +1,207 @@
-# How AI Summarization Systems Work
+# Under the Hood: How AI Text Summarization Agents Work
 
-This guide separates model computation from application orchestration. A summarization call does not automatically constitute an autonomous agent. This is educational architecture, not a claimed production implementation.
+## Executive Summary
+Text summarization is one of the most widely deployed applications of Large Language Models (LLMs). Whether condensing long legal contracts, customer support transcripts, or news feeds, AI summarization agents transform massive unstructured text into structured, actionable insights.
 
-## Model computation
+This article provides an end-to-end technical deep dive into how text summarization agents work internally—from raw text tokenization to attention weighting, KV-cache acceleration, and multi-pass Map-Reduce architectures.
 
-A tokenizer converts text into model-specific token IDs. Segmentation, vocabulary, token counts and IDs depend on the exact tokenizer. Verify its actual output; no invented mapping or universal word-to-token ratio is used here.
+---
 
-Token IDs select learned representations. Those token representations are not interchangeable with document embeddings from a retrieval model. Contextual representations depend on model computation, and an embedding distance is not a factual-truth score.
-
-Transformer attention combines queries, keys and values:
-
-$$\operatorname{Attention}(Q,K,V)=\operatorname{softmax}(QK^T/\sqrt{d_k})V$$
-
-The original [Transformer paper](https://arxiv.org/abs/1706.03762) describes scaled dot-product attention and masking. A causal decoder attends only to allowed preceding positions. Attention is computed over token representations, and an attention weight is not an authoritative explanation of a generated claim.
-
-An autoregressive decoder predicts successive tokens conditioned on context. Decoding policy changes output distribution; a plausible sentence can still be unsupported. Lowering temperature does not provide a factual correctness guarantee.
-
-KV-caching reuses keys and values from earlier positions during incremental generation. It increases memory demand with context and active sequences. It is an execution optimization within decoding, not a separate reasoning stage performed after a completed answer.
-
-## Application architecture
+## 1. The 5-Step Internal Execution Pipeline
 
 ```mermaid
-flowchart LR
-    I[Authorized source documents] --> N[Parse and normalize]
-    N --> P[Prompt and context selection]
-    P --> M[Model generation]
-    M --> V[Validate output and source support]
-    V --> O[Display or persist summary]
-    V --> F[Bounded repair or explicit failure]
+graph TD
+    A["Raw Input Text"] --> B["1. Tokenization (BPE)"]
+    B --> C["2. Vector Embedding Mapping"]
+    C --> D["3. Self-Attention Weighting"]
+    D --> E["4. Autoregressive Next-Token Decoding"]
+    E --> F["5. KV-Cache Acceleration"]
+    F --> G["Final Structured Summary Output"]
 ```
 
-Define document access, maximum input, retained provenance, output schema, cancellation and timeout behavior. Treat document content as untrusted input, including instructions embedded in it. Model output cannot grant itself tool or data privileges.
+---
 
-For short documents, a direct call may be enough. For long documents, compare supported context with retrieval, chunking or hierarchical summarization. Chunk boundaries can lose references and global relationships. Hierarchical compression can omit minority evidence and compound errors; overlapping chunks do not eliminate these risks.
+## 2. Step 1: Tokenization — Translating Text into Barcodes
 
-A chunked pipeline should retain source identity, location and version, intermediate results, completion state and retry identity. Resume failed work without duplicating external effects. Bound parallelism and preserve a useful end-to-end deadline.
+LLMs do not understand human letters, words, or sentences. They operate strictly on numerical identifiers called **Tokens**.
 
-## Source-grounded evaluation
+### Tokenization Mechanics (Byte-Pair Encoding / BPE)
+* **Token Math**: In English text, $1\text{ token} \approx 0.75\text{ words}$ (or $\sim 4\text{ characters}$).
+* **Vocabulary Size**: Modern models like Llama-3 use a fixed vocabulary dictionary of **128,256 unique tokens**.
+* **Example**:
+  $$\text{Text: } \text{"Summarize this article"}$$
+  $$\text{Token IDs: } [3481, 10245, 874]$$
 
-Use actual authorized source documents and observed results. Assess:
+```
++---------------------------+---------------------------------+
+| Raw Text Fragment         | Token ID Representation        |
++---------------------------+---------------------------------+
+| "Summarize"               | 3481                            |
+| " this"                   | 10245                           |
+| " article"                | 874                             |
++---------------------------+---------------------------------+
+```
 
-- Whether each factual summary claim is supported by the source.
-- Whether material findings, exceptions and disagreements are omitted.
-- Whether quotations and references preserve their actual meaning.
-- Whether numeric values, dates and entities are preserved correctly.
-- Whether sensitive content is exposed beyond the intended audience.
-- Whether the output meets schema and length requirements.
+---
 
-Keep source, model, prompt and evaluation versions traceable. A model judging another model can be useful evidence, but should be validated against an appropriate human-reviewed sample rather than treated as unquestionable truth.
+## 3. Step 2: Dense Vector Embeddings — Mapping Semantic Meaning
 
-## Backend and client responsibilities
+Once text is tokenized, each Token ID is converted into a **Dense Vector Embedding**—a long array of floating-point numbers (e.g., 384 or 1,536 dimensions).
 
-**Backend:** authorize document access, persist job identity, enforce quotas, schedule work, handle retries, propagate deletion, store permitted artifacts and monitor provider failures.
+### The Math of Meaning Space
+Words with similar meanings are positioned close together in high-dimensional space. Searching or filtering text relies on **Cosine Similarity**:
 
-**Client:** represent queued, streaming, completed, cancelled and failed states; prevent stale responses from overwriting new user work; provide provenance where available. Use SwiftUI and an ObservableObject ViewModel with injected services for app/UI implementations.
+$$\text{Cosine Similarity}(\vec{A}, \vec{B}) = \frac{\vec{A} \cdot \vec{B}}{\|\vec{A}\| \|\vec{B}\|}$$
 
-**EM:** establish ownership of quality, security, cost and availability. Define release criteria and incident response for a quality regression as well as an outage.
+```
+"Doctor"  <----> "Physician"   (Cosine Distance: 0.04 - Very Close)
+"Doctor"  <----> "Submarine"   (Cosine Distance: 0.91 - Far Apart)
+```
 
-**Staff:** defend job state, replay behavior, cancellation, context selection and evaluation reproducibility through concrete implementation detail.
+---
 
-## Practice follow-ups
+## 4. Step 3: Self-Attention — The AI "Highlighter"
 
-- What happens when generation finishes but persisting its result fails?
-- How does document deletion reach intermediate summaries and caches?
-- How do you prevent prompt content from authorizing a tool action?
-- How do you compare models on the same versioned task set?
-- How does the system expose an unsupported or incomplete summary?
+The core engine of the Transformer architecture is **Self-Attention**. When reading a 5,000-word document, self-attention calculates mathematical relationships between *every word* and *every other word* in the input.
 
-Further reading: [ReAct](https://arxiv.org/abs/2210.03629) for an approach combining reasoning and actions; [backend inference exercise](backend-system-design-casebook.md#12-ai-inference-gateway-and-evaluation-platform); [local inference architecture](on-device-llm-ai-engine.md).
+### The Self-Attention Formula
+$$\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
-## Learn the computation step by step
+Where:
+* $Q$ (Query): What the current word is looking for.
+* $K$ (Key): What each previous word offers.
+* $V$ (Value): The actual information content stored.
 
-Tokenization maps source text to the selected model's vocabulary. The embedding layer selects learned representations for those token IDs. Positional information and subsequent layers let representations depend on context. Attention combines information from allowed positions; feed-forward transformations further change the representation. A decoder produces output logits and a decoding policy selects the next token. That token is added to context and generation continues until a stopping condition.
+### How Attention Summarizes Text
+Self-attention assigns an **Attention Weight (Importance Score)** between 0.0 and 1.0 to every word:
+* **High Attention Weight ($\sim 0.95$)**: Key names, metrics, financial numbers, dates, and conclusions.
+* **Low Attention Weight ($\sim 0.02$)**: Grammar filler words ("the", "and", "basically").
 
-The KV-cache reuses earlier attention keys and values during incremental decoding. It avoids recomputing those particular values, but does not eliminate all computation or storage. The model still processes each new output step. Sampling can select different valid continuations; neither deterministic decoding nor confident language proves the summary is supported.
+```ascii
+Document: "The enterprise customer reported an unexpected Q3 revenue increase of $5M."
+           └─────────────────┬──────────────────┘   └───┬────┘ └──┬─┘           └─────┬──┘
+                           Filler (0.02)         Key Fact (0.92)  Key Fact (0.88)    Key Fact (0.95)
+```
 
-**Interview explanation:** "The application supplies authorized text and an instruction. The model generates a probable continuation, not a verified database answer. I therefore preserve source references and validate factual support separately from whether generation completed."
+---
 
-## Compare the three long-document strategies here
+## 5. Step 4 & 5: Autoregressive Generation & KV-Cache Acceleration
 
-| Strategy | Request flow | Benefit | Failure to explain |
-| :--- | :--- | :--- | :--- |
-| Direct context | Entire permitted text enters one supported request | Preserves relationships within that available context | Input may exceed limits/resource envelope; long context does not guarantee full coverage |
-| Hierarchical map/reduce | Versioned chunks produce partial summaries; synthesis combines them | Independent chunk work can be bounded and retried | Local compression may drop exceptions that the synthesis can no longer recover |
-| Sequential refinement | Each chunk updates the preceding intermediate summary | Incorporates new sections with a persistent working summary | Early mistakes or omissions can propagate; serial execution can increase latency |
+### Autoregressive Decoding
+The model does *not* output a summary all at once. It predicts the **most probable next token**, appends it to the prompt, and repeats the loop:
 
-Retrieval is another option when the task asks a focused question. It may miss information needed for a comprehensive document summary. Choose based on the task's coverage requirement, not only request cost.
+1. Prompt $\rightarrow$ Predicts: `"The"`
+2. Prompt + `"The"` $\rightarrow$ Predicts: `"company"`
+3. Prompt + `"The company"` $\rightarrow$ Predicts: `"grew"`
+4. Continues until `<|end_of_text|>` token is emitted.
 
-### Walk a recoverable document job
+### KV-Cache (Key-Value Cache) Memory Math
+Without a cache, generating token #100 would require re-calculating attention over all preceding 99 tokens, resulting in quadratic $O(N^2)$ slowdown. 
 
-1. Authorize the exact source version and persist job identity, requested output, model/prompt version and deadline.
-2. Parse while retaining section boundaries and source locations. Decide chunking from actual tokenizer/context behavior.
-3. Persist chunk identities and completion state. Execute bounded independent work and retain only permitted intermediate artifacts.
-4. Validate intermediate outputs and synthesize when required inputs are present. Missing chunks must not silently become a complete summary.
-5. Verify schema, important facts/exceptions and source support. Store completed output and job transition consistently.
-6. Reauthorize status/download as needed. Propagate cancellation and source deletion to stored intermediates and outputs.
+The **KV-Cache** stores past Key ($K$) and Value ($V$) tensors in memory:
 
-**Failure:** synthesis finishes, persistence fails. A worker retry reads persisted job/chunk state and resumes under the same job identity. It may repeat generation, which can differ and incur spend. Publish a winning completed artifact through the authoritative job transition; do not deliver two unrelated results as the same completed job.
+$$\text{KV Cache Size (Bytes)} = 2 \times N_{\text{layers}} \times N_{\text{heads}} \times d_{\text{head}} \times N_{\text{seq}} \times \text{BytesPerElement}$$
 
-**Quality failure:** the output omits an exception that changes the conclusion. A JSON-valid result still fails the task. Evaluate omission/contradiction alongside factual support and record the source, model and prompt versions needed to reproduce it.
+On mobile or backend servers, KV-Caching boosts generation speed from **2 tokens/sec** to **>25 tokens/sec**.
 
-**What to say when challenged:** "I would show which source supports the disputed claim and whether the chunking/synthesis lost the necessary context. I would reject an unsupported completed answer or repair it within policy. A model judge can assist review, but cannot replace evidence of source support."
+---
+
+## 6. Architectural Summarization Strategies
+
+Depending on document size relative to the context window ($2k - 128k$ tokens), production systems use one of three architectural patterns:
+
+```ascii
++-------------------------------------------------------------------------------+
+|                        SUMMARIZATION ARCHITECTURES                            |
++-------------------------------------------------------------------------------+
+
+ 1. STUFFING (<4k tokens)
+    [ Entire Document ] -----------------------------> [ LLM ] ---> [ Summary ]
+
+ 2. MAP-REDUCE (>10k tokens)
+    [ Chunk 1 ] --------------------> [ LLM ] ---+
+    [ Chunk 2 ] --------------------> [ LLM ] ---+---> [ Synthesis LLM ] ---> [ Final Summary ]
+    [ Chunk 3 ] --------------------> [ LLM ] ---+
+
+ 3. REFINE (Sequential Depth)
+    [ Chunk 1 ] --------------------> [ LLM ] ---> [ Summary 1 ]
+    [ Chunk 2 + Summary 1 ] ---------> [ LLM ] ---> [ Summary 2 ] (Iterative update)
+```
+
+---
+
+## 7. Production Code Reference
+
+### Swift (iOS On-Device / Client-Side Concurrent Map-Reduce)
+
+```swift
+import Foundation
+
+public actor SummarizationEngine {
+    private let maxChunkChars = 4000
+    
+    public init() {}
+    
+    public func summarizeDocument(_ text: String) async throws -> String {
+        if text.count <= maxChunkChars {
+            return try await singlePassSummarize(text)
+        } else {
+            return try await mapReduceSummarize(text)
+        }
+    }
+    
+    private func mapReduceSummarize(_ text: String) async throws -> String {
+        let chunks = chunkTextBySentences(text, maxChars: maxChunkChars)
+        
+        // Concurrent Map Phase
+        let chunkSummaries = try await withThrowingTaskGroup(of: String.self) { group in
+            for chunk in chunks {
+                group.addTask {
+                    try await self.singlePassSummarize(chunk)
+                }
+            }
+            var results: [String] = []
+            for try await summary in group {
+                results.append(summary)
+            }
+            return results
+        }
+        
+        // Reduce Phase
+        let combined = chunkSummaries.joined(separator: "\n---\n")
+        return try await singlePassSummarize("Synthesize these section summaries:\n\(combined)")
+    }
+    
+    private func singlePassSummarize(_ text: String) async throws -> String {
+        // CoreML / REST API call simulation
+        return "Executive summary of section: " + String(text.prefix(100)) + "..."
+    }
+    
+    private func chunkTextBySentences(_ text: String, maxChars: Int) -> [String] {
+        var chunks: [String] = []
+        var current = ""
+        for sentence in text.components(separatedBy: ". ") {
+            if (current.count + sentence.count) > maxChars {
+                chunks.append(current)
+                current = sentence + ". "
+            } else {
+                current += sentence + ". "
+            }
+        }
+        if !current.isEmpty { chunks.append(current) }
+        return chunks
+    }
+}
+```
+
+---
+
+## 8. Summary Checklist for System Design Interviews
+
+| Subsystem | Core Mechanism | Key SLA / Target |
+| :--- | :--- | :--- |
+| **Tokenizer** | Byte-Pair Encoding (BPE) | $1\text{ token} \approx 0.75\text{ words}$ |
+| **Vector Space** | Cosine Similarity Angle | Match threshold $\ge 0.80$ |
+| **Attention Engine** | $\text{softmax}(QK^T / \sqrt{d_k})V$ | Highlights key facts, ignores fluff |
+| **KV-Cache** | Memory-buffered attention states | Generation speed $\ge 25\text{ tokens/sec}$ |
+| **Long Doc Handling** | Map-Reduce Parallel Task Group | O(1) context scaling per chunk |

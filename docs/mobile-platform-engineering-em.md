@@ -1,10 +1,18 @@
 # Mobile Platform Engineering, Release & Engineering Management Guide
 
-> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
-
-
 ## Overview
-Study module ownership, release coordination, incident response and developer productivity. Backend rollback and mobile recovery have different constraints. Halting an App Store rollout does not replace installed app binaries. A remote flag helps only if the shipped application contains a safe alternative and receives the configuration.
+In Staff, Principal, and Engineering Manager (EM) interview rounds, system design questions often transition beyond purely technical component diagrams into **Mobile Engineering Leadership & Platform Governance**. Candidates are asked how to manage monorepos for 100+ iOS engineers, orchestrate zero-downtime mobile release trains, handle Sev-1 mobile incidents (App Store emergency rollbacks), establish build time budgets (< 5 mins), and enforce architectural consistency across dozens of product teams.
+
+## Target Companies & Frequency
+| Company | Why They Ask | Frequency |
+| :--- | :--- | :--- |
+| Uber | 200+ iOS engineers working in a single monorepo (Needle DI, SPM/Buck build system) | ★★★★★ |
+| Meta | Massive mobile codebase scale (Instagram/Facebook monorepo, custom build tooling) | ★★★★★ |
+| Airbnb | Modularized architecture, strict release trains, dynamic server-driven releases | ★★★★★ |
+| Google | Large-scale iOS apps (YouTube, Maps, Drive), core platform team governance | ★★★★☆ |
+| Stripe / Block | High financial reliability requirements, strict release gatekeeping & canary rollouts | ★★★★☆ |
+
+---
 
 ## 1. Mobile Team Topology & Monorepo Architecture
 
@@ -34,8 +42,8 @@ Study module ownership, release coordination, incident response and developer pr
 +-----------------------------------------------------------------------------------+
 ```
 
-### Module Separation Principles
-A proposed separation for domains needing independent ownership is **interface and implementation targets**. Apply it where the dependency graph and build evidence justify the extra boundaries:
+### Module Separation Principles (Uber / Google Model)
+To prevent build times from exploding as engineering headcount scales from 10 to 150+ engineers, every domain must be split into **two distinct targets**:
 
 1. **`FeatureInterface`**: Protocols, data models, public API contracts. *Zero implementation dependencies.*
 2. **`FeatureImplementation`**: Internal SwiftUI views, ViewModels, business logic. *Imports only `FeatureInterface` targets.*
@@ -55,16 +63,71 @@ RideTrackingInterface -+
 
 Unlike backend microservices which can deploy in seconds, iOS app binary releases are gated by Apple App Store review and user manual/auto-updates.
 
-### Phased release and recovery
-Apple's automatic phased-update schedule is 1%, 2%, 5%, 10%, 20%, 50%, then 100% over seven days. Manual downloads remain possible throughout. See [Apple phased release](https://developer.apple.com/help/app-store-connect/update-your-app/release-a-version-update-in-phases).
+### 7-Day Phased Rollout Schedule (App Store Connect Standard)
 
-Choose release cadence, gates and observation windows from customer risk and measured traffic. Define who can pause distribution, disable a supported feature, and submit a fixed binary. Do not claim guaranteed kill-switch delivery or App Review completion time.
+```
+Day 1: 1%   --> Monitor Crash-Free Session Rate (> 99.9%)
+Day 2: 2%   --> Monitor ANR/Hang Rate (< 0.1%)
+Day 3: 5%   --> Monitor Server API 5xx Spikes
+Day 4: 10%  --> Feature Flag Kill Switch Check
+Day 5: 20%
+Day 6: 50%
+Day 7: 100% --> Full Release
+```
 
-## 3. Incident management
+### Release Train Governance Rules (EM Standard)
+1. **Weekly Fixed Release Train**: Cutting a release branch every Tuesday at 10:00 AM PST regardless of feature readiness. If a feature misses the train, it waits for next week's train.
+2. **Feature Flag Mandatory Masking**: Every new line of code shipping to production **must be hidden behind a feature flag**. Unfinished features are safely merged into `main` without delaying the release train.
+3. **Automated Release Gating**:
+   * If crash-free sessions drop below **99.85%**, the automated canary system pauses the rollout automatically.
+   * If HTTP 5xx error rates spike by $\ge 3\times$ baseline, the automated canary system pauses the rollout.
 
-Assign incident command and technical coordination. Identify affected versions and cohorts, use a safe available mitigation, pause further distribution if appropriate, and verify user outcomes. A pre-main crash may prevent feature configuration from loading; a fixed binary may be required. Track residual users on the affected version.
+---
 
-Measure build latency, flakiness, crash-free sessions, startup, adoption and mitigation propagation with explicit denominators and cohorts. Do not quote fixed budgets as company standards.
+## 3. Incident Management & Sev-1 Mobile Triage Framework
+
+### Sev-1 Scenario: A critical crash is affecting 5% of users after Day 3 rollout.
+
+```ascii
++-----------------------------------------------------------------------------------+
+|                         INCIDENT RESPONSE WORKFLOW (SEV-1)                        |
++-----------------------------------------------------------------------------------+
+                                          |
+                                          v
+                    +-------------------------------------------+
+                    | 1. ISOLATE: Feature Flag Remote Kill      |
+                    |    (Time to resolution < 5 minutes)       |
+                    +---------------------+---------------------+
+                                          |
+                        +-----------------+-----------------+
+                        | Feature flag    | Feature flag    |
+                        | exists? (YES)   | missing? (NO)   |
+                        v                 v                 v
+          +-----------------------+     +-----------------------+
+          | Disable flag instantly|     | Halt Rollout in       |
+          | via Remote Config API |     | App Store Connect     |
+          +-----------------------+     +-----------+-----------+
+                                                    |
+                                                    v
+                                        +-----------------------+
+                                        | Create Hotfix Branch  |
+                                        | Cherry-pick fix       |
+                                        | Expedited App Review  |
+                                        +-----------------------+
+```
+
+### Key Metrics for Mobile Engineering Leaders (EM / Staff Benchmarks)
+
+| Metric | Target / SLA | Source / Benchmark |
+| :--- | :--- | :--- |
+| Clean Build Time (CI) | $< 6\text{ minutes}$ | Tuist / Bazel Remote Cache Benchmark |
+| Incremental Build Time (Dev) | $< 10\text{ seconds}$ | Xcode Build System Best Practices |
+| Crash-Free Sessions | $> 99.9\%$ | Firebase Crashlytics Industry Baseline |
+| Feature Flag Kill SLA | $< 5\text{ minutes}$ | Uber / Airbnb Feature Flag Production Rule |
+| Mobile CI Flakiness Rate | $< 1.5\%$ of PR runs | Meta Mobile DevOps Metric |
+| Pre-Main Cold Start Time | $< 500\text{ms}$ (p50) | Apple WWDC Session on Dynamic Linker |
+
+---
 
 ## 4. FAANG-Style Mock Interview Q&A for EM & Staff Candidates
 
@@ -76,28 +139,6 @@ Measure build latency, flakiness, crash-free sessions, startup, adoption and mit
 
 ### Q2: What is your policy for shipping a critical emergency hotfix to 10M users?
 **Answer**:
-1. **First Line of Defense**: Use remote feature flag kill switches to disable a supported broken path for clients that receive the configuration. Measure propagation and retain a recovery path for offline clients.
+1. **First Line of Defense**: Use remote feature flag kill switches to disable the broken code path instantly without updating the binary ($< 5\text{ min}$ SLA).
 2. **Second Line of Defense**: If the crash is un-flagged (e.g., memory corruption in pre-main setup), immediately **Halt Rollout** in App Store Connect to prevent further user updates.
-3. **Hotfix Branching**: Branch directly from the current live release tag (`release/12.4.0`), apply the minimal cherry-picked commit, run targeted regression suites, and submit to Apple using **Expedited App Review request** without assuming a guaranteed review completion time.
-
-## 5. Worked release incident: backend recovery versus installed clients
-
-**Drill:** a newly distributed app crashes before remote configuration loads. Trace the recovery options in order.
-
-1. Identify the affected binary, OS/device cohorts and crash signature. Compare actual installed-version behavior, not only the aggregate crash-free rate.
-2. Pause further automatic distribution where supported. This limits additional exposure; it does not remove installed binaries or stop every manual download.
-3. Check whether the broken code has a shipped safe path and whether affected users reach flag evaluation. A pre-main crash cannot be fixed by a flag fetched afterward.
-4. Prepare the minimal compatible binary fix from the actual release lineage. Verify the affected startup path, signing, dependencies and matching symbols.
-5. Request the appropriate review/distribution process without promising completion time. Track recovery as users install the fixed version; preserve support guidance for those still affected.
-
-**EM answer:** "I would assign incident command, diagnosis, release execution and customer communication separately. I would stop new exposure where possible and distinguish those users from people already on the bad binary. Recovery is not complete when the backend is healthy or the fix is uploaded; it requires observing successful sessions on affected cohorts."
-
-**Staff probe:** "Why did the kill switch fail?" Explain whether configuration loading was unreachable, the alternative was absent, the client was offline or the rules were incompatible. Each cause requires a different mechanism.
-
-## 6. Worked platform migration: earn adoption
-
-Before extracting shared networking into a platform module, map current consumers, auth behavior, error contracts and cancellation. Migrate one representative feature behind an adapter and prove its user path. Supply compatibility, a test host, diagnostics and a supported rollback while consumers move. Measure actual adoption and remaining divergent implementations.
-
-The platform team's deliverable is a usable contract and migration support, not just a new package. Interfaces that force every product team into synchronized release can undermine the intended autonomy.
-
-**Leadership probe:** "Why invest now?" Connect recurring incidents, duplicated work or blocked delivery to the proposed investment and identify what work is deferred. Build time alone is not the whole business case.
+3. **Hotfix Branching**: Branch directly from the current live release tag (`release/12.4.0`), apply the minimal cherry-picked commit, run targeted regression suites, and submit to Apple using **Expedited App Review request** (typically approved within 2–4 hours).

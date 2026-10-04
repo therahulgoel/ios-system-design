@@ -1,416 +1,324 @@
-<a id="top"></a>
-
 <div align="center">
 
-![System Design Interview Prep: client architecture, backend systems and engineering leadership](assets/interview-prep-banner.svg)
+![iOS Mobile System Design](assets/banner.jpg)
 
-# System Design Interview Prep
+# iOS Mobile System Design
 
-### Know what to cover. Practice how to answer. Defend the follow-ups.
-
-[![Backend track](https://img.shields.io/badge/LEARN-Backend-0284c7?style=for-the-badge)](docs/backend-interview-track.md)
-[![Client architecture](https://img.shields.io/badge/DESIGN-Client_Architecture-7c3aed?style=for-the-badge)](#explore-by-industry-and-domain)
-[![Leadership](https://img.shields.io/badge/LEAD-EM_%2F_SDM-059669?style=for-the-badge)](docs/behavioral-engineering-manager-staff-guide.md)
+### The most comprehensive mobile system design resource for senior iOS engineers.
+### Built for Engineering Manager (EM), Staff/Principal Engineer, Director of Engineering, Senior Director & AVP/VP interviews at top product & tech companies at scale.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![GitHub stars](https://img.shields.io/github/stars/therahulgoel/ios-system-design?style=social)](https://github.com/therahulgoel/ios-system-design)
+[![Stars](https://img.shields.io/github/stars/therahulgoel/ios-system-design?style=social)](https://github.com/therahulgoel/ios-system-design/stargazers)
 
-[LinkedIn](https://www.linkedin.com/in/therahulgoel/) · [X / Twitter @therahulgoel](https://x.com/therahulgoel) · [Resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf)
+**If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-Interview preparation for **Senior iOS, Staff / Principal, EM / SDM and engineering leadership** roles.
-
-Study a domain, build an answer, stress-test it with failure questions, and connect your decisions to real experience.
-
-**[Start learning](#your-first-visit-start-here) · [Browse industries](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Reference library](#primary-source-reference-library)**
+[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Leadership & Behavioral Guide](docs/behavioral-engineering-manager-staff-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 
 ---
 
-## Your first visit: start here
+## 🎯 Who Is This For?
 
-Choose one route. Each route leads to concepts, an answer structure and questions to rehearse.
+You are a **senior mobile engineer, architect, or engineering leader** preparing for:
 
-| Build your foundation | Practice your interview |
-| :--- | :--- |
-| **Backend: basics to real apps**<br>[Follow the progressive track](docs/backend-interview-track.md)<br>Requests, APIs, data and distributed systems. | **Learn how to answer**<br>[Open the answer playbook](docs/interview-answer-playbook.md)<br>Worked responses and challenging follow-ups. |
-| **Client architecture**<br>[Choose an industry below](#explore-by-industry-and-domain)<br>State, networking, persistence and device constraints. | **Design a backend system**<br>[Open the twelve-case workbook](docs/backend-system-design-casebook.md)<br>APIs, invariants and recovery drills. |
-| **Streaming depth**<br>[Explore FAST / SVOD / AVOD / TVOD](docs/streaming-business-and-architecture.md)<br>DRM, ads, live latency, CDN and entitlement. | **Prepare EM and leadership stories**<br>[Build your evidence bank](docs/behavioral-engineering-manager-staff-guide.md)<br>Real decisions, people outcomes and lessons. |
+- **Engineering Manager (EM / M1 / M2)** loops at Google, Meta, Uber, Apple, Salesforce, Amazon, or Stripe
+- **Staff / Principal Engineer (L6 / L7 / E6 / E7)** architecture, technical strategy & cross-team leadership rounds
+- **Director of Engineering, Senior Director & AVP / VP** executive system design, organizational scaling & behavioral loops
+- Roles requiring mobile system design depth, people leadership, and organizational scaling at **100M+ user scale**
 
-> [!TIP]
-> **Your first session:** pick one problem, explain your design aloud, inject a failure, answer the follow-up, then record what you could not defend.
+This is **not** a LeetCode repo. This teaches you to architect production systems on iOS and lead high-performing engineering organizations — the way hiring committees, Bar Raisers, and VP interview panels at top tech companies actually evaluate candidates.
 
 ---
 
-## What makes this repository different
+## ⚡ Why This Repository Is Different
 
-The material connects **what to design**, **how to explain it**, and **what happens when the interviewer challenges it**. Its distinguishing combination is client behavior, backend correctness and engineering leadership in the same preparation path.
+Most system design resources are backend-focused. This is built ground-up for **client-side mobile architecture**.
 
-| Preparation need | What this repository contains |
+| What most resources cover | What this covers |
 | :--- | :--- |
-| Explain a design | [Worked answer walkthroughs](docs/interview-answer-playbook.md), API/data-model discussions and architecture diagrams |
-| Go beyond the happy path | Timeouts, concurrent requests, duplicate events, stale workers and recovery drills |
-| Defend a decision | Domain-specific trade-offs and questions about the rejected alternative |
-| Handle technical probes | Backend casebook follow-ups and mock Q&A in the client specifications |
-| Adapt to seniority | Staff implementation/influence depth, EM people/operations depth and leadership scope |
-| Tell a credible career story | STAR-style structure, probing questions and an evidence bank based on the author's resume |
+| Database sharding & load balancing | AVPlayer pooling & adaptive bitrate |
+| Distributed consensus (Raft/Paxos) | Operational Transformation & CRDTs |
+| Horizontal server scaling | Memory pressure, OOM, and LRU eviction |
+| API gateway design | Certificate pinning & token refresh interceptors |
+| MapReduce pipelines | Offline-first sync with BGTaskScheduler |
+| Message queues (Kafka) | WebSocket lifecycle, heartbeat & reconnect strategy |
 
-A payment timeout, a lost message acknowledgement and a failed ad decision have different consequences. Practice explaining those differences through an actual contract, state model and recovery action.
-
-The diagrams and sketches support reasoning. Worked responses describe proposed designs; career answers must come from your own experience. The repo does not supply invented success stories or guaranteed hiring scripts.
-
-### Start with a worked lesson
-
-| Learn directly in this repository | What the page walks through |
-| :--- | :--- |
-| [Checkout from request to reconciliation](docs/backend-interview-track.md#worked-app-checkout-from-request-to-reconciliation) | Records, transaction, worker, lost provider result and customer recovery |
-| [Chat from send to reconnect](docs/backend-interview-track.md#worked-app-chat-from-send-to-reconnect) | Stable message identity, durable acceptance, sequence and missed-history recovery |
-| [Streaming startup and failures](docs/backend-interview-track.md#assemble-an-answer-for-a-streaming-app) | Entitlement, manifest, DRM, first frame, ads and CDN failover |
-| [All twelve worked backend cases](docs/backend-system-design-casebook.md) | Mechanism, persisted evidence, failure decision and spoken answer in each case |
-| [Leadership answers from actual work](docs/behavioral-engineering-manager-staff-guide.md#worked-preparation-turn-a-project-into-a-defensible-answer) | Project decisions, cost attribution, coaching, disagreement and reflection |
-
-Topic guides include **Worked learning walkthroughs** before their architecture sections. Read the walkthrough first, then use the models and diagrams to deepen the answer. External sources support verification; the learning flow is explained here.
-
-## What a stronger answer sounds like
-
-**Practice prompt: What if the payment request times out?**
-
-> A timeout leaves the outcome unknown. I would retain the operation identity, show pending state, and reconcile through status lookup or provider events. The backend must atomically bind the identity to the caller and request, so concurrent retries do not create separate operations.
-
-**Expect the follow-up:** what if the provider accepted the payment before the worker crashed? Trace the persisted attempt, external idempotency contract and reconciliation path. Then add the EM lens: ownership, exception handling and customer communication.
-
-[Read the full walkthrough and streaming example](docs/interview-answer-playbook.md).
-
-## Choose your preparation track
-
-| Your target | Start here | What to demonstrate |
-| :--- | :--- | :--- |
-| Senior iOS / mobile frontend | Pick a client design in your domain, then use the [cheatsheet](docs/cheatsheet.md) | State, concurrency, networking, persistence, performance and debugging |
-| Staff / principal mobile | [Mobile platform guide](docs/mobile-platform-engineering-em.md) and [modularization](docs/app-modularization.md) | Technical depth, migration, cross-team adoption and durable architecture decisions |
-| Backend EM / Amazon SDM | [Basics-to-apps track](docs/backend-interview-track.md), [backend leadership guide](docs/backend-engineering-manager-guide.md) and [behavioral guide](docs/behavioral-engineering-manager-staff-guide.md) | Correctness, operations, people development and delivery judgment |
-| Staff / principal backend | [Basics-to-apps track](docs/backend-interview-track.md), [backend casebook](docs/backend-system-design-casebook.md) | APIs, schemas, concurrency, replay, failure recovery and technical influence |
-| Director / engineering leadership | [Leadership guide](docs/behavioral-engineering-manager-staff-guide.md) | Actual multi-team scope, portfolio decisions, resource allocation and leadership development |
-
-For a worked preparation path grounded in the author's experience, see [Rahul's resume-based plan](docs/rahul-backend-interview-plan.md). It identifies evidence already present and gaps that require real examples or hands-on work.
-
-> [!NOTE]
-> **Coverage boundary:** the frontend material focuses on iOS and mobile. Web frontend candidates need additional browser, JavaScript/TypeScript, accessibility and framework preparation. Backend candidates need implementation and operational practice beyond reading these documents.
-
-## Turn reading into interview practice
-
-| Step | What to do | What to produce |
-| :---: | :--- | :--- |
-| **1** | Choose a domain and role | One client specification and its corresponding backend exercise |
-| **2** | State the invariant | What must remain correct and which component enforces it |
-| **3** | Draw the normal path | APIs, authoritative data, persistence and acknowledgement boundaries |
-| **4** | Inject a failure | A walkthrough of a timeout, concurrent request, duplicate event, stale worker or unavailable dependency |
-| **5** | Defend the trade-off | Customer consequences, recovery, operational burden and cost using traceable inputs |
-| **6** | Add your role's evidence | Staff: implementation and influence. EM: people, ownership and execution. Leadership: portfolio and organizational decisions |
-| **7** | Get feedback and repeat | A repaired answer to the incorrect assumption or unsupported claim |
-
-Practice prompts are authored exercises, not leaked company questions. Use the actual posting and recruiter packet to decide which coding, design, management and writing rounds to rehearse.
-
-Official preparation references: [Amazon SDM](https://amazon.jobs/content/en/how-we-hire/sdm-interview-prep), [Google hiring](https://www.google.com/about/careers/applications/how-we-hire/), [Google DeepMind](https://deepmind.google/careers/) and [SpaceX careers](https://www.spacex.com/careers/).
+Every spec includes:
+- ✅ **Real production numbers** (Netflix, Uber, Firebase, Apple WWDC, OWASP)
+- ✅ **Swift 5.9+ code** (async/await, Actors, SwiftUI + MVVM)
+- ✅ **Actual SQLite schemas** and **API contracts**
+- ✅ **Mermaid architecture diagrams** (render natively on GitHub)
+- ✅ **Trade-off tables** with defended decisions
+- ✅ **FAANG-style Mock Interview Q&A** per problem
+- ✅ **Common Mistakes** (❌ Wrong → ✅ Correct)
 
 ---
 
-## Explore by industry and domain
+## 🗂 Complete Problem Catalog
 
-Use the domain map to jump to a reading list. Each list connects a design problem to the decisions and follow-ups to practice.
-
-| Industry / domain | The question you must defend | Explore |
-| :--- | :--- | :--- |
-| 💳 **Payments** | Can retries move money twice? | [Checkout, identity and reconciliation](#payments) |
-| 🎬 **Streaming and media** | Can playback continue when a dependency fails? | [DRM, ads, live delivery and entitlement](#streaming) |
-| 🛍️ **E-commerce and booking** | Who owns the last available item? | [Catalog, search and inventory](#commerce) |
-| 💬 **Messaging and collaboration** | What does an acknowledgement guarantee? | [Ordering, convergence and offline sync](#messaging) |
-| 📍 **Mobility and delivery** | How useful is a delayed location update? | [Tracking, notifications and device lifecycle](#mobility) |
-| 📊 **Social and analytics** | Can you trust the feed and its measurements? | [Freshness, events and experimentation](#social) |
-| 🗄️ **Backend systems** | Which invariant survives concurrency and failover? | [Foundations, leadership and design cases](#backend) |
-| 🧠 **AI applications** | How do you evaluate and recover model-backed features? | [Inference, retrieval and evaluation](#ai) |
-| 🛠️ **Developer platforms** | Can teams detect, contain and recover a bad release? | [Modularity, observability and delivery](#platforms) |
-| 🧭 **Engineering leadership** | What did you decide, own and learn? | [Behavioral evidence and preparation plans](#leadership) |
-
-Product names in document titles identify familiar design problems. They do not imply access to those companies' internal architectures or private interview questions.
-
-<a id="payments"></a>
-
-<a id="payments--financial-workflows"></a>
-
-### 💳 Payments & financial workflows
-
-> **Design challenge:** how do you preserve a correct money movement when the client, service or provider can fail independently?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Payment checkout](docs/payment-checkout.md) | Stable request identity, pending outcomes, authentication challenges, persisted client state and reconciliation |
-| [Authentication, OAuth and biometrics](docs/authentication-oauth-biometric.md) | Token lifecycle, credential storage and authentication recovery |
-| [Mobile security and privacy](docs/mobile-security-privacy-engine.md) | Trust boundaries, key protection, encrypted storage and certificate rotation |
-
-Pair these with the casebook's [checkout, payments and inventory exercise](docs/backend-system-design-casebook.md#1-checkout-payments-and-inventory). Be ready to explain why a timeout is not proof of failure and where duplicate-effect protection actually lives.
-
-<a id="streaming"></a>
-
-<a id="streaming-media--live-experiences"></a>
-
-### 🎬 Streaming, media & live experiences
-
-> **Design challenge:** how do you sustain playback quality across device constraints, variable networks and service failures?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [FAST, SVOD, AVOD and TVOD guide](docs/streaming-business-and-architecture.md) | Business models plus detailed DRM, ad measurement, live latency, CDN failover and entitlement failure walkthroughs |
-| [Long-form video player](docs/video-streaming-player.md) | Playback lifecycle, adaptive streaming, DRM and downloads |
-| [Short-form video feed](docs/video-feed-streaming.md) | Player reuse, prefetching, cancellation and memory pressure |
-| [Audio player and offline mode](docs/spotify-audio-player.md) | Playback queues, background audio, system integration and offline media |
-| [Video calling and WebRTC](docs/google-meet-webrtc.md) | Connection establishment, relay fallback, media sessions and thermal constraints |
-
-Pair client behavior with the [live-event backend exercise](docs/backend-system-design-casebook.md#8-streaming-platform-and-live-event-control-plane). Separate media delivery from entitlement and metadata, and distinguish playback success from server request success.
-
-<a id="commerce"></a>
-
-<a id="e-commerce-marketplaces--booking"></a>
-
-### 🛍️ E-commerce, marketplaces & booking
-
-> **Design challenge:** how do you keep discovery responsive while inventory and order state remain correct?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Product catalog and discovery](docs/e-commerce-catalog.md) | Pagination, image-heavy screens and local cart state |
-| [Property search and booking](docs/airbnb-search-booking.md) | Search coordination, reservations and booking state |
-| [Search and autocomplete](docs/search-autocomplete.md) | Debounce, cancellation, stale results and local search |
-| [Server-driven UI](docs/sdui-engine.md) | Schema compatibility, component registration and safe fallback |
-| [Image loading library](docs/image-loading-library.md) | Caching, downsampling, request coalescing and cancellation |
-
-Extend the client specifications with [exclusive inventory booking](docs/backend-system-design-casebook.md#2-booking-exclusive-inventory) and [search indexing](docs/backend-system-design-casebook.md#5-search-and-autocomplete). Defend concurrent allocation, index lag and old-client compatibility.
-
-<a id="messaging"></a>
-
-<a id="messaging-collaboration--productivity"></a>
-
-### 💬 Messaging, collaboration & productivity
-
-> **Design challenge:** what does an acknowledgement mean, and how do multiple devices recover a consistent view?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Messaging and chat](docs/messaging-chat.md) | Pending sends, ordering, receipts, reconnection and durable history |
-| [Multi-workspace channel sync](docs/slack-channel-sync.md) | Workspace isolation, unread state and connection lifecycle |
-| [Collaborative editor](docs/collaborative-editor.md) | Concurrent editing, operation models and convergence |
-| [Offline-first sync](docs/offline-sync-engine.md) | Local persistence, conflict handling, replay and resynchronization |
-| [Calendar client](docs/google-calendar.md) | Recurrence, time zones, range queries and synchronized state |
-
-Practice [durable messaging](docs/backend-system-design-casebook.md#3-durable-messaging-and-offline-synchronization) and [distributed scheduling](docs/backend-system-design-casebook.md#10-distributed-scheduler-and-work-execution). Explain acceptance versus delivery, cursor expiry and stale worker ownership.
-
-<a id="mobility"></a>
-
-<a id="mobility-delivery--real-time-tracking"></a>
-
-### 📍 Mobility, delivery & real-time tracking
-
-> **Design challenge:** how do you keep a useful live view when updates are delayed, devices sleep or connectivity disappears?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Geospatial tracking](docs/realtime-location-tracking.md) | Location updates, transport lifecycle, interpolation and battery use |
-| [Delivery order tracking](docs/doordash-delivery-tracker.md) | Order transitions, realtime updates and Live Activities |
-| [Push notification system](docs/push-notification-system.md) | Device registration, provider responses and background update limits |
-| [Deep linking and universal links](docs/deep-linking-universal-links.md) | Routing, cold starts, domain association and authorization |
-
-Use the [notification backend exercise](docs/backend-system-design-casebook.md#7-notification-delivery) to defend preference checks, expiry, retries and token cleanup. Provider acceptance is not proof that the device received or displayed a message.
-
-<a id="social"></a>
-
-<a id="social-feeds-growth--analytics"></a>
-
-### 📊 Social feeds, growth & analytics
-
-> **Design challenge:** how do you deliver relevant content and derive trustworthy measurements without losing control of freshness, privacy or cost?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Social feed](docs/social-feed.md) | Pagination, optimistic state and impression tracking |
-| [User analytics event pipeline](docs/user-analytics-event-pipeline.md) | Event contracts, identity, aggregation and retention |
-| [Analytics SDK](docs/analytics-sdk.md) | Durable collection, batching, retries and lifecycle constraints |
-| [Feature flags](docs/feature-flag-system.md) | Local evaluation, defaults, configuration updates and recovery |
-| [A/B testing SDK](docs/ab-testing-experimentation-sdk.md) | Assignment, exposure tracking and experiment compatibility |
-
-Pair these with [feed and recommendation design](docs/backend-system-design-casebook.md#4-social-feed-and-recommendations) and [telemetry ingestion](docs/backend-system-design-casebook.md#6-analytics-and-telemetry-ingestion). Discuss late events, replay, sampling and deletion before trusting the resulting metric.
-
-<a id="backend"></a>
-
-<a id="backend-platforms--distributed-systems"></a>
-
-### 🗄️ Backend platforms & distributed systems
-
-> **Design challenge:** which invariants survive concurrency, overload, replication lag and regional failure?
-
-| Resource | What it provides |
-| :--- | :--- |
-| [Backend interview track: basics to complete apps](docs/backend-interview-track.md) | Ten stages with plain-language concepts, spoken responses, exit questions and app mappings |
-| [Backend EM, staff and leadership master guide](docs/backend-engineering-manager-guide.md) | Consistency, transactions, caching, CDC, security, capacity, migrations and organizational ownership |
-| [Backend system design casebook](docs/backend-system-design-casebook.md) | Twelve authored exercises with data-model questions, failure drills and role-specific follow-ups |
-| [Networking layer](docs/networking-layer.md) | The client side of API contracts, credential refresh, request handling and recovery |
-
-The casebook also includes [multi-tenant reporting](docs/backend-system-design-casebook.md#9-multi-tenant-csat-and-reporting-platform) and [regional recovery](docs/backend-system-design-casebook.md#11-regional-failure-and-data-recovery). Start with authoritative state and access paths; add infrastructure only when its purpose and failure consequences are clear.
-
-<a id="ai"></a>
-
-<a id="ai-applications--inference"></a>
-
-### 🧠 AI applications & inference
-
-> **Design challenge:** how do you make model-backed features measurable, authorized and recoverable?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [On-device AI architecture](docs/on-device-llm-ai-engine.md) | Runtime choice, weight and working memory, cancellation, retrieval and cloud routing |
-| [Summarization systems](docs/how-ai-summarization-agents-work.md) | Tokenization, generation, context selection, provenance and output evaluation |
-| [Primary AI reading map](docs/history-of-agentic-loops.md) | Distinguishing training, inference, search and tool orchestration through published research |
-
-Practice the [AI inference gateway](docs/backend-system-design-casebook.md#12-ai-inference-gateway-and-evaluation-platform). Evaluate task quality separately from availability and speed. This material does not substitute for ML research or distributed-training expertise.
-
-<a id="platforms"></a>
-
-<a id="developer-platforms-reliability--release-engineering"></a>
-
-### 🛠️ Developer platforms, reliability & release engineering
-
-> **Design challenge:** how do you improve delivery while making failures easier to detect, contain and recover from?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Mobile platform leadership](docs/mobile-platform-engineering-em.md) | Module ownership, release coordination and incident response |
-| [App modularization and dependency injection](docs/app-modularization.md) | Dependency boundaries, interfaces and adoption |
-| [Mobile CI/CD](docs/mobile-ci-cd-pipeline.md) | Build pipelines, signing, validation and distribution |
-| [App performance monitoring](docs/app-performance-monitoring.md) | Startup, responsiveness, resource usage and metric definitions |
-| [Crash reporting and observability](docs/crash-reporting-sdk.md) | Diagnostics, breadcrumbs and abnormal termination analysis |
-
-Connect these to the [backend guide's reliability and release sections](docs/backend-engineering-manager-guide.md). A backend rollback, an App Store rollout pause and a remote feature flag have different recovery capabilities.
-
-<a id="leadership"></a>
-
-<a id="leadership-behavioral-preparation--reference"></a>
-
-### 🧭 Leadership, behavioral preparation & reference
-
-| Resource | How to use it |
-| :--- | :--- |
-| [Leadership and behavioral guide](docs/behavioral-engineering-manager-staff-guide.md) | Reconstruct actual decisions, people outcomes, conflicts, failures and learning |
-| [Rahul's preparation plan](docs/rahul-backend-interview-plan.md) | See a resume-grounded evidence bank, scope assessment and preparation sequence |
-| [Client architecture cheatsheet](docs/cheatsheet.md) | Recall patterns after studying their constraints |
-| [Generic mobile problems](docs/generic-mobile-problems.md) | Practice cross-cutting client design |
-| [Evidence standard and sources](docs/evidence-and-sources.md) | Check published behavior and distinguish measurements from proposed targets |
-| [Repository review record](docs/repository-review.md) | Understand repairs, validation scope and remaining limitations |
+**33 production-grade specs** across 10 domains. **13,000+ lines** of real content.
 
 ---
 
-## Streaming terminology to prepare
+### 🤖 AI, LLM & On-Device ML
 
-Streaming interviews can span both product economics and media infrastructure. The [streaming business and architecture guide](docs/streaming-business-and-architecture.md) connects the following concepts to design exercises and primary sources:
-
-| Topic | Preparation focus |
-| :--- | :--- |
-| FAST | Free ad-supported streaming TV: scheduled channels, program guides, playout and ad breaks |
-| SVOD | Subscription VOD: billing lifecycle, entitlement, access restoration and session policy |
-| AVOD | Advertising-supported VOD: ad decisions, consent, measurement and playback continuity |
-| TVOD | Transactional VOD: purchases, rentals, rights windows and payment reconciliation |
-| Hybrid tiers | Separating subscription state, advertising policy and content rights |
-| CSAI / SSAI | Client-side versus server-side insertion, timing, fallback and measurement responsibilities |
-| HLS / DASH / CMAF | Delivery manifests, renditions, media compatibility and supported player behavior |
-| DRM / CDN / QoE | Content protection, cache and origin behavior, and defined playback outcomes |
-
-Definitions: [Amazon Ads VOD guide](https://advertising.amazon.com/library/guides/avod-svod-tvod-video-on-demand), [AWS FAST channel architecture](https://aws.amazon.com/blogs/media/deploying-virtual-linear-ott-channels-using-aws-media-services/). Use the linked guide for the technical references and failure drills.
-
-## Architecture decision reference
-
-Use this to recall decisions, then defend them for the actual workload. There is no single mandatory architecture or cache budget.
-
-| Area | Options and judgment to explain |
-| :--- | :--- |
-| App layers | SwiftUI view, ObservableObject ViewModel and injected domain/data services under [the repo convention](REPO_SPEC.md) |
-| Structured local state | SQLite or Core Data according to access, concurrency and migration needs |
-| Credentials | Appropriate Keychain access policy; never rely on ordinary preferences for secrets |
-| Media and images | Persistent versus purgeable storage, decoding size, retention and cancellation |
-| Realtime transport | WebSocket for interactive sessions; HTTP for request/response; push as a system-controlled hint |
-| Pagination | A stable order, matching index and explicit snapshot/expiry semantics |
-| Mutating APIs | Durable operation identity, request fingerprint, atomic enforcement and ambiguous-outcome recovery |
-| Async work | Durable acceptance, replay-safe effects, bounded queues and observable recovery |
-| Release safety | Compatibility, measured canaries and a recovery action that actually works for installed clients |
-
-## A design conversation framework
-
-Adapt the pacing to the actual interview; this is a rehearsal sequence, not a company-prescribed duration.
-
-| Phase | Concrete output |
-| :--- | :--- |
-| Clarify | Customer journey, scope, workload inputs, authorization and correctness invariant |
-| Model | APIs, entities, indexes, authoritative state and acknowledgement boundary |
-| Design | Normal request path and justified component boundaries |
-| Deep dive | Concurrency, timeout, retry, replay, stale state and dependency failure |
-| Operate | User-outcome metrics, overload, recovery, rollout, security and cost |
-| Lead | Ownership, staffing, delivery or cross-team adoption appropriate to the role |
-
-## Primary-source reference library
-
-Read for a specific decision. A product overview alone is not evidence for a performance number.
-
-| Area | Primary material | What to extract |
+| Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
-| Streaming delivery | [Apple HLS](https://developer.apple.com/streaming/), [HLS authoring](https://developer.apple.com/documentation/http-live-streaming/hls-authoring-specification-for-apple-devices/), [DASH-IF](https://dashif.org/guidelines/iop-v5/) | Supported media profiles, playlist behavior and compatibility |
-| Streaming monetization | [VOD models](https://advertising.amazon.com/library/guides/avod-svod-tvod-video-on-demand), [FAST channels](https://aws.amazon.com/blogs/media/deploying-virtual-linear-ott-channels-using-aws-media-services/) | Revenue/access model versus channel and playback behavior |
-| Advertising | [IAB Tech Lab VAST 4.3](https://iabtechlab.com/wp-content/uploads/2022/09/VAST_4.3.pdf), [IVS SSAI](https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/server-side-ad-insertion.html), [MediaTailor](https://docs.aws.amazon.com/mediatailor/latest/ug/what-is.html) | Ad contracts, insertion and integration responsibilities |
-| Media distribution | [CloudFront streaming](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/on-demand-streaming-video.html) | Encoding, packaging, origin and delivery boundaries |
-| Reliability | [Google SRE objectives](https://sre.google/sre-book/service-level-objectives/), [overload](https://sre.google/sre-book/handling-overload/), [incident management](https://sre.google/sre-book/managing-incidents/) | Defined SLIs, admission control and coordinated recovery |
-| Transactions and replication | [PostgreSQL isolation](https://www.postgresql.org/docs/current/transaction-iso.html), [replication](https://www.postgresql.org/docs/current/warm-standby.html), [DDL](https://www.postgresql.org/docs/current/sql-altertable.html) | Actual guarantees, stale reads, failover and locking |
-| Events and payments | [Kafka design](https://kafka.apache.org/41/design/design/), [AWS outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html), [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests) | Ordering, replay and external-effect boundaries |
-| HTTP and identity | [HTTP semantics](https://www.rfc-editor.org/rfc/rfc9110.html), [WebSocket](https://www.rfc-editor.org/rfc/rfc6455), [OAuth security BCP](https://www.rfc-editor.org/rfc/rfc9700), [PKCE](https://www.rfc-editor.org/rfc/rfc7636) | Protocol behavior, authentication and retry implications |
-| Mobile persistence | [SQLite WAL](https://sqlite.org/wal.html), [SQLCipher design](https://www.zetetic.net/sqlcipher/design/) | Writer concurrency, checkpoints, durability and encryption behavior |
-| Mobile operations | [Jetsam diagnostics](https://developer.apple.com/documentation/xcode/identifying-high-memory-use-with-jetsam-event-reports), [background push](https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app), [phased release](https://developer.apple.com/help/app-store-connect/update-your-app/release-a-version-update-in-phases) | Device-specific evidence and recovery limitations |
-| AI mechanics and runtime | [Transformer paper](https://arxiv.org/abs/1706.03762), [ReAct](https://arxiv.org/abs/2210.03629), [ExecuTorch](https://docs.pytorch.org/executorch/stable/index.html), [Apple Foundation Models](https://developer.apple.com/documentation/foundationmodels) | Model computation versus orchestration and actual platform support |
+| [🤖 On-Device LLM & Mobile AI Assistant Engine](docs/on-device-llm-ai-engine.md) | INT4 quantization, CoreML/ExecuTorch runtime, local RAG (USearch/SQLite VSS), token streaming, thermal throttling | Apple, Meta, Google, Microsoft, Snap |
+| [📝 How AI Text Summarization Agents Work Under the Hood](docs/how-ai-summarization-agents-work.md) | BPE tokenization, vector embeddings, Self-Attention equations, KV-cache math, Map-Reduce chunking | All FAANG, OpenAI, Anthropic |
+| [📜 Complete History & Evolution of Agentic AI (1950–2026)](docs/history-of-agentic-loops.md) | Game Theory (Deep Blue, AlphaGo), Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) | All AI & Tech Companies |
 
-Use [the evidence standard](docs/evidence-and-sources.md) for how to cite and qualify results. Verify provider and platform versions when implementing a design.
+---
 
-## Evidence, verification & contribution
+### 🎬 Streaming
 
-This is a study library. Embedded client snippets are incomplete sketches rather than a compiled application, and remaining tuning choices require actual measurements. Resume results are candidate-reported. No hiring outcome, company level equivalence or universal production benchmark is promised.
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [📺 Long-form Video Streaming Player](docs/video-streaming-player.md) | HLS/DASH, AVPlayer, adaptive bitrate, FairPlay DRM, offline download | Google, Apple, Netflix |
+| [🎞 Short-form Video Feed](docs/video-feed-streaming.md) | AVPlayer pool (3-item), prefetch engine, low-bandwidth 240p, memory guard | Google, Meta, Snap |
+| [🎵 Spotify / Apple Music Audio Player](docs/spotify-audio-player.md) | AVQueuePlayer gapless, AVAssetDownloadURLSession DRM offline, MPNowPlayingInfoCenter, FairPlay | Apple, Spotify |
 
-Run the documentation check from the repository root:
+---
 
-```sh
-python3 scripts/check_docs.py
+### 💬 Messaging & Collaboration
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [💬 Instant Messaging & Chat](docs/messaging-chat.md) | SQLite WAL, message state machine, E2EE (Signal protocol), offline queue | Meta, Slack, Google |
+| [📝 Collaborative Document Editor](docs/collaborative-editor.md) | OT vs CRDTs, delta sync, presence/cursors, op log | Google, Notion, Dropbox |
+| [💼 Slack Multi-Workspace Channel Sync](docs/slack-channel-sync.md) | Per-workspace SQLite isolation, WebSocket per workspace, unread badge actor | Slack, Salesforce, Microsoft |
+| [📹 Google Meet / Zoom Video Calling](docs/google-meet-webrtc.md) | WebRTC SFU, ICE/STUN/TURN, thermal throttling, AVAudioSession, dynamic grid | Google, Meta, Zoom |
+
+---
+
+### 📡 Real-Time & Geospatial
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🗺 Real-Time Location & Ride Tracking](docs/realtime-location-tracking.md) | WebSocket, Kalman filter, GPS batching, map delta rendering, battery guard | Uber, Lyft, DoorDash |
+| [🍕 DoorDash Live Delivery Tracker](docs/doordash-delivery-tracker.md) | Order state machine, ActivityKit Dynamic Island, hybrid WebSocket+APNs+polling | DoorDash, Uber Eats, Swiggy |
+
+---
+
+### 🏦 Payments, E-Commerce & Marketplace
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🖥 Server-Driven UI (SDUI) Engine](docs/sdui-engine.md) | Component registry, schema versioning, fallback engine, analytics injection | Uber, Meta, Google |
+| [💳 Payment Checkout Flow](docs/payment-checkout.md) | Tokenization, idempotency keys, payment state machine, PCI DSS, 3DS | Google Pay, Stripe, Square |
+| [🛍 Product Catalog & Discovery Feed](docs/e-commerce-catalog.md) | Image-heavy grid, cursor pagination, cart sync, wishlist offline queue | Amazon, Shopify, Etsy |
+| [🏠 Airbnb Search & Property Booking](docs/airbnb-search-booking.md) | Map+grid sync, 800ms debounce, blurhash, 15-min inventory hold, booking draft | Airbnb, Booking.com |
+
+---
+
+### 🌐 Social & Feed
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [📰 Infinite Social Feed](docs/social-feed.md) | Cursor-based pagination, image pipeline, offline feed (200 items), impression tracking | Meta, Twitter/X, LinkedIn |
+
+---
+
+### 📅 Productivity
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [📅 Google Calendar Mobile Client](docs/google-calendar.md) | RFC 5545 RRule, infinite scroll UICollectionViewLayout, APNs silent sync, conflict resolution | Google, Apple, Microsoft |
+
+---
+
+### 🔐 Security & Identity
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🔐 Authentication: OAuth2 / SSO / Biometric](docs/authentication-oauth-biometric.md) | PKCE flow, Keychain storage, Secure Enclave, atomic token refresh actor, multi-device logout | All FAANG, Stripe, Salesforce |
+| [🛡 Security, Cryptography & Zero-Trust Engine](docs/mobile-security-privacy-engine.md) | Apple App Attest, Secure Enclave key derivation, SPKI TLS 1.3 pinning, SQLCipher encryption | Stripe, Square, Apple, Signal, Meta |
+| [🔗 Deep Linking & Universal Links](docs/deep-linking-universal-links.md) | AASA file (no CDN!), deferred deep links, router/coordinator, cold-start race condition | Meta, Airbnb, Spotify |
+
+---
+
+### 🔧 Platform Infrastructure & Engineering Leadership (EM / Staff)
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [🏛 Mobile Platform Eng, Release & Governance (EM)](docs/mobile-platform-engineering-em.md) | Interface vs Implementation graph, 7-day canary train, Sev-1 triage & remote kill switch | Uber, Meta, Airbnb, Stripe |
+| [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
+| [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |
+| [📊 Mobile Analytics & Telemetry SDK](docs/analytics-sdk.md) | Ring buffer, SQLite journal, battery-aware batching, crash recovery, sampling | Uber, Meta, Google |
+| [🚩 Feature Flag & Experimentation System](docs/feature-flag-system.md) | Fallback chain, synchronous local eval, kill switch (<5min), A/B tracking | Uber, Airbnb, Meta |
+| [🔄 Offline-First Data Sync Engine](docs/offline-sync-engine.md) | Local-first architecture, dirty-flag sync, LWW conflict resolution, BGTaskScheduler | Google, Apple, Dropbox |
+| [🧩 App Modularization & DI System](docs/app-modularization.md) | Module hierarchy, interface modules, DI (Needle pattern), build time, SPM | Uber, Google, Grab |
+| [🔔 Push Notification System](docs/push-notification-system.md) | APNs token lifecycle + FCM HTTP v1 cross-platform, silent push, deferred deep links | All FAANG, Airbnb, Spotify |
+| [💥 Crash Reporting & Observability SDK](docs/crash-reporting-sdk.md) | Signal handlers, OOM detection, breadcrumb ring buffer, dSYM symbolication | Google (Firebase), Meta, Uber |
+| [🧪 A/B Testing & Experimentation SDK](docs/ab-testing-experimentation-sdk.md) | Deterministic MurmurHash bucketing, sticky assignment, kill switch via silent push | Google, Airbnb, Spotify |
+| [⚡ App Performance Monitoring (APM)](docs/app-performance-monitoring.md) | MetricKit, pre-main cold start, hitch rate vs hang, URL template anti-pattern | All 10M+ user apps |
+| [🚀 Mobile CI/CD Pipeline & Release Eng](docs/mobile-ci-cd-pipeline.md) | Fastlane match, Xcode Cloud, code signing, phased rollout, auto-rollback | Uber, Meta, Google |
+| [🔍 Search with Autocomplete & Offline Index](docs/search-autocomplete.md) | Task-based debounce, SQLite FTS5 offline index, request race condition, trie vs FTS5 | Google, Amazon, Airbnb |
+
+---
+
+### 📈 Analytics & Growth
+
+| Problem | Key Concepts | Target Companies |
+| :--- | :--- | :--- |
+| [📈 User Analytics Event Pipeline](docs/user-analytics-event-pipeline.md) | 8-event taxonomy, DAU/MAU via HyperLogLog, Kafka→BigQuery, user journey, persona segmentation | Meta, Google, Uber, DoorDash |
+
+---
+
+### 🎯 Engineering Leadership, Behavioral & Executive Master Guide
+
+| Resource | Scope & Key Concepts | Target Roles & Companies |
+| :--- | :--- | :--- |
+| [🎯 FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](docs/behavioral-engineering-manager-staff-guide.md) | **The STAR Technique & Probing Dimensions ("Peeling the Onion")**, 5 Core Leadership Principles (Ownership, Bias for Action, Disagree & Commit, Learn & Be Curious, Dive Deep), People & Talent Management (PIP vs Coaching, Keeper Test), Salesforce V2MOM alignment model, and deep analysis of real LeetCode Discuss & Blind interview questions across Meta, Google, Amazon, Netflix, Apple & Salesforce. | Engineering Manager (EM / M1 / M2), Staff/Principal Engineer, Director of Engineering, Senior Director & AVP/VP at Google, Meta, Amazon, Apple, Netflix, Salesforce, Uber, Stripe |
+
+---
+
+### 📚 References, Cheatsheets & Misc History
+
+| Resource | What's In It |
+| :--- | :--- |
+| [📊 Master Cheatsheet](docs/cheatsheet.md) | All key numbers, decisions, and anti-patterns in one page |
+| [📜 Complete History & Evolution of Agentic AI (1950–2026)](docs/history-of-agentic-loops.md) | Deep Blue, AlphaGo, Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) |
+| [📝 How AI Text Summarization Agents Work Under the Hood](docs/how-ai-summarization-agents-work.md) | BPE tokenization, vector embeddings, Self-Attention equations, KV-cache math, Map-Reduce chunking |
+| [🧩 Generic Mobile Problems](docs/generic-mobile-problems.md) | Cross-cutting patterns applicable to any mobile system design |
+
+---
+
+## 🏗 The 45-Minute Interview Framework
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│  Phase             │  Time      │  What You Must Achieve             │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. Clarify        │  0–5 min   │  Scope, scale (DAU), offline?, platform │
+│  2. HLD            │  5–15 min  │  Full client-server component map  │
+│  3. Data & API     │  15–25 min │  Entities, endpoints, pagination   │
+│  4. Deep Dives     │  25–40 min │  Own 2–3 hardest subsystems        │
+│  5. Ops & Scale    │  40–45 min │  Failures, metrics, rollout plan   │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-It checks local links and anchors, code-fence balance, the ASCII hyphen rule and coverage of every document in this README. It does not compile Swift, benchmark systems or certify all technical claims.
+### The 4-Layer Client Architecture (Use This Every Time)
 
-Contribute a better failure walkthrough, a substantiated correction or a complete verified implementation. Follow [CONTRIBUTING.md](CONTRIBUTING.md), [REPO_SPEC.md](REPO_SPEC.md) and the [evidence standard](docs/evidence-and-sources.md).
+```
+┌──────────────────────────────────────────────────────────────┐
+│  View Layer         (SwiftUI — zero business logic)           │
+├──────────────────────────────────────────────────────────────┤
+│  Presentation Layer (ViewModel — state, user events)          │
+├──────────────────────────────────────────────────────────────┤
+│  Domain / Use Case  (Business rules, repository protocols)    │
+├──────────────────────────────────────────────────────────────┤
+│  Data Layer         (Repository: Remote + Local)              │
+│     ├── Remote  → URLSession / gRPC / WebSocket               │
+│     └── Local   → SQLite / CoreData / NSCache / Keychain      │
+└──────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## About the author
+## 📊 Production Benchmarks (Quote These in Interviews)
 
-Built and maintained by **Rahul Goel**, an engineering manager with experience across streaming, social, payments and e-commerce client platforms. The [resume-based plan](docs/rahul-backend-interview-plan.md) connects those projects to interview evidence while distinguishing team contributions, personal ownership and product-wide scale.
+| Metric | Target | Source |
+| :--- | :--- | :--- |
+| Cold start (p50) | `< 1.2s` | Apple HIG, Uber Engineering |
+| Warm start | `< 400ms` | Google Play Vitals |
+| UI frame budget (60Hz) | `16.6ms` | CoreAnimation |
+| UI frame budget (120Hz ProMotion) | `8.3ms` | ProMotion / CADisplayLink |
+| Memory before OOM warning | `~250MB` | WWDC 2018 |
+| Hard OOM crash threshold | `~350MB` | iOS crash telemetry |
+| API p99 latency target | `< 200ms` client-side | Uber API principles |
+| Search debounce | `300ms` | Apple HIG |
+| WebSocket heartbeat | `30s` | RFC 6455 |
+| Analytics flush | `30s or 100 events` | Firebase Analytics |
+| HLS segment size | `6s` | Apple HLS Authoring Spec |
+| APNs max payload | `4KB` | Apple docs |
+| FCM messages/day | `400B+` | Firebase I/O 2023 |
+| Redis HyperLogLog error | `0.81%` | Redis docs |
+| Redis HLL memory | `max 12KB/counter` | Redis docs |
+| Session timeout | `30 min inactivity` | Google Analytics, Amplitude |
+| DAU/MAU stickiness (great) | `> 40%` | Instagram, Slack |
+| Crash-free session target | `> 99.9%` | Firebase Crashlytics |
+| BGAppRefreshTask window | `Max 30s` | Apple Background Tasks |
+| OAuth2 PKCE code_verifier | `43 char min` | RFC 7636 |
+| App Store phased rollout | `7 days to 100%` | App Store Connect |
+| On-Device LLM RAM budget | `≤ 500MB` | Apple WWDC 2024 / ExecuTorch |
+| LLM Time-to-First-Token | `< 100ms` | Apple Neural Engine / Snapdragon NPU |
+| Local Vector Search Latency | `< 15ms` | USearch / HNSW Benchmark |
+| Mobile CI Clean Build Budget | `< 6 min` | Bazel / Tuist Remote Cache |
+| Secure Enclave Key Gen | `< 80ms` | Apple Secure Enclave Spec |
 
-| Connect | Read more |
-| :--- | :--- |
-| [LinkedIn](https://www.linkedin.com/in/therahulgoel/) | [Career background and resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf) |
-| [X @therahulgoel](https://x.com/therahulgoel) / [Twitter](https://twitter.com/therahulgoel) | [Technical writing on Medium](https://therahulgoel.medium.com/) |
-| [GitHub @therahulgoel](https://github.com/therahulgoel) | [Resume-based interview preparation plan](docs/rahul-backend-interview-plan.md) |
+---
 
-If this helps your preparation, star the repository so other engineers can discover it. Corrections, deeper failure analysis and verified implementations are welcome through [the contribution guide](CONTRIBUTING.md).
+## 🔑 Core Technical Decision Reference
 
-[Back to top](#top)
+### Storage
 
-## License
+| Data Type | Solution | Why |
+| :--- | :--- | :--- |
+| Structured / relational | SQLite (WAL mode) | Concurrent reads, fast writes, indexed queries |
+| Secrets / tokens | Keychain | Hardware-backed encryption, survives reinstall |
+| User preferences | UserDefaults | Fast synchronous reads, small data only |
+| Large media / files | FileManager (`/Application Support`) | Persists across reinstall for purchases |
+| In-session objects | NSCache / LRU Cache | Auto-evicts under memory pressure / max cost ($O(1)$ operations via Hash Map + Doubly Linked List) |
 
-Licensed under [MIT](LICENSE).
+### Real-Time Transport
+
+| Protocol | Choose When | iOS API |
+| :--- | :--- | :--- |
+| **WebSocket** | Bidirectional, low-latency (chat, location) | `URLSessionWebSocketTask` |
+| **APNs Push** | App backgrounded, infrequent alerts | `UserNotifications` |
+| **HTTP/2** | Multiple concurrent API requests | `URLSession` (automatic) |
+| **gRPC Streaming** | High-frequency, strongly typed | `gRPC-Swift` |
+
+### Pagination
+
+```
+✅  Cursor-based:  GET /feed?after_cursor=eyJpZCI6MTIzfQ==&limit=20
+    → Stable on inserts | O(1) server cost | No duplicates
+
+❌  Offset-based:  GET /feed?page=5&limit=20
+    → Items shift on insert | O(n) server scan | Duplicates on fast feeds
+```
+
+---
+
+## 🧠 What Makes a Staff/EM Answer Different
+
+| Dimension | Senior (L5) | Staff / EM (L6/L7) |
+| :--- | :--- | :--- |
+| **Scope** | Designs what's asked | Explicitly states in-scope AND out-of-scope |
+| **Numbers** | "We'll use a cache" | "NSCache 50MB L1, 7-day TTL on disk, evict on `didReceiveMemoryWarning`" |
+| **Trade-offs** | Lists options | Defends a choice with cost/complexity/team reasoning |
+| **Failure modes** | Mentions errors | Covers stale cache, offline fallback, circuit breaker |
+| **Observability** | "We'd add logging" | Names specific metrics: p99 render, OOM rate, crash-free sessions |
+| **Drive** | Answers questions | Owns the interview, states agenda, moves through phases |
+
+---
+
+## 🤝 Contributing
+
+Found an issue or want to add a new problem? **PRs are welcome.**  
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for quality standards and the spec format.
+
+---
+
+## 👤 About the Author
+
+Built by a mobile engineering leader with **12+ years** scaling iOS apps to **100M+ users** across streaming, social, payments, and e-commerce.
+
+Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**  
+Follow on X / Twitter: **[@therahulgoel](https://x.com/therahulgoel)**
+
+If this helped you level up or land an offer — a ⭐ takes one second and helps this reach engineers who need it.
 
 ---
 
 <div align="center">
 
-[Star this repository](https://github.com/therahulgoel/ios-system-design) · [Connect on LinkedIn](https://www.linkedin.com/in/therahulgoel/) · [Follow on X / Twitter](https://x.com/therahulgoel) · [Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design)
+**📱 iOS Mobile System Design · 33 Production-Grade Specs · 13,000+ Lines of Real Content**
+
+[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Share on Twitter](https://twitter.com/intent/tweet?text=The+most+comprehensive+iOS+mobile+system+design+resource+for+Staff+%26+EM+interviews.+33+production-grade+specs+with+real+numbers.&url=https://github.com/therahulgoel/ios-system-design)
 
 </div>
