@@ -13,7 +13,7 @@
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Leadership & Behavioral Guide](docs/behavioral-engineering-manager-staff-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
+[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Behavioral EM Guide](docs/behavioral-engineering-manager-staff-guide.md) · [🛡 Backend EM Guide](docs/backend-engineering-manager-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 
@@ -144,6 +144,7 @@ Every spec includes:
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [🏛 Mobile Platform Eng, Release & Governance (EM)](docs/mobile-platform-engineering-em.md) | Interface vs Implementation graph, 7-day canary train, Sev-1 triage & remote kill switch | Uber, Meta, Airbnb, Stripe |
+| [🛡 Senior Backend EM & Distributed Systems (SDM)](docs/backend-engineering-manager-guide.md) | Mobile BFF & Federation, Auth/Identity, Reco feed (<60ms SLA), Search CDC, Saga Checkout, Push, Scaling Playbook, SRE & FinOps | Meta, Google, Amazon, Stripe, Uber, Netflix |
 | [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
 | [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |
 | [📊 Mobile Analytics & Telemetry SDK](docs/analytics-sdk.md) | Ring buffer, SQLite journal, battery-aware batching, crash recovery, sampling | Uber, Meta, Google |
@@ -172,6 +173,7 @@ Every spec includes:
 | Resource | Scope & Key Concepts | Target Roles & Companies |
 | :--- | :--- | :--- |
 | [🎯 FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](docs/behavioral-engineering-manager-staff-guide.md) | **The STAR Technique & Probing Dimensions ("Peeling the Onion")**, 5 Core Leadership Principles (Ownership, Bias for Action, Disagree & Commit, Learn & Be Curious, Dive Deep), People & Talent Management (PIP vs Coaching, Keeper Test), Salesforce V2MOM alignment model, and deep analysis of real LeetCode Discuss & Blind interview questions across Meta, Google, Amazon, Netflix, Apple & Salesforce. | Engineering Manager (EM / M1 / M2), Staff/Principal Engineer, Director of Engineering, Senior Director & AVP/VP at Google, Meta, Amazon, Apple, Netflix, Salesforce, Uber, Stripe |
+| [🛡 Senior Backend EM & Distributed Systems Master Guide](docs/backend-engineering-manager-guide.md) | **End-to-End Backend EM Leadership from an Apps Standpoint**: Mobile BFF & GraphQL federation, Auth/Identity (JWT + Redis Blacklist), Recommendation feeds (Two-stage Retrieval + ML Ranking SLA < 60ms), Search (CDC Debezium + OpenSearch + Trie), Checkout/Payments (Saga Orchestration + Transactional Outbox + Idempotency), Push Engine, Scaling Playbook (Cache Stampede, DB Sharding, Read-Your-Own-Writes), SRE Error Budgets, Sev-1 Incident Command, Zero-Downtime DB Migrations (Expand-Contract), Cloud FinOps & Capacity math. | Senior Engineering Manager (Senior EM / SDM / M1 / M2), Staff/Principal Backend Architect at Meta, Google, Amazon, Stripe, Uber, Netflix |
 
 ---
 
