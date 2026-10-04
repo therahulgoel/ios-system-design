@@ -1,15 +1,10 @@
 # Design Spotify / Apple Music Audio Player with Offline Mode
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing an audio streaming app like Spotify or Apple Music requires handling uninterrupted background playback, seamless offline DRM (Digital Rights Management) downloads, and gapless transitions between tracks. This problem evaluates a candidate's mastery of the `AVFoundation` framework, OS-level integration (Lock Screen, Control Center), and robust background resource management.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Apple | Music / Podcasts / Books teams | ★★★★★ |
-| Spotify | Core competency | ★★★★★ |
-| Amazon | Amazon Music, Audible | ★★★★☆ |
-| Netflix / Disney+ | Video players share similar AVFoundation traits | ★★★☆☆ |
 
 ## Scope Definition
 
@@ -37,13 +32,15 @@ Designing an audio streaming app like Spotify or Apple Music requires handling u
 5. Pause playback when headphones are disconnected.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Start Latency | < 500ms (Time to first audio) | Spotify Engineering / HIG |
-| Gapless Transition | 0ms | Core Audio |
-| Lock Screen Sync | 1s interval | Apple MediaPlayer Docs |
-| Concurrent Downloads| Max 3 | Spotify bandwidth heuristics |
-| Offline Key Expiry | e.g., 48 hours | FairPlay Streaming constraints |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Start Latency
+- Gapless Transition
+- Lock Screen Sync
+- Concurrent Downloads
+- Offline Key Expiry
+
 
 ## High-Level Architecture (HLD)
 
@@ -186,7 +183,7 @@ CREATE TABLE playlist_tracks (
 
 ## Client Architecture Deep-Dives
 
-### Subsystem 1 — Gapless Playback Engine
+### Subsystem 1 - Gapless Playback Engine
 To achieve 0ms latency between tracks, you cannot destroy and recreate `AVPlayer`. You must use `AVQueuePlayer`.
 
 ```swift
@@ -226,7 +223,7 @@ class AudioPlayerEngine {
 }
 ```
 
-### Subsystem 2 — Offline DRM Downloads
+### Subsystem 2 - Offline DRM Downloads
 Downloading DRM-protected HLS streams requires a specialized URL session and writing into a specialized bundle format (`.movpkg`). Standard `URLSession` will corrupt DRM assets.
 
 ```swift
@@ -268,7 +265,7 @@ class DownloadManager: NSObject, AVAssetDownloadDelegate {
 }
 ```
 
-### Subsystem 3 — OS Audio Integrations
+### Subsystem 3 - OS Audio Integrations
 A production player must handle lock screen controls and respond to hardware interrupts (like pulling out AirPods).
 
 ```swift
@@ -359,13 +356,9 @@ class OSIntegrationManager {
 - **Download Success Rate**: Track chunk failures and DRM key acquisition failures.
 - **Background Suspension Rate**: How often iOS kills the app while playing (usually memory-related).
 
-## Production Benchmarks Reference
-| Metric | Real World Number | Source |
-| :--- | :--- | :--- |
-| Max Concurrent Downloads | 3 | Spotify bandwidth architecture |
-| Audio Bitrates | 24kbps - 320kbps | Spotify Quality Settings |
-| DRM Key Expiry | ~48-72 hours | Apple FairPlay Streaming |
-| Audio Segment Size | ~10 seconds | HLS Audio Guidelines |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Know `AVAssetDownloadURLSession`.** If you suggest standard `URLSession` for DRM/HLS downloads, you will fail the iOS domain portion.

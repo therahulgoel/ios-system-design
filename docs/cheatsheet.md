@@ -1,18 +1,21 @@
-# Mobile System Design — Master Cheatsheet
-### One-page reference for Staff, EM, Principal, Director & AVP interviews. All numbers are real and sourced.
+# Mobile System Design - Master Cheatsheet
 
-> 🎯 **Preparing for Leadership & Behavioral Rounds?** Review the [FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](behavioral-engineering-manager-staff-guide.md) covering the STAR framework, probing follow-ups, and real questions from Google, Meta, Amazon, Netflix, Apple & Salesforce.
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+### Client architecture reference. Use the backend guide for distributed systems and the evidence standard before quoting a performance claim.
+
+> 🎯 **Preparing for Leadership & Behavioral Rounds?** Review the [FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](behavioral-engineering-manager-staff-guide.md) covering real career evidence, STAR structure and authored practice prompts.
 
 ---
 
 ## The Universal 45-Minute Framework
 
 ```
-0–5 min   → CLARIFY:    Scope (in/out), scale (DAU), offline?, platform?
-5–15 min  → HLD:        4-layer diagram + data flow (CDN → API → Cache → UI)
-15–25 min → DATA/API:   Entities, endpoints, cursor pagination, payload format
-25–40 min → DEEP DIVE:  2-3 hardest subsystems (you choose which ones)
-40–45 min → OPS:        Failure modes, metrics, rollout strategy, A/B gates
+0-5 min   → CLARIFY:    Scope (in/out), scale (DAU), offline?, platform?
+5-15 min  → HLD:        4-layer diagram + data flow (CDN → API → Cache → UI)
+15-25 min → DATA/API:   Entities, endpoints, cursor pagination, payload format
+25-40 min → DEEP DIVE:  2-3 hardest subsystems (you choose which ones)
+40-45 min → OPS:        Failure modes, metrics, rollout strategy, A/B gates
 ```
 
 **Staff/EM signal**: State your agenda at the start. *"I'll spend 5 minutes on scope, then walk through the full architecture, then deep-dive the sync engine and the offline queue. Does that work?"*
@@ -36,21 +39,13 @@
 - **Thread Safety**: Wrap inside a Swift `actor` or `NSLock` for concurrent access.
 - **Cost-Based Eviction**: Track total byte cost (`width * height * 4` for images) and auto-evict least recently used node when exceeding max cost (e.g., 50MB).
 
-**SQLite WAL numbers**: 2–3x faster writes than DELETE journal mode. Checkpoint every 1,000 writes or 5s. Supports concurrent readers + one writer. Source: [sqlite.org/wal.html](https://sqlite.org/wal.html)
+**SQLite WAL:** permits readers alongside one writer. The default automatic checkpoint threshold is 1,000 WAL pages, not writes or seconds. Benchmark the workload and choose durability settings deliberately. Source: [SQLite WAL](https://sqlite.org/wal.html)
 
 ---
 
 ## Caching Policy Reference
 
-| Data Type | L1 (Memory) | L2 (Disk) | TTL | Eviction | Write Policy |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Feed items | 50MB NSCache | 100MB | 5 min | LRU | Write-through |
-| Images (decoded) | 50MB NSCache | 500MB | 7 days | LRU + memory pressure | Write-around |
-| Auth tokens | Keychain only | Keychain | Manual revoke | Never auto-evict | Write-through |
-| User profile | 10MB NSCache | SQLite | No TTL | Manual invalidate | Write-back |
-| Search results | 20MB NSCache | SQLite | 10 min | LRU (100 queries) | Write-through |
-| Feature flags | NSDictionary | UserDefaults + SQLite | Server-defined | On config refresh | Write-through |
-| API responses | URLCache | URLCache disk | ETag-based | LRU | Conditional GET |
+Choose cache capacity, eviction and freshness from measured object sizes, memory pressure, reuse and correctness needs. Secrets belong in appropriate secure storage. Use ETag validation for compatible HTTP representations.
 
 **Image memory math**: `width × height × 4 bytes` (ARGB8888). A 1000×1000px image = **4MB decoded**. Always downsample to display size before caching. Source: UIImage ARGB8888 pixel format.
 
@@ -69,7 +64,7 @@
 
 **WebSocket heartbeat**: 30s ping/pong to detect zombie connections (RFC 6455 recommendation, confirmed by Uber Engineering production config).
 
-**Reconnect backoff**: `delay = min(base × 2^attempt, maxDelay) × (1 ± jitter)` — base: 1s, max: 60s, jitter: ±30%. Jitter prevents thundering herd after server restart.
+**Reconnect backoff**: `delay = min(base × 2^attempt, maxDelay) × (1 ± jitter)` - base: 1s, max: 60s, jitter: ±30%. Jitter prevents thundering herd after server restart.
 
 ---
 
@@ -108,14 +103,14 @@ Batch endpoint:    POST /v1/batch for multiple operations in one RTT
 ## Concurrency Patterns
 
 ```swift
-// ✅ Swift Concurrency — thread-safe shared state
+// ✅ Swift Concurrency - thread-safe shared state
 actor ImageCache {
     private var store: [URL: UIImage] = [:]
     func image(for url: URL) -> UIImage? { store[url] }
     func store(_ image: UIImage, for url: URL) { store[url] = image }
 }
 
-// ✅ GCD — background DB writes (never on main thread)
+// ✅ GCD - background DB writes (never on main thread)
 let dbWriteQueue = DispatchQueue(label: "com.app.db.write", qos: .utility)
 let dbReadQueue  = DispatchQueue(label: "com.app.db.read", attributes: .concurrent)
 
@@ -126,7 +121,7 @@ class FeedViewModel: ObservableObject {
     func loadFeed() async { items = await repository.fetchFeed() }
 }
 
-// ❌ Never do this — main thread DB read blocks UI
+// ❌ Never do this - main thread DB read blocks UI
 let results = db.query("SELECT * FROM messages") // ON MAIN THREAD
 ```
 
@@ -140,7 +135,7 @@ All WRITES:
   Background SyncEngine polls dirty=1 → POST to server → mark dirty=0
 
 All READS:
-  Always from SQLite — UI never waits for network
+  Always from SQLite - UI never waits for network
 
 Conflict resolution:
   Last-Write-Wins (LWW)   → server timestamp wins; simple, use for most entities
@@ -151,7 +146,7 @@ Conflict resolution:
 
 ---
 
-## Image Pipeline (Universal — Used in 80% of Specs)
+## Image Pipeline (Universal - Used in 80% of Specs)
 
 ```
 imageView.load(url, targetSize: imageView.bounds.size × UIScreen.scale)
@@ -164,12 +159,12 @@ Dedup check: in-flight request for same URL? → YES: add completion to observer
     ↓ NO
 URLSession fetch on background queue
     → Decode JPEG/PNG (background thread, never main)
-    → Downsample to targetSize (CGImageSourceCreateThumbnailAtIndex — key API)
+    → Downsample to targetSize (CGImageSourceCreateThumbnailAtIndex - key API)
     → Store L1 + L2
     → Notify all observers
 ```
 
-**Critical**: `CGImageSourceCreateThumbnailAtIndex` with `kCGImageSourceThumbnailMaxPixelSize` decodes directly at the target size — avoids allocating full-resolution bitmap. This is the single biggest memory optimization in image loading.
+**Critical**: `CGImageSourceCreateThumbnailAtIndex` with `kCGImageSourceThumbnailMaxPixelSize` decodes directly at the target size - avoids allocating full-resolution bitmap. This is the single biggest memory optimization in image loading.
 
 ---
 
@@ -182,7 +177,7 @@ URLSession fetch on background queue
 | **Context Window** | Max token limit per prompt + completion | $2,048 - 4,096$ tokens on-device |
 | **Quantization** | Weight compression from FP16 (16-bit) to INT4 (4-bit) | FP16: $6\text{GB} \rightarrow$ INT4: $1.5\text{GB}$ file / $\le 500\text{MB}$ RAM |
 | **RAG** | Retrieval-Augmented Generation via local vector search | Cosine Similarity $\ge 0.80$ match |
-| **MCP** | Model Context Protocol — JSON-RPC 2.0 tool calling protocol | Host $\leftrightarrow$ MCP Client $\leftrightarrow$ Native iOS Tools |
+| **MCP** | Model Context Protocol - JSON-RPC 2.0 tool calling protocol | Host $\leftrightarrow$ MCP Client $\leftrightarrow$ Native iOS Tools |
 | **KV-Cache** | Pre-computed Key-Value attention states stored in RAM | $\text{KV Cache RAM} \approx 2 \cdot L \cdot H \cdot D \cdot S \cdot \text{Bytes}$ |
 | **Embeddings** | Dense vector numerical array representing text semantics | 384 dimensions (MobileBERT / MiniLM) |
 | **Hardware Scheduling** | Execution dispatch across ANE, GPU, and CPU | ANE (Neural Engine) $\rightarrow$ Metal GPU $\rightarrow$ CPU fallback |
@@ -243,47 +238,15 @@ Is Apple Neural Engine (ANE) available & model in CoreML format?
 
 ---
 
-## Production Benchmarks — Complete Reference
+## Measurement and evidence
 
-| Metric | Target | Source |
-| :--- | :--- | :--- |
-| Cold start (p50) | < 1.2s | Apple HIG; WWDC 2019 Session 423 |
-| Warm start | < 400ms | Google Play Vitals thresholds |
-| UI frame budget (60fps) | 16.6ms | CoreAnimation CADisplayLink |
-| UI frame budget (120Hz) | 8.3ms | ProMotion — CADisplayLink |
-| OOM warning (iPhone 12 class) | ~250MB | WWDC 2018 — iOS Memory Deep Dive |
-| Hard OOM crash | ~350–400MB | Measured crash telemetry |
-| Image memory | width × height × 4 bytes | UIImage ARGB8888 pixel format |
-| Feed page payload | < 15KB compressed | Instagram/Facebook Newsfeed Engineering |
-| API p99 latency (client budget) | < 200ms | Uber API Design Principles |
-| Search debounce | 300ms | Apple HIG search patterns |
-| WebSocket heartbeat | 30s | RFC 6455 §5.5.2; Uber production |
-| Reconnect backoff (max) | 60s | Industry standard; AWS SDK reference |
-| HLS segment duration | 6s | Apple HLS Authoring Specification |
-| Video pre-buffer target | 10s within 3s | Netflix Tech Blog |
-| AVPlayer instance overhead | ~15MB | AVFoundation profiling, Instruments |
-| SQLite WAL checkpoint | Every 1,000 writes or 5s | SQLite WAL documentation |
-| Analytics flush trigger | 30s or 100 events | Firebase Analytics production behavior |
-| Analytics event size | ~200–500 bytes JSON | Firebase Analytics |
-| BGAppRefreshTask runtime | Max 30s | Apple Background Tasks WWDC 2019 |
-| Cert pinning rotation | Every 60 days | OWASP Mobile Security Testing Guide |
-| Crash-free session target | > 99.9% | Firebase Crashlytics industry baseline |
-| ANR / Hang rate target | < 0.1% sessions | Google Play Vitals P1 threshold |
-| Feature flag kill switch | < 5 min to 100% users | Uber/Airbnb feature flag SLA |
-| Token bucket refill (search) | 2 tokens/second, max 10 | Standard rate limit for search APIs |
-| On-Device LLM Model RAM Budget | $\le 500\text{MB}$ RAM (INT4 3B model) | Apple WWDC 2024 / Meta ExecuTorch |
-| LLM Time to First Token (TTFT) | $< 100\text{ms}$ (Local NPU) | Apple Neural Engine / Snapdragon NPU Benchmark |
-| Local Vector Search Latency | $< 15\text{ms}$ for 10,000 vectors | USearch / HNSW C++ Benchmark |
-| Mobile CI Clean Build Budget | $< 6\text{ minutes}$ | Bazel / Tuist Remote Cache Benchmark |
-| Secure Enclave Key Generation | $< 80\text{ms}$ | Apple Secure Enclave Hardware Spec |
-
----
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Common Mistakes by Problem Type
 
 ### Feed Design
 - ❌ Using offset pagination (`page=5`) on a live feed → duplicates on fast inserts  
-- ✅ Cursor-based (`after_cursor=...`) — O(1), stable
+- ✅ Cursor-based (`after_cursor=...`) - O(1), stable
 
 ### Image Loading
 - ❌ Decoding full-resolution image (4K) and scaling with UIImageView.contentMode  
@@ -295,11 +258,11 @@ Is Apple Neural Engine (ANE) available & model in CoreML format?
 
 ### Collaborative Editor
 - ❌ Last-write-wins (timestamp) for text documents → data loss on concurrent edits  
-- ✅ Operational Transformation (OT) — server transforms concurrent ops
+- ✅ Operational Transformation (OT) - server transforms concurrent ops
 
 ### Payment
 - ❌ Showing error on network timeout during payment  
-- ✅ Poll `/status` endpoint every 5s for up to 5 minutes — never assume failure
+- ✅ Poll `/status` endpoint every 5s for up to 5 minutes - never assume failure
 
 ### Real-Time Location
 - ❌ Raw GPS coordinates every 1s → battery drain + network noise  
@@ -311,7 +274,7 @@ Is Apple Neural Engine (ANE) available & model in CoreML format?
 
 ### Auth Token Refresh
 - ❌ Multiple concurrent 401 responses each trigger a token refresh → race condition  
-- ✅ Atomic token refresh with request queue — one refresh, pending requests wait
+- ✅ Atomic token refresh with request queue - one refresh, pending requests wait
 
 ### On-Device AI / LLM
 - ❌ Loading unquantized 16-bit FP weights directly into RAM (`Data(contentsOf: url)`).  

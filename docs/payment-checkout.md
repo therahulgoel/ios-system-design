@@ -1,22 +1,16 @@
 # Mobile Payment Checkout Flow
 
-## Overview
-The Mobile Payment Checkout Flow is a critical component of any e-commerce or fintech application, handling the secure transfer of funds from a user to a merchant. This problem is frequently asked at FAANG and major fintech companies because it tests a candidate's understanding of state management, failure handling, security protocols (PCI DSS), and complex API interactions like idempotency and polling.
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
 
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Stripe | Core business is payments, expects deep knowledge of tokenization and idempotency. | ★★★★★ |
-| Google Pay | Heavy focus on security, Secure Enclave, and hardware-backed auth. | ★★★★☆ |
-| Square | Focuses on terminal state synchronization and offline/online transitions. | ★★★★☆ |
-| PayPal | Tests knowledge of multi-step authentication flows and deep link callbacks. | ★★★★☆ |
-| Uber / Airbnb | Needs robust checkout flows with retries, high availability, and zero double-charging. | ★★★☆☆ |
+
+## Overview
+The Mobile Payment Checkout Flow is a critical component of any e-commerce or fintech application, handling the secure transfer of funds from a user to a merchant.
 
 ## Scope Definition
 
 ### In Scope
 - Payment tokenization and secure data handling (Apple Pay, Stripe SDK)
-- Idempotency and exactly-once processing guarantees
+- Stable operation identity, durable idempotency and payment reconciliation
 - Payment state machine and local state persistence
 - Timeout handling, polling, and terminal state resolution
 - Security (cert pinning, Biometrics, Secure Enclave)
@@ -33,20 +27,22 @@ The Mobile Payment Checkout Flow is a critical component of any e-commerce or fi
 
 ### Functional Requirements
 1. The app must securely tokenize payment methods without exposing raw PANs to the merchant server.
-2. The system must guarantee exactly-once payment processing, preventing double charges.
+2. The backend must atomically enforce operation identity and reconcile ambiguous provider outcomes. Client retries alone cannot guarantee exactly-once external effects.
 3. The app must handle network interruptions and device reboots during a payment attempt.
 4. The system must support 3DS (3D Secure) authentication via web challenge.
-5. The app must resolve the payment to a definitive terminal state (Success or Failure) before allowing the user to proceed or retry.
+5. The app must expose pending or unknown outcomes and resume status reconciliation. Prevent a new payment attempt while the previous outcome remains ambiguous, under the documented backend/provider contract.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Payment Success Rate | > 99.5% | Industry Standard (Stripe) |
-| Idempotency Key TTL | 24 hours | Stripe API Documentation |
-| API Timeout | 30 seconds | Client standard |
-| Polling Duration | up to 5 minutes | Common payment gateway SLA |
-| PCI DSS Compliance | Level 1 | PCI Security Standards Council |
-| 3DS Fraud Reduction | ~70% | Visa Global Data |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Payment Success Rate
+- Idempotency Key TTL
+- API Timeout
+- Polling Duration
+- PCI DSS Compliance
+- 3DS Fraud Reduction
+
 
 ## High-Level Architecture (HLD)
 
@@ -207,7 +203,7 @@ Not strictly applicable for the checkout flow, but for listing past transactions
 
 ## Client Architecture Deep-Dives
 
-### Idempotency and Exactly-Once Processing
+### Idempotency and Ambiguous Payment Outcomes
 Idempotency is crucial. If the app sends a payment request and the network drops before the response arrives, the app doesn't know if the server processed it. Retrying blindly could result in a double charge. By generating a UUID on the client and sending it as an `Idempotency-Key` header, the server can cache the result of the first request. Any subsequent request with the same key will return the cached response instead of charging again.
 
 ```swift
@@ -353,7 +349,7 @@ class PaymentManager: ObservableObject {
 ## Trade-off Analysis
 | Decision | Option A | Option B | Chosen | Why |
 | :--- | :--- | :--- | :--- | :--- |
-| Idempotency Key Generation | Client generates UUID | Server generates token | Client generates UUID | Protects against network drops where client never receives the server token. Guarantees exactly-once on retry. |
+| Idempotency Key Generation | Client generates UUID | Server generates token | Client generates UUID | Protects against network drops where client never receives the server token. Requires durable, atomic backend enforcement and provider reconciliation. |
 | Pending State Handling | Block UI indefinitely | Show 'Pending' & Background | Show 'Pending' & Background | Better UX. Polling can take minutes. Let user navigate away while we check. |
 | Local Storage | CoreData | SQLite (via GRDB) | SQLite | Lighter weight, exact control over schema and threading, easier to ensure strict consistency for financial data. |
 
@@ -364,13 +360,9 @@ class PaymentManager: ObservableObject {
 - `3ds_challenge_rate`: Percentage of transactions requiring 3DS.
 - `app_kill_recovery_count`: Number of pending transactions recovered on app launch.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-| :--- | :--- | :--- |
-| Idempotency TTL | 24 Hours | Stripe API Docs |
-| API Timeout Target | 30s Client / 5m Polling | Stripe / Adyen standard practices |
-| 3DS Fraud Reduction | 70% | Visa Global Data |
-| PCI DSS | Level 1 | PCI Security Standards |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Never assume failure:** Emphasize that a network timeout does NOT mean the payment failed. It is an ambiguous state. Blindly retrying or showing a failure message can lead to double charges or extreme user frustration.
@@ -398,10 +390,10 @@ flowchart TD
 ✅ **Correct**: Treat timeouts as ambiguous. Transition the UI to a "Processing" state and background poll the server for the definitive state using the idempotency key.
 
 ❌ **Mistake**: Not using a client-generated idempotency key.
-✅ **Correct**: Generate a UUID on the iOS client before the request. This guarantees exactly-once processing (preventing double charges) if you have to retry the request.
+✅ **Correct**: Generate a UUID on the iOS client before the request. Reuse the same identity on retry. Duplicate-effect protection requires caller scope, request fingerprint, atomic persistence and provider-specific reconciliation.
 
 ❌ **Mistake**: Retrying 4xx errors.
-✅ **Correct**: A 4xx error (like 402 Payment Required or 400 Bad Request) is terminal. Only retry 5xx errors or network drops.
+✅ **Correct**: Classify status and provider reason together. Authentication recovery and rate limiting differ from rejected payment details. Network errors and 5xx responses can leave an unknown outcome; reconcile before retrying an external effect.
 
 ❌ **Mistake**: Not persisting payment state locally.
 ✅ **Correct**: Save the `Initiated` state to SQLite before the network call. If the app is killed mid-flow, you can read the DB on next launch and resume polling.
@@ -414,7 +406,7 @@ flowchart TD
 A: If the request times out (e.g., >30s), we enter an ambiguous state. We NEVER assume failure. We persist the "Processing" state to SQLite, show a pending UI, and start a `PaymentPoller`. The poller queries the `/status` endpoint every 5s for up to 5 minutes using our client-generated Idempotency Key until we get a terminal Succeeded or Failed state.
 
 > 🔍 *Interviewer follow-up: How do you prevent double charges if the user aggressively taps the "Retry" button?*
-> A: The "Retry" button shouldn't fire a new payment. It should just trigger the poller. But even if a new payment is fired, because we generated a UUID `Idempotency-Key` and tied it to that transaction order, the backend will recognize the duplicate key and return the cached response of the first attempt, guaranteeing exactly-once processing.
+> A: The "Retry" button shouldn't fire a new payment. It should just trigger the poller. But even if a new payment is fired, because we generated a UUID `Idempotency-Key` and tied it to that transaction order, the backend will recognize the duplicate key and return the cached response of the first attempt, subject to the backend and provider idempotency contract. A timeout can remain pending until reconciliation resolves it.
 
 **Q: How do you handle 3DS (3D Secure) authentication?**
 A: If the initial API call returns a `requires_action` status with a challenge URL, the State Machine transitions to `requiresChallenge`. We open a `WKWebView` or SafariViewController with the URL. The user authenticates with their bank. The bank redirects to a specific app deep link (e.g., `app://payment/3ds-complete`), which our `SceneDelegate` intercepts to resume the polling flow.

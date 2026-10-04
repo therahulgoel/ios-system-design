@@ -1,14 +1,10 @@
 # Real-Time Geospatial Tracking & Ride Tracking (Uber / Lyft / DoorDash)
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing a system for real-time location tracking involves capturing high-frequency GPS data on a provider app (driver), transmitting it efficiently, and smoothly rendering it on a consumer app (rider). It tests hardware API knowledge (CoreLocation), battery optimization, noisy data filtering, and real-time networking.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-|---------|--------------|-----------|
-| Uber / Lyft | Core to their entire business model. | ★★★★★ |
-| DoorDash / Instacart | Real-time delivery tracking. | ★★★★★ |
-| Grab / GoJek | Super-apps with heavy ride/delivery focus. | ★★★★★ |
 
 ## Scope Definition
 
@@ -33,12 +29,14 @@ Designing a system for real-time location tracking involves capturing high-frequ
 4. Must handle GPS dead zones (tunnels, rural areas).
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-|-------------|--------|--------|
-| Transmission Frequency | 2-4s (Active) / 15s (Background) | Uber Eng Blog |
-| Location Accuracy | ±3m to ±5m | CLLocation Docs |
-| Battery Consumption | < 5% per hour | iOS Guidelines |
-| Render Framerate | 60fps (Smooth animation) | MapKit Guidelines |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Transmission Frequency
+- Location Accuracy
+- Battery Consumption
+- Render Framerate
+
 
 ## High-Level Architecture (HLD)
 
@@ -245,12 +243,9 @@ Like the chat app, the WebSocket must use exponential backoff (1s → 2s → 4s 
 - **Data Freshness**: Latency between driver timestamp and rider receive timestamp (p99 < 1s).
 - **Battery Drain**: Monitored via OS metrics; critical SLA for driver app.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-|--------|-------|--------|
-| Transmission Rate | 4 seconds | Uber Engineering |
-| Kalman Filter | Reduces noise ~60% | Geospatial studies |
-| WS Heartbeat | 30s | RFC 6455 |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Drive the dual-app narrative**: Explicitly separate your design into "Provider (Driver)" and "Consumer (Rider)". The constraints are completely different.
@@ -276,7 +271,7 @@ flowchart TD
 - Not handling WebSocket reconnection (trip tracking silently stops).
 
 ## Mock Interview Q&A
-**Q: A driver goes through a tunnel — no GPS for 60 seconds. What does the rider's app show?**
+**Q: A driver goes through a tunnel - no GPS for 60 seconds. What does the rider's app show?**
 A: The rider app interpolates based on the last known speed and heading, effectively "dead reckoning" along the route polyline. Once out of the tunnel, the app smoothly animates to the new true coordinate over a few seconds to avoid teleporting.
 
 **Q: How do you make location tracking battery-efficient?**

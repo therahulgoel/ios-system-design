@@ -1,17 +1,11 @@
 <[Problem Title]>
 # Image Loading Library
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing an image loading library is one of the most common and critical iOS system design questions asked at top tech companies. The library needs to efficiently download, decode, cache, and display images from the network while minimizing memory footprint and CPU usage. It evaluates a candidate's understanding of networking, concurrency, memory management, and caching strategies.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Meta | Heavy reliance on images in Instagram, Facebook, and Threads | ★★★★★ |
-| Twitter / X | Media-rich timelines require highly optimized image fetching | ★★★★★ |
-| Airbnb | High-resolution property images dictate booking conversions | ★★★★★ |
-| Booking.com | Similar to Airbnb, highly visual listings with offline needs | ★★★★☆ |
-| Uber | Maps, driver profiles, and receipts need fast, reliable loading | ★★★★☆ |
 
 ## Scope Definition
 
@@ -40,13 +34,15 @@ Designing an image loading library is one of the most common and critical iOS sy
 5. **Downsampling**: Large images must be resized to fit the target view dimensions to save memory.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source / Justification |
-| :--- | :--- | :--- |
-| Main Thread Block Time | < 16ms per frame | Apple UI Guidelines (60fps target) |
-| Memory Footprint | < 50MB for L1 Cache | SDWebImage defaults, prevents OOM |
-| Disk Cache Size | < 500MB | Prevents OS from aggressively purging |
-| Disk Cache TTL | 7 days | Standard TTL for image assets |
-| Decoding Thread | 100% Background | Prevents UI stuttering |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Main Thread Block Time
+- Memory Footprint
+- Disk Cache Size
+- Disk Cache TTL
+- Decoding Thread
+
 
 ## High-Level Architecture (HLD)
 
@@ -166,7 +162,7 @@ Not applicable for fetching single images. However, when a client fetches a list
 
 ## Client Architecture Deep-Dives
 
-### [Subsystem 1 — The 3-Tier Cache (L1, L2, L3)]
+### [Subsystem 1 - The 3-Tier Cache (L1, L2, L3)]
 The core of an image loader is its caching mechanism. L1 is an `NSCache` which automatically responds to `UIApplication.didReceiveMemoryWarningNotification` and evicts objects. We limit L1 to ~50MB. L2 is a disk cache capped at 500MB, managed via `FileManager`.
 
 ```swift
@@ -198,7 +194,7 @@ actor MemoryCache {
 }
 ```
 
-### [Subsystem 2 — Decoding & Downsampling]
+### [Subsystem 2 - Decoding & Downsampling]
 Decoding a JPEG/PNG into a bitmap is highly CPU intensive. If done on the main thread, it causes severe UI hitching. Furthermore, loading a 4K image into a 100x100 thumbnail wastes massive amounts of memory. We use `ImageIO` to downsample the image during decoding.
 
 ```swift
@@ -233,7 +229,7 @@ struct ImageDecoder {
 }
 ```
 
-### [Subsystem 3 — Request Deduplication & Cancellation]
+### [Subsystem 3 - Request Deduplication & Cancellation]
 In a UICollectionView, multiple cells might request the same image URL concurrently (e.g., repeating avatars). We must coalesce these requests. Also, fast scrolling means cells are reused, so we must cancel obsolete requests to save bandwidth and CPU.
 
 ```swift
@@ -303,13 +299,9 @@ actor NetworkManager {
 - **OOM Crash Rate**: Must remain < 0.1% after shipping downsampling.
 - **Bytes Downloaded per Session**: Monitor to ensure deduplication and caching are working.
 
-## Production Benchmarks Reference
-| Metric | Target | Source / Justification |
-| :--- | :--- | :--- |
-| L1 Memory Limit | 50MB - 100MB | SDWebImage standard defaults |
-| L2 Disk Limit | 500MB - 1GB | Kingfisher / SDWebImage defaults |
-| Image Size (Decoded)| W * H * 4 bytes | Standard 32-bit ARGB formula (e.g., 1000x1000 = 4MB) |
-| WebP Size Reduction | 25-35% | Google WebP documentation vs standard JPEG |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Always mention downsampling**: It is the #1 reason candidates fail this question. Showing a 4K image in a 50x50 cell will cause an OOM crash.

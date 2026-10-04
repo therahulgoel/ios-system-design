@@ -1,151 +1,31 @@
-# Contributing to iOS Mobile System Design
+# Contributing
 
-Thank you for wanting to make this the best mobile system design resource on the internet. This guide explains how to contribute effectively.
+Keep the material technically defensible and useful for practice. Read [AGENTS.md](AGENTS.md), [REPO_SPEC.md](REPO_SPEC.md), and [the evidence standard](docs/evidence-and-sources.md).
 
----
+## Evidence requirements
 
-## What Makes a Good Contribution
+Use primary documentation, standards, papers or attributable engineering publications. Place the exact source beside the claim and retain the applicable version, units and context. Do not label a tuning choice an industry benchmark.
 
-This repository is built on one core principle: **everything must be grounded in reality**. No guessing, no generic advice, no assumptions.
+Do not add dummy production data, fabricated benchmark results, invented career stories, interview-frequency ratings or unverified private hiring rubrics. Keep practice prompts explicitly identified as authored exercises. Describe missing inputs rather than inventing workload or staffing numbers.
 
-A good contribution:
-- Cites **real sources** (engineering blogs, WWDC sessions, official docs, RFC numbers)
-- Includes **specific numbers** (latency targets, memory budgets, cache sizes)
-- Contains **runnable Swift 5.9+ code** that compiles and follows MVVM
-- Is written from the perspective of someone who has **built this at scale**
-- Covers **failure modes** — not just the happy path
+Resume claims remain candidate-reported until the measurement method and personal ownership are established. Never convert product-wide usage into an individual's service throughput.
 
-A bad contribution:
-- Says "use a cache" without specifying type, size, TTL, eviction policy
-- Has pseudocode instead of real Swift
-- Copies content from other tutorials without real-world context
-- Makes claims without citations
+## Architecture and examples
 
----
+Follow MVVM for app/UI examples as specified in [REPO_SPEC.md](REPO_SPEC.md). Backend design is governed by explicit APIs, data models, invariants and failure semantics; MVVM does not govern server architecture.
 
-## Ways to Contribute
+Identify incomplete snippets as sketches. To claim runnable code, provide a buildable target, actual dependencies, platform/toolchain versions and relevant execution checks. Never claim a code snippet alone is production-certified.
 
-### 1. Add a New System Design Spec
+For each design, include requirements, authoritative state, invariant, API semantics, concurrency, retry and replay behavior, overload, recovery, authorization, migration and observability. Add the leadership lens where relevant.
 
-Use the template below. Save your file to `docs/your-problem-name.md`.
+Use standard ASCII hyphens. Use clear Markdown links and fenced blocks. Mermaid diagrams should show trust, persistence and acknowledgement boundaries where useful.
 
-**Spec Template**:
-```
-# [Problem Title]
-## Overview
-## Target Companies & Frequency
-## Scope Definition (In Scope / Out of Scope)
-## Requirements (Functional + Non-Functional with real numbers)
-## High-Level Architecture (Mermaid diagram + component table + data flow)
-## Data Models (Swift structs + SQLite schema)
-## API Design (endpoints + real JSON examples + pagination)
-## Client Architecture Deep-Dives (2-3 hardest subsystems with Swift code)
-## Performance & Optimizations (table with benchmarks)
-## Failure Modes & Fallbacks (table)
-## Trade-off Analysis (table with defended decision)
-## Observability & Metrics (specific thresholds)
-## Common Mistakes (❌ Wrong approach → ✅ Correct approach)
-## Mock Interview Q&A (realistic back-and-forth dialogue)
-## Related Specs (cross-links)
-## Production Benchmarks Reference (table with sources)
-## Interview Tips (3-5 bullet points)
-```
+## Review workflow
 
-### 2. Improve an Existing Spec
+1. Make the change in a focused branch.
+2. Cite added or changed factual claims and explain measurement limitations.
+3. Run `python3 scripts/check_docs.py` and relevant implementation checks when there is executable code.
+4. Review diagrams and documentation for consistency and scope.
+5. Open a pull request describing the concrete improvement and actual validation.
 
-Found a better approach, a more accurate benchmark, or a missing failure mode? Open a PR with:
-- What you changed and why
-- Source / citation for the change
-- If it contradicts existing content, explain the trade-off
-
-### 3. Fix Incorrect Information
-
-Mobile engineering moves fast. If a benchmark, API, or framework behavior is outdated:
-- Open an issue with the label `outdated`
-- Link to the current correct source
-- PRs welcome
-
-### 4. Share Your Interview Experience
-
-If you've recently interviewed at a top company and encountered a mobile system design question:
-- Open a **Discussion** (not an issue) in the Q&A category
-- Describe the problem prompt (without violating NDA)
-- Share what the interviewer focused on
-- What worked / what didn't
-
----
-
-## Style Guide
-
-### Architecture
-- Always use **MVVM**: View → ViewModel → UseCase → Repository → Data Sources
-- ViewModels use `ObservableObject` + `@Published` for SwiftUI
-- Use `async/await` (Swift 5.5+) for async operations
-- Use `actor` for thread-safe shared state
-
-### Code
-- All Swift must be **syntactically correct** and follow Swift API Design Guidelines
-- No force-unwraps (`!`) unless explicitly justified with a comment
-- Prefer `protocol`-based abstractions over concrete types for testability
-- Include the full type signature, not just method bodies
-
-### Numbers
-Every benchmark must have a source. Use this format in tables:
-
-| Metric | Value | Source |
-|:---|:---|:---|
-| Cold start target | < 1.2s | Apple HIG + WWDC 2019 Session 423 |
-
-Acceptable sources:
-- Apple Developer Documentation
-- WWDC session transcripts (cite year + session number)
-- Uber Engineering Blog (eng.uber.com)
-- Netflix Tech Blog (netflixtechblog.com)
-- Instagram / Meta Engineering Blog
-- Firebase documentation
-- RFC documents (cite RFC number)
-- OWASP Mobile Security Testing Guide
-- SQLite documentation (sqlite.org)
-
-Not acceptable:
-- "I read somewhere that..."
-- Medium posts without primary source backing
-- Stack Overflow answers without linking to official docs
-
-### Diagrams
-Use **Mermaid** for all architecture diagrams (GitHub renders natively):
-
-```mermaid
-flowchart TD
-    A[View] --> B[ViewModel]
-    B --> C[UseCase]
-    C --> D[Repository]
-    D --> E[(SQLite)]
-    D --> F[API Client]
-```
-
----
-
-## PR Process
-
-1. Fork the repo
-2. Create a branch: `feat/problem-name` or `fix/spec-name-issue`
-3. Follow the style guide above
-4. Open a PR with:
-   - Summary of what you added/changed
-   - Sources for any new benchmarks
-   - Screenshot of any Mermaid diagrams rendering correctly
-5. A maintainer will review within 7 days
-
----
-
-## Code of Conduct
-
-- Be specific, not vague
-- Cite sources, not opinions
-- Critique content, not people
-- If you've interviewed at a company, share signal — not secret questions
-
----
-
-*The goal: every engineer who reads a spec here should walk into a Staff or EM interview feeling like they've solved this problem before.*
+No review turnaround or hiring outcome is guaranteed. Share public preparation guidance without disclosing confidential interview or employer information.

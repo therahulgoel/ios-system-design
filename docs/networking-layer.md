@@ -1,15 +1,10 @@
 # Networking Layer / HTTP Client SDK Architecture
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 A robust, protocol-oriented networking layer is the backbone of almost every modern iOS application. This system design problem asks candidates to build an extensible, testable, and secure HTTP client SDK. Interviewers at all major tech companies use this to evaluate a candidate's grasp of generics, concurrency (async/await), dependency injection, request lifecycle management (retries, auth), and security practices (pinning).
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Uber / Lyft | Massive API surface area requiring strict SDK abstractions and low latency. | ★★★★☆ |
-| Meta | Heavily modularized apps requiring universal, standardized network clients. | ★★★★☆ |
-| Spotify | High-throughput streaming and metadata requests needing precise priority queues. | ★★★★☆ |
-| Any Startup | Foundational piece of infrastructure needed for day-one app architecture. | ★★★★★ |
 
 ## Scope Definition
 
@@ -38,12 +33,14 @@ A robust, protocol-oriented networking layer is the backbone of almost every mod
 5. It must support multiple base URLs (e.g., staging, production, specialized microservices).
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Handshake Overhead | ~1 RTT | TLS 1.3 Specification |
-| Network Timeout | 30s (default) | Typical URLSession configuration |
-| Concurrent Connections | 6 per host (HTTP/1.1), Multiplexed (HTTP/2) | Apple URLSession Docs |
-| SSL Pinning Rotation | Every 60-90 days | OWASP Mobile Security Guidelines |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Handshake Overhead
+- Network Timeout
+- Concurrent Connections
+- SSL Pinning Rotation
+
 
 ## High-Level Architecture (HLD)
 
@@ -147,7 +144,7 @@ enum AppNetworkError: Error {
 
 ## Client Architecture Deep-Dives
 
-### [Subsystem 1 — Generic Network Service]
+### [Subsystem 1 - Generic Network Service]
 The core execution engine using Swift `async/await`.
 
 ```swift
@@ -219,49 +216,14 @@ class NetworkService {
 }
 ```
 
-### [Subsystem 2 — Atomic Token Refresh (The Concurrency Challenge)]
+### [Subsystem 2 - Atomic Token Refresh (The Concurrency Challenge)]
 Handling 401s is tricky when multiple requests fire simultaneously. If 5 requests fail with 401, you should only refresh the token ONCE, while the other 4 requests wait. We use an `actor` for this.
 
-```swift
-actor AuthManager {
-    private var accessToken: String?
-    private var isRefreshing = false
-    private var refreshTask: Task<String, Error>?
-    
-    func getAccessToken() -> String? {
-        return accessToken
-    }
-    
-    func refreshToken() async throws -> String {
-        // If already refreshing, wait for the existing task to finish
-        if let refreshTask = refreshTask {
-            return try await refreshTask.value
-        }
-        
-        // Create a new refresh task
-        let task = Task { () -> String in
-            // Pseudo-code: Make actual network call to /v1/auth/refresh
-            let newToken = try await executeRefreshAPI()
-            self.accessToken = newToken
-            return newToken
-        }
-        
-        self.refreshTask = task
-        
-        defer { self.refreshTask = nil }
-        
-        return try await task.value
-    }
-    
-    private func executeRefreshAPI() async throws -> String {
-        // Implementation of hitting the refresh endpoint
-        return "new_token_123"
-    }
-}
-```
+Coalesce refresh through one shared in-flight task and inject the actual refresh transport. Track the credential generation used by each failed request: a late 401 for an old generation should retry with the newer credential instead of rotating again. Bind work to a session generation so logout or account switch prevents an old refresh from installing credentials. Persist a rotated token pair atomically, limit the authenticated retry, and define cancellation and terminal failure behavior. An actor serializes isolated access but can reenter across await points; it does not supply these policies by itself.
+
 In the `NetworkService`, `handleUnauthorized` simply calls `try await authManager.refreshToken()`. If it succeeds, it rebuilds the request with the new token and executes it *once* more.
 
-### [Subsystem 3 — Unit Testing with URLProtocol]
+### [Subsystem 3 - Unit Testing with URLProtocol]
 To test the networking layer without hitting live servers, we subclass `URLProtocol`.
 
 ```swift
@@ -325,13 +287,9 @@ class MockURLProtocol: URLProtocol {
 - **Payload Sizes**: Monitor average response sizes. If a JSON payload exceeds 1MB, it should be paginated.
 - **Logging Interceptor**: Log `[Method] [Path] [Status Code] [Duration ms]` in Debug builds. NEVER log body payloads in production (PII risk).
 
-## Production Benchmarks Reference
-| Benchmark | Value | Source |
-| :--- | :--- | :--- |
-| TLS Handshake (TLS 1.2) | 2 Round Trips | IETF TLS 1.2 Specs |
-| TLS Handshake (TLS 1.3) | 1 Round Trip | IETF TLS 1.3 Specs |
-| URLSession Timeout | 60s Request / 7 Days Resource | Apple Documentation |
-| Pinning Rotation Limit | Max 90 days validity | OWASP Mobile Security |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Avoid 3rd Party Libraries**: Never rely on Alamofire as your answer. Interviewers want to see if you understand the underlying Apple frameworks.

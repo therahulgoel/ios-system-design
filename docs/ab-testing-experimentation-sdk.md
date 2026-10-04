@@ -1,14 +1,10 @@
 # Design a Mobile A/B Testing & Experimentation SDK
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing an A/B testing and remote configuration SDK involves building a low-latency, deterministic evaluation engine that allows product teams to remotely toggle features and assign users to experiments without requiring app updates. This is frequently asked at FAANG companies because it tests caching strategies, deterministic hashing, concurrency, and minimizing main-thread blocking during app launch.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Google / Meta | Experimentation is fundamental to growth and product rollouts. | ★★★★★ |
-| Uber / Airbnb | Heavily rely on feature flags and kill switches for daily ops. | ★★★★☆ |
-| Spotify | Uses experimentation for nearly every UI and algorithm change. | ★★★★☆ |
 
 ## Scope Definition
 
@@ -35,13 +31,15 @@ Designing an A/B testing and remote configuration SDK involves building a low-la
 5. **Kill Switch:** Disable broken features globally within 5 minutes.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Flag Evaluation Time | < 1µs | In-memory dictionary lookup |
-| Min Fetch Interval | 1 Hour | Firebase Remote Config |
-| Background Fetch Timeout | 2s max | Standard SLA |
-| Kill Switch SLA | < 5 mins to 95% of DAU | Uber/Airbnb Targets |
-| Config Payload Size | 5KB - 50KB | 100-200 active experiments |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Flag Evaluation Time
+- Min Fetch Interval
+- Background Fetch Timeout
+- Kill Switch SLA
+- Config Payload Size
+
 
 ## High-Level Architecture (HLD)
 
@@ -289,14 +287,9 @@ actor ConfigStore {
 - **Kill Switch Latency**: P90 time from kill switch deployment to client acknowledgement.
 - **Exposure Volume**: Total exposure events ingested per minute.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-| :--- | :--- | :--- |
-| Concurrent Experiments | 1000+ | Airbnb Engineering Blog (2020) |
-| Min Fetch Interval | 1 hour | Firebase Remote Config Docs |
-| Hashing Distribution | Uniform across 1B users | Murmur3 specification |
-| Flag Evaluation Time | < 1µs | In-memory Swift Dictionary |
-| Config Payload | 5-50KB JSON | Typical SaaS experimentation platforms |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **CRITICAL**: Understand the difference between assigning a user to a bucket and logging an exposure. An assigned user might never actually navigate to the screen with the feature.

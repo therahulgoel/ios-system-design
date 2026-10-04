@@ -1,14 +1,9 @@
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
 Long-form Video Streaming App (Netflix / Disney+ / Hotstar / Apple TV+)
 ## Overview
 Building a long-form video streaming client involves handling DRM, adaptive bitrate streaming (ABR), offline downloads, and precise state synchronization across devices. It tests deep knowledge of AVFoundation, networking, and device resource management over long sessions.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-|---------|--------------|-----------|
-| Netflix | Core product engineering. | ★★★★★ |
-| Apple | Apple TV+ architecture. | ★★★★★ |
-| Google | YouTube architecture (long form).| ★★★★★ |
-| Hotstar/Disney | Streaming scale, live events. | ★★★★☆ |
 
 ## Scope Definition
 
@@ -35,12 +30,14 @@ Building a long-form video streaming client involves handling DRM, adaptive bitr
 5. Recover gracefully from network stalls without infinite loading spinners.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-|-------------|--------|--------|
-| Pre-buffer time | 10s of video within 3s | Netflix Engineering |
-| Video Stalls | < 0.5% of sessions | Industry standard |
-| Concurrent users (Live)| Up to 25M | Hotstar IPL scaling |
-| Heartbeat sync delay | < 10s accuracy | Disney+ architecture |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Pre-buffer time
+- Video Stalls
+- Concurrent users (Live)
+- Heartbeat sync delay
+
 
 ## High-Level Architecture (HLD)
 
@@ -299,13 +296,9 @@ class OfflineDownloadManager: NSObject, AVAssetDownloadDelegate {
 - `average_bitrate_played`: Ensures users aren't stuck on 360p due to aggressive ABR.
 - `drm_license_failure_rate`: Tracks key server outages.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-|--------|-------|--------|
-| Target Pre-buffer | 10 seconds of video | Netflix Engineering Blog |
-| Peak Concurrent | 25M users (Live Sports) | Hotstar IPL scaling blog |
-| Video Segment Size | Standard 6 seconds | HLS Authoring Guidelines |
-| 1080p Frame Size | ~8-10MB/s bandwidth | Apple HLS guidelines |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **HLS Knowledge is Mandatory**: You must explain that HLS consists of a Master Playlist containing different bandwidth variant playlists, which contain pointers to 6-second `.ts` or `.fmp4` chunks.

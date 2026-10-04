@@ -2,14 +2,6 @@ Design a Mobile CI/CD Pipeline & Release Engineering System
 ## Overview
 Designing a mobile Continuous Integration and Continuous Deployment (CI/CD) pipeline is a core platform engineering challenge. For iOS, it involves orchestrating macOS runners, managing strict code signing requirements, optimizing lengthy build times, and orchestrating phased App Store releases. It is frequently asked at large tech companies to gauge an engineer's maturity in scaling development infrastructure for dozens or hundreds of contributors.
 
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Uber | Massive monorepo (1000+ engineers), heavy reliance on build cache (Bazel) | ★★★★★ |
-| Meta | Complex release trains, feature flags, custom build systems (Buck) | ★★★★★ |
-| Google | Huge scale, stringent automated testing and binary size limits | ★★★★☆ |
-| Airbnb | Focus on developer velocity, modularization, and test stability | ★★★★☆ |
-
 ## Scope Definition
 
 ### In Scope
@@ -34,12 +26,14 @@ Designing a mobile Continuous Integration and Continuous Deployment (CI/CD) pipe
 5. The pipeline must block PRs that exceed a defined binary size budget.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| PR Build Time | < 10 minutes | Industry best practice (Uber achieved <5m) |
-| Cellular Download | < 200MB compressed | Apple App Store limit (iOS 16+) |
-| Phased Rollout | 7 days to 100% | App Store Connect default |
-| Crash-free gate | > 99.5% | Standard rollback threshold |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- PR Build Time
+- Cellular Download
+- Phased Rollout
+- Crash-free gate
+
 
 ## High-Level Architecture (HLD)
 
@@ -94,6 +88,9 @@ Designing a mobile Continuous Integration and Continuous Deployment (CI/CD) pipe
 ### Config Data Models
 ```yaml
 # Example: .github/workflows/ios-ci.yml (Simplified)
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
 name: iOS PR Check
 on:
   pull_request:
@@ -189,13 +186,9 @@ A scalable team cannot wait for feature completion to merge code.
 - **App Store Crash-Free Rate:** Monitored constantly during the 7-day rollout.
 - **Binary Size Delta:** CI posts a comment on PRs if the commit increases binary size by > 100KB.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-| :--- | :--- | :--- |
-| Cellular Download Limit | 200 MB (compressed) | iOS 16 App Store Policy |
-| Large Team Build Time | 4 mins (down from 30m) | Uber Engineering Blog (Bazel) |
-| App Store Review | ~24 hours median | Apple App Review Stats |
-| Phased Rollout | 7 Days | App Store Connect default |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Code Signing is a Filter:** Many candidates wave away code signing. Be explicit about `fastlane match`, turning off automatic signing, and encrypting certs outside the main repo. It shows deep platform experience.

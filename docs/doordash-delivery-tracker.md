@@ -1,16 +1,10 @@
 # Design DoorDash / UberEats Live Delivery Order Tracking
 
-## Overview
-Designing a live delivery tracking screen (like DoorDash or UberEats) involves managing complex real-time geospatial data, strict state machines, and battery-efficient background updates. This problem is frequently asked because it tests your ability to handle real-time synchronization, manage map rendering performance, implement modern iOS features (Live Activities), and balance real-time needs against device battery life.
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
 
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| DoorDash | Core app experience; realtime geospatial tracking. | ★★★★★ |
-| Uber / UberEats | Driver-rider tracking; map rendering performance. | ★★★★★ |
-| Lyft | Same as Uber; real-time location sync. | ★★★★★ |
-| Instacart | Real-time shopper state and location updates. | ★★★★☆ |
-| Zomato / Swiggy | Major food delivery players; similar core flows. | ★★★★☆ |
+
+## Overview
+Designing a live delivery tracking screen (like DoorDash or UberEats) involves managing complex real-time geospatial data, strict state machines, and battery-efficient background updates.
 
 ## Scope Definition
 
@@ -26,7 +20,7 @@ Designing a live delivery tracking screen (like DoorDash or UberEats) involves m
 - Restaurant menu browsing and cart management.
 - Payment processing.
 - Driver app architecture (sending location).
-- Complex routing algorithms (A* or Dijkstra's) — server handles routing.
+- Complex routing algorithms (A* or Dijkstra's) - server handles routing.
 
 ## Requirements
 
@@ -38,13 +32,15 @@ Designing a live delivery tracking screen (like DoorDash or UberEats) involves m
 5. **Resilience**: The tracking state must survive app kills and network drops.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Location Update Freq | Every 2-4 seconds | DoorDash / Uber standard |
-| Map Render Latency | < 16ms (60fps) | iOS MapKit performance |
-| Live Activity Update | Max 1/sec, typ. driven by APNs | Apple ActivityKit Docs |
-| ETA Accuracy | ±3 min for 80% of orders | DoorDash Eng Blog |
-| Battery Drain | < 3% per delivery session | App Store Guidelines |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Location Update Freq
+- Map Render Latency
+- Live Activity Update
+- ETA Accuracy
+- Battery Drain
+
 
 ## High-Level Architecture (HLD)
 
@@ -345,14 +341,9 @@ func animateDriverMarker(to newCoordinate: CLLocationCoordinate2D) {
 - **WebSocket Reconnection Rate**: Spikes indicate routing/infrastructure issues.
 - **Battery Drain**: Measured via XCTest metric logs during UI tests.
 
-## Production Benchmarks Reference
-| Metric | Real World Number | Source |
-| :--- | :--- | :--- |
-| GPS Update Frequency | 2-4 seconds | Uber / DoorDash observation |
-| ETA Accuracy | ±3 min (80% orders) | DoorDash Eng Blog |
-| APNs Latency | < 5s (typical) | Apple Documentation |
-| Map Render FPS | 60 FPS | iOS CoreAnimation target |
-| Live Activity Update Limit | 1 per second max | ActivityKit Docs |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Highlight Battery Impact**: Always discuss how WebSockets drain battery if left open in the background. Mentioning the switch to APNs for background updates is a senior signal.

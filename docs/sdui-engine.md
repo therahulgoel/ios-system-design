@@ -1,14 +1,9 @@
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
 Server-Driven UI (SDUI) Engine & Dynamic Layout Framework
 ## Overview
 Server-Driven UI (SDUI) allows backend services to dictate the UI structure, layout, and content without requiring app updates. It is heavily asked in FAANG/Top-tier interviews because it tests complex state management, generic parsing, fallback strategies, and component registries while keeping the client lightweight and robust.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-|---------|--------------|-----------|
-| Uber | Core to their dynamic home feed and ride-booking flows. | ★★★★★ |
-| Meta | Used heavily in Instagram Shop and Facebook Feed. | ★★★★★ |
-| Google | Used in Google Pay (Tez) and Play Store. | ★★★★☆ |
-| Grab | Central to their super-app modularity. | ★★★★★ |
 
 ## Scope Definition
 
@@ -37,13 +32,15 @@ Server-Driven UI (SDUI) allows backend services to dictate the UI structure, lay
 5. Client must enforce schema version compatibility (skip unsupported major versions).
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-|-------------|--------|--------|
-| Schema Parsing | < 16ms (avoid frame drop) | Apple WWDC Core Animation |
-| Cache Retrieval | < 50ms | Uber SDUI Blog |
-| Component Render | < 8ms per cell | Meta Feed Optimizations |
-| Crash-free Sessions | > 99.9% | Firebase Crashlytics standard |
-| Payload Size | < 50KB gzip | Industry average |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Schema Parsing
+- Cache Retrieval
+- Component Render
+- Crash-free Sessions
+- Payload Size
+
 
 ## High-Level Architecture (HLD)
 
@@ -388,13 +385,9 @@ struct SDUILayoutView: View {
 - `sdui_unknown_component_rendered`: Tracks backend sending types iOS hasn't implemented. Should be 0 on stable releases.
 - `sdui_render_time`: View rendering performance. Target < 16ms per screen update.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-|--------|-------|--------|
-| Target Frame Render Time | < 16ms (60fps) | Apple WWDC |
-| Protobuf Size Reduction | ~40-50% vs JSON | Uber Engineering Blog |
-| Gzip JSON Reduction | ~60-70% | Common Web Standards |
-| Crash-free sessions | 99.9% | Firebase Crashlytics |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Crucial Pattern**: Emphasize that the app should *never* crash when encountering a new, unrecognized string in `type`. The ComponentRegistry pattern skipping unknown types is the most critical feature.
@@ -436,7 +429,7 @@ flowchart TD
 
 ## Mock Interview Q&A
 **Q: How do you handle a new component type your app doesn't know about?**
-A: We use a `ComponentRegistry` pattern. The JSON decoder maps the component type to a string. The registry looks up a registered SwiftUI `ViewBuilder` for that string. If the type is missing (e.g., the backend shipped a new feature but the user hasn't updated the app), the registry safely returns an `EmptyView()` and fires a non-fatal error to Crashlytics. This guarantees a 99.9% crash-free rate despite dynamic payloads.
+A: We use a `ComponentRegistry` pattern. The JSON decoder maps the component type to a string. The registry looks up a registered SwiftUI `ViewBuilder` for that string. If the type is missing (e.g., the backend shipped a new feature but the user hasn't updated the app), the registry safely returns an `EmptyView()` and fires a non-fatal error to Crashlytics. Validate payloads, bounds and compatibility and measure crash-free sessions; missing-component fallback cannot guarantee an application reliability percentage.
 
 > 🔍 *Interviewer follow-up: How would you version the schema to avoid breaking old clients entirely?*
 > A: We pass a `Supported-SDUI-Version: 2` header in the API request. The backend filters the layout, stripping `v3` components or replacing them with `v2` fallbacks. Alternatively, the client checks the root `version` field in the response; if it's unsupported, we fallback to our disk cache or force an app update prompt.

@@ -1,15 +1,10 @@
 # Instant Messaging & Chat App (WhatsApp / Slack / iMessage)
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing an instant messaging application requires handling real-time bi-directional communication, offline support, and efficient local storage. It's a staple of FAANG interviews because it tests a candidate's understanding of WebSockets, local persistence (CoreData/SQLite), background tasks, and complex state machines for message delivery.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-|---------|--------------|-----------|
-| Meta | WhatsApp & Messenger are core products; heavy focus on offline resilience. | ★★★★★ |
-| Slack | Enterprise chat needs complex group state and unread synchronization. | ★★★★★ |
-| Google | Google Messages (RCS) demands robust networking and media pipelines. | ★★★★☆ |
-| Apple | iMessage requires deep integration with iOS system and E2EE. | ★★★★★ |
 
 ## Scope Definition
 
@@ -38,14 +33,16 @@ Designing an instant messaging application requires handling real-time bi-direct
 6. Unread counts must stay synchronized across devices.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-|-------------|--------|--------|
-| Message Delivery Latency | < 200ms | WhatsApp Engineering |
-| Cold Start Time | < 1.5s | Apple HIG |
-| WebSocket Heartbeat | 30s | RFC 6455 |
-| Crash-free Sessions | > 99.9% | Industry Standard |
-| Local Storage Size | < 500MB (auto-evict) | iOS Storage Guidelines |
-| Battery Impact | < 2% / hour active | iOS Energy Guidelines |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Message Delivery Latency
+- Cold Start Time
+- WebSocket Heartbeat
+- Crash-free Sessions
+- Local Storage Size
+- Battery Impact
+
 
 ## High-Level Architecture (HLD)
 
@@ -382,13 +379,9 @@ In a FAANG interview, understanding the concepts of E2EE is a strong signal:
 - **Offline Queue Size**: Alert if p99 offline queue > 100 messages (indicates stuck queue).
 - **SQLite DB Size**: Track local storage ballooning.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-|--------|-------|--------|
-| Daily Volume | 100B+ messages/day | WhatsApp (2020) |
-| Avg Payload | < 500 bytes text | Industry Standard |
-| Heartbeat | 30s | RFC 6455 |
-| Max Delay | 60s max reconnect | AWS Architecture Blog |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Drive the requirements**: Always ask if media is in scope, if groups are in scope, and what the max group size is.

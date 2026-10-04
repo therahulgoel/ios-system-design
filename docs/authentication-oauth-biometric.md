@@ -1,15 +1,10 @@
 # Design Mobile Authentication System (OAuth2 / SSO / Biometric)
 
-## Overview
-Designing a modern mobile authentication system requires handling secure token exchange without client secrets, managing persistent session states securely, and integrating OS-level features like biometric step-up authentication. This problem is frequently asked because it tests knowledge of security primitives (Keychain, Secure Enclave), concurrency (atomic token refresh), and standard protocols (OAuth2 PKCE).
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
 
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Stripe/Square | Crucial for fintech security and session management | ★★★★★ |
-| Salesforce | Heavy reliance on Enterprise SSO and OAuth integrations | ★★★★★ |
-| Meta | Multi-account management and massive scale auth | ★★★★ |
-| Apple | Deep integration with ASWebAuthenticationSession / Sign in with Apple | ★★★★★ |
+
+## Overview
+Designing a modern mobile authentication system requires handling secure token exchange without client secrets, managing persistent session states securely, and integrating OS-level features like biometric step-up authentication.
 
 ## Scope Definition
 
@@ -36,12 +31,14 @@ Designing a modern mobile authentication system requires handling secure token e
 5. Users must be able to securely log out, invalidating tokens locally and server-side.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Keychain Read Latency | < 1ms | Apple Security Benchmarks |
-| Token Storage | Encrypted at rest, excluded from iCloud | iOS Security Best Practices |
-| Access Token Lifetime | 15min - 1hr | OAuth2 Standard Practice |
-| SSO Browser Launch | ~1-3s | Safari/WebAuthSession Benchmarks |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Keychain Read Latency
+- Token Storage
+- Access Token Lifetime
+- SSO Browser Launch
+
 
 ## High-Level Architecture (HLD)
 
@@ -331,13 +328,9 @@ class BiometricAuthManager {
 - **Refresh Failure Rate:** Spike indicates backend token rotation issues or mass user revocation.
 - **Biometric Fallback Rate:** Percentage of users falling back to passcode (indicates UX friction or hardware limits).
 
-## Production Benchmarks Reference
-| Metric | Number | Source |
-| :--- | :--- | :--- |
-| Access Token Lifetime | 15 minutes | Google / Stripe API Standards |
-| Refresh Token Lifetime | 60 - 90 days | Spotify / Google Platform Docs |
-| PKCE Code Verifier | 43 - 128 characters | RFC 7636 |
-| Face ID Match Speed | < 1.0 second | Apple Hardware Specs |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - ❌ **Common Mistake:** Suggesting `WKWebView` for OAuth. Apple will reject the app, and it breaks SSO. Always use `ASWebAuthenticationSession`.

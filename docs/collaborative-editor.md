@@ -1,15 +1,10 @@
 # Collaborative Document Editor (Google Docs / Notion / Quip)
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing a collaborative document editor involves complex distributed systems concepts applied to mobile clients. It tests a candidate's grasp of conflict resolution, optimistic UI updates, and synchronization mechanisms when multiple users edit the same text simultaneously.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-|---------|--------------|-----------|
-| Google | Google Docs is the pioneer; rigorous testing on concurrency. | ★★★★☆ |
-| Notion | Heavy mobile usage; local-first offline capabilities. | ★★★★☆ |
-| Microsoft | Office 365 / Loop rely on these exact principles. | ★★★★☆ |
-| Dropbox | Dropbox Paper requires deep understanding of sync engines. | ★★★☆☆ |
 
 ## Scope Definition
 
@@ -35,12 +30,14 @@ Designing a collaborative document editor involves complex distributed systems c
 4. Users can see where others are currently typing (presence).
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-|-------------|--------|--------|
-| Sync Latency | < 100ms | Collaborative Editing HCI Studies |
-| Local Input Latency | < 16ms (60fps) | iOS HIG |
-| Concurrent Editors | Up to 100 | Google Docs Limits |
-| Presence Broadcast | Every 500ms | Standard UI Debounce |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Sync Latency
+- Local Input Latency
+- Concurrent Editors
+- Presence Broadcast
+
 
 ## High-Level Architecture (HLD)
 
@@ -310,12 +307,9 @@ In offline mode, all local edits are appended to the SQLite `operation_log` as p
 - **Desync Rate**: Number of times client hashes mismatch server hashes (critical metric for OT correctness).
 - **Conflict Resolution Time**: CPU time spent in `OperationTransformer` per loop.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-|--------|-------|--------|
-| Tech Stack | OT via central server | Google Docs Engineering |
-| Alternative Stack| CRDTs via peer-to-peer | Figma / Automerge |
-| Op Batching | 500ms or word-boundary | Common practice |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **CRDT vs OT**: You WILL be asked this. Know that CRDTs resolve conflicts mathematically without a central server by assigning unique IDs to every character. OT relies on a central server to dictate order.

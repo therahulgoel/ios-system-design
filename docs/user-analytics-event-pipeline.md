@@ -1,10 +1,13 @@
 # Design User Analytics Event Pipeline
-### EM / Staff Interview — What to Capture, Why, and How to Derive Insight from Minimal Events
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+### EM / Staff Interview - What to Capture, Why, and How to Derive Insight from Minimal Events
 
 **Reported at**: Meta, Google, Uber, Airbnb, DoorDash, Spotify  
 **Domain**: Platform Analytics / Growth Engineering  
 **Seniority**: Staff IC · EM · Principal  
-**Interview Prompts**: *"Design an analytics system"*, *"How do you measure feature success?"*, *"User retention dropped 15% — what events tell you where they're dropping off?"*
+**Interview Prompts**: *"Design an analytics system"*, *"How do you measure feature success?"*, *"User retention dropped 15% - what events tell you where they're dropping off?"*
 
 ---
 
@@ -22,7 +25,7 @@ Everything else is derivative. A well-designed event schema answers all 3 from �
 
 ---
 
-## The Minimal Event Taxonomy (Industry Standard)
+## A Minimal Event Taxonomy to Evaluate Against Product Needs
 
 > **Staff-level insight**: Most companies track 300+ events. The best teams get 90% of insight from 8.  
 > More events = more schema drift, more data swamp, more engineering cost. Design for signal density.
@@ -33,8 +36,8 @@ Everything else is derivative. A well-designed event schema answers all 3 from �
 1. app_open              → DAU signal, source attribution, cold-start detection
 2. screen_viewed         → Navigation graph, funnel entry/exit, page depth
 3. feature_engaged       → Core action taken (generic: "user did the thing")
-4. conversion_completed  → Purchase / signup / subscribe — the money metric
-5. conversion_abandoned  → Checkout exit, form exit — where users leave
+4. conversion_completed  → Purchase / signup / subscribe - the money metric
+5. conversion_abandoned  → Checkout exit, form exit - where users leave
 6. error_occurred        → Quality signal, rage taps, 4xx/5xx from client
 7. notification_tapped   → Attribution: did push drive engagement?
 8. session_ended         → Session duration, engagement depth
@@ -55,7 +58,7 @@ Quality:     error_occurred rate per app_version per screen
 
 ---
 
-## Event Schema — Property Design Is Where Insight Lives
+## Event Schema - Property Design Is Where Insight Lives
 
 The event name is cheap. **The properties determine what you can infer.**
 
@@ -63,7 +66,7 @@ The event name is cheap. **The properties determine what you can infer.**
 
 ```json
 {
-  "event_id":      "uuid-v4",          // deduplication key — idempotent on retry
+  "event_id":      "uuid-v4",          // deduplication key - idempotent on retry
   "event_name":    "screen_viewed",
   "user_id":       "u_123",            // null if not logged in
   "device_id":     "d_abc",            // stable, Keychain-persisted, always present
@@ -84,39 +87,39 @@ The event name is cheap. **The properties determine what you can infer.**
 | User not logged in | `device_id` as identity (anonymous journey) |
 | User logs in mid-session | identity stitch: link all prior `device_id` events to `user_id` |
 | Multi-device user | same `user_id`, different `device_id` → deduplicate in DAU by `user_id` |
-| DAU for anonymous users | `COALESCE(user_id, device_id)` — count distinct |
+| DAU for anonymous users | `COALESCE(user_id, device_id)` - count distinct |
 
 ### Event-Specific Properties (What Makes Inference Possible)
 
 ```json
-// app_open — source attribution
+// app_open - source attribution
 { "source": "push_notification", "notification_id": "n_789",
   "utm_source": "instagram", "utm_campaign": "summer_sale",
   "is_cold_start": true, "cold_start_ms": 1240 }
 
-// screen_viewed — funnel tracking
+// screen_viewed - funnel tracking
 { "screen_name": "CheckoutReview", "referrer_screen": "Cart",
   "is_first_view": false, "load_time_ms": 340 }
 
-// feature_engaged — the generic action event
+// feature_engaged - the generic action event
 { "feature_name": "add_to_cart", "item_id": "prod_456",
   "item_category": "electronics", "price": 29.99 }
 
-// conversion_completed — the money event
+// conversion_completed - the money event
 { "conversion_type": "purchase", "value": 89.97, "currency": "USD",
   "item_count": 3, "payment_method": "apple_pay",
   "notification_id": "n_789" }   // ← links notification → conversion
 
-// conversion_abandoned — where you lose users
+// conversion_abandoned - where you lose users
 { "screen_name": "PaymentEntry", "step": 3, "total_steps": 4,
   "time_spent_ms": 45000, "abandon_reason": "back_gesture" }
 
-// error_occurred — quality signal
+// error_occurred - quality signal
 { "error_type": "network", "error_code": "timeout", "screen_name": "Feed",
   "url_template": "/v1/feed", "latency_ms": 8000 }
-  // NOTE: use url_template NOT full URL — prevents PII + cardinality explosion
+  // NOTE: use url_template NOT full URL - prevents PII + cardinality explosion
 
-// notification_tapped — attribution
+// notification_tapped - attribution
 { "notification_id": "n_789", "notification_type": "order_update",
   "delivery_delay_ms": 3400, "app_state": "background" }
 ```
@@ -150,7 +153,7 @@ SELECT
 FROM funnel;
 ```
 
-> **Staff-level call**: Always use `MAX(CASE WHEN...)` not `COUNT(event)` for funnels — prevents double-counting users who visited a screen twice.
+> **Staff-level call**: Always use `MAX(CASE WHEN...)` not `COUNT(event)` for funnels - prevents double-counting users who visited a screen twice.
 
 ### 2. D1 / D7 / D30 Retention (from `app_open` alone)
 
@@ -239,7 +242,7 @@ WHERE event_date >= DATE_SUB(CURRENT_DATE(), INTERVAL 30 DAY)
 GROUP BY user_id;
 ```
 
-> **EM insight**: Personas drive push notification targeting, A/B test audience splits, and UI personalization — without ever touching an ML model. Rule-based is auditable, debuggable, and sufficient for most product decisions.
+> **EM insight**: Personas drive push notification targeting, A/B test audience splits, and UI personalization - without ever touching an ML model. Rule-based is auditable, debuggable, and sufficient for most product decisions.
 
 ---
 
@@ -250,7 +253,7 @@ User Action
     ↓
 AnalyticsSDK.track("screen_viewed", properties)   ← single entry point
     ↓
-EventQueue (Swift actor — thread-safe)
+EventQueue (Swift actor - thread-safe)
     ↓
 SQLite buffer (flush: every 30s OR 100 events OR app background)
     ↓
@@ -293,12 +296,12 @@ actor AnalyticsSDK {
             try await APIClient.post("/v1/events/batch", body: pending)
             db.markSent(ids: pending.map(\.eventId))
         } catch {
-            // exponential backoff — leave sent=0, retry next cycle
+            // exponential backoff - leave sent=0, retry next cycle
         }
     }
 }
 
-// Session: new UUID after 30min inactivity (industry standard)
+// Session policy: choose inactivity semantics from actual analytics requirements
 class SessionManager {
     static var current = SessionManager()
     private(set) var sessionId = UUID().uuidString
@@ -318,7 +321,7 @@ class SessionManager {
 ### Critical: Flush on Background
 
 ```swift
-// AppDelegate — non-negotiable
+// AppDelegate - non-negotiable
 func applicationWillResignActive(_ application: UIApplication) {
     let bgTask = application.beginBackgroundTask(expirationHandler: nil)
     Task {
@@ -362,7 +365,7 @@ flowchart TD
 | **Real-time DAU** | Redis HyperLogLog | `PFADD dau:2024-01-15 user_123` → O(1), 12KB per day, 0.81% error |
 | **Exact DAU (billing)** | BigQuery `COUNT(DISTINCT)` | Runs nightly, not real-time, fully accurate |
 | **Deduplication** | Bloom filter (Flink) + Redis exact (24h) | Bloom for high-speed check, Redis for exact within window |
-| **MAU from DAU** | `PFMERGE mau:jan dau:jan-01 ... dau:jan-31` | HyperLogLog union is O(1) — merge 30 day-HLLs into 1 MAU count |
+| **MAU from DAU** | `PFMERGE mau:jan dau:jan-01 ... dau:jan-31` | HyperLogLog union is O(1) - merge 30 day-HLLs into 1 MAU count |
 
 ### DAU/MAU Computation
 
@@ -390,7 +393,7 @@ Stickiness = DAU / MAU
 | **Event per button** (300+ events) | Schema drift, nobody owns it, can't query | 1 `feature_engaged` event + `feature_name` property |
 | **Raw user input in properties** | GDPR violation when uploaded to server | Never log text field content, search queries verbatim |
 | **Device-id only for DAU** | Inflates DAU 20-30% on multi-device users | Always `COALESCE(user_id, device_id)` |
-| **Rolling 24h window for DAU** | DAU varies by timezone — not comparable across days | Calendar day UTC midnight to midnight |
+| **Rolling 24h window for DAU** | DAU varies by timezone - not comparable across days | Calendar day UTC midnight to midnight |
 | **Synchronous tracking in UI** | Frame drops on main thread | Always async via `actor` |
 
 ---
@@ -413,7 +416,7 @@ WHERE device_id = 'd_abc' AND user_id IS NULL;
 -- (or do this at query time with a JOIN to identity_map table)
 ```
 
-**identity_map table**: `{device_id, user_id, linked_at}` — updated on every login. Query-time join is cheaper than backfilling event table.
+**identity_map table**: `{device_id, user_id, linked_at}` - updated on every login. Query-time join is cheaper than backfilling event table.
 
 > **Staff-level interview point**: Identity resolution is where most analytics systems break. If you don't stitch pre-login events to post-login user_id, your funnel conversion rates are artificially low (pre-login steps not attributed to converting users).
 
@@ -424,17 +427,17 @@ WHERE device_id = 'd_abc' AND user_id IS NULL;
 | ❌ Wrong | ✅ Correct |
 |:---|:---|
 | Tracking everything "just in case" | Define business question first, then pick minimum events that answer it |
-| Counting DAU with `device_id` | `COALESCE(user_id, device_id)` — user has multiple devices |
-| Firing analytics on main thread | Always async via Swift `actor` — prevents frame drops |
-| Not flushing on app background | ~20% event loss — flush in `applicationWillResignActive` |
-| Not deduplicating retried events | Double-counting on retry — `event_id` UUID + server-side dedup |
-| Logging PII in properties | GDPR violation — never log email/name/address in event properties |
-| Using `COUNT(event)` in funnels | Use `COUNT(DISTINCT user_id)` — same user may trigger event twice |
-| Building 300-event taxonomy | Schema drift, no ownership, unusable — 8 core events cover 90% of needs |
+| Counting DAU with `device_id` | `COALESCE(user_id, device_id)` - user has multiple devices |
+| Firing analytics on main thread | Always async via Swift `actor` - prevents frame drops |
+| Not flushing on app background | ~20% event loss - flush in `applicationWillResignActive` |
+| Not deduplicating retried events | Double-counting on retry - `event_id` UUID + server-side dedup |
+| Logging PII in properties | GDPR violation - never log email/name/address in event properties |
+| Using `COUNT(event)` in funnels | Use `COUNT(DISTINCT user_id)` - same user may trigger event twice |
+| Building 300-event taxonomy | Schema drift, no ownership, unusable - 8 core events cover 90% of needs |
 
 ---
 
-## Mock Interview Q&A — EM / Staff Level
+## Mock Interview Q&A - EM / Staff Level
 
 **Q: "User retention dropped 15% after a redesign. You have 8 events. Where do you start?"**
 
@@ -444,19 +447,19 @@ WHERE device_id = 'd_abc' AND user_id IS NULL;
 
 **Q: "How does Meta count DAU for 3B users in real-time?"**
 
-> Two-tier: real-time via HyperLogLog in Redis — `PFADD dau:{date} {user_id}` on every `app_open` event from the stream processor. This gives < 1min lag with 0.81% error — good enough for dashboards. For exact billing-grade DAU, nightly BigQuery job runs `COUNT(DISTINCT user_id)` on the full partitioned events table. Cost: BigQuery scans only 1 day's partition (~2TB) instead of full table. The HLL approach uses max 12KB of Redis memory per day regardless of cardinality.
+> Two-tier: real-time via HyperLogLog in Redis - `PFADD dau:{date} {user_id}` on every `app_open` event from the stream processor. This gives < 1min lag with 0.81% error - good enough for dashboards. For exact billing-grade DAU, nightly BigQuery job runs `COUNT(DISTINCT user_id)` on the full partitioned events table. Cost: BigQuery scans only 1 day's partition (~2TB) instead of full table. The HLL approach uses max 12KB of Redis memory per day regardless of cardinality.
 
 ---
 
 **Q: "A new push notification campaign claims 40% CTR. How do you validate it?"**
 
-> Query: `notification_tapped` events with `notification_id` from the campaign ÷ total sends. But CTR is a vanity metric — ask: did those taps lead to `conversion_completed` within 24h? Join `notification_tapped.notification_id` with `conversion_completed.notification_id` (both events carry `notification_id`). Also check: what % of those conversions would have happened anyway (holdout group with no push). That delta is the true lift.
+> Query: `notification_tapped` events with `notification_id` from the campaign ÷ total sends. But CTR is a vanity metric - ask: did those taps lead to `conversion_completed` within 24h? Join `notification_tapped.notification_id` with `conversion_completed.notification_id` (both events carry `notification_id`). Also check: what % of those conversions would have happened anyway (holdout group with no push). That delta is the true lift.
 
 ---
 
 **Q: "You have 1M users. Your funnel shows 60% drop between 'Add to Cart' and 'Checkout'. What do you do?"**
 
-> First, validate the data: is the funnel query using `COUNT(DISTINCT user_id)` not `COUNT(event)`? Is the session window correct? Next, segment: does the drop differ by `device_model`, `os_version`, `app_version`? A recent bug may be causing it. Then look at `conversion_abandoned` events from the cart screen — what's `time_spent_ms` and `abandon_reason`? If `time_spent_ms` is high, users are trying but failing. If it's low, they're bouncing immediately — likely a UX problem, not a bug. This is your test hypothesis for the next A/B test.
+> First, validate the data: is the funnel query using `COUNT(DISTINCT user_id)` not `COUNT(event)`? Is the session window correct? Next, segment: does the drop differ by `device_model`, `os_version`, `app_version`? A recent bug may be causing it. Then look at `conversion_abandoned` events from the cart screen - what's `time_spent_ms` and `abandon_reason`? If `time_spent_ms` is high, users are trying but failing. If it's low, they're bouncing immediately - likely a UX problem, not a bug. This is your test hypothesis for the next A/B test.
 
 ---
 
@@ -468,32 +471,18 @@ WHERE device_id = 'd_abc' AND user_id IS NULL;
 
 **Q: "How do you compute D30 retention without scanning the entire events table every day?"**
 
-> Partition BigQuery events table by `event_date` and cluster by `user_id`. For retention, pre-compute and materialize a `daily_active_users` table nightly: `{user_id, event_date}` from `app_open` events. This is 1 row/user/day instead of N events/user/day. D30 retention query then only joins two small tables — O(MAU) not O(total events). Alternatively, use a time-series DB like Druid that computes retention natively.
+> Partition BigQuery events table by `event_date` and cluster by `user_id`. For retention, pre-compute and materialize a `daily_active_users` table nightly: `{user_id, event_date}` from `app_open` events. This is 1 row/user/day instead of N events/user/day. D30 retention query then only joins two small tables - O(MAU) not O(total events). Alternatively, use a time-series DB like Druid that computes retention natively.
 
 ---
 
-## Production Benchmarks (Real Numbers)
+## Measurement and evidence
 
-| Metric | Number | Source |
-|:---|:---|:---|
-| Meta DAU | 3.27B (Q1 2024) | Meta earnings |
-| Meta stickiness (DAU/MAU) | ~67% | Meta earnings |
-| Slack stickiness | ~50% | Slack S-1 2019 |
-| Average app D1 retention | 25-35% | Adjust Mobile Report 2023 |
-| Average app D30 retention | 5-10% | Adjust Mobile Report 2023 |
-| Redis HyperLogLog error | 0.81% std dev | Redis docs |
-| Redis HLL memory | max 12KB per counter | Redis docs |
-| Kafka throughput | 1M+ events/sec per broker | LinkedIn engineering |
-| Session timeout | 30 minutes | Google Analytics, Amplitude, Mixpanel |
-| Push notification 24h attribution | Industry standard window | AppsFlyer, Branch, Adjust |
-| BigQuery partition scan | ~2TB/day for 100M DAU product | GCP pricing |
-
----
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Related Specs
 
-- [`analytics-sdk.md`](analytics-sdk.md) — client-side SDK implementation depth
-- [`ab-testing-experimentation-sdk.md`](ab-testing-experimentation-sdk.md) — experiment exposure events + analysis
-- [`push-notification-system.md`](push-notification-system.md) — `notification_tapped` event source
-- [`feature-flag-system.md`](feature-flag-system.md) — flag evaluation events
-- [`crash-reporting-sdk.md`](crash-reporting-sdk.md) — `error_occurred` event pipeline
+- [`analytics-sdk.md`](analytics-sdk.md) - client-side SDK implementation depth
+- [`ab-testing-experimentation-sdk.md`](ab-testing-experimentation-sdk.md) - experiment exposure events + analysis
+- [`push-notification-system.md`](push-notification-system.md) - `notification_tapped` event source
+- [`feature-flag-system.md`](feature-flag-system.md) - flag evaluation events
+- [`crash-reporting-sdk.md`](crash-reporting-sdk.md) - `error_occurred` event pipeline

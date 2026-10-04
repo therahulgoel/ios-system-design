@@ -1,15 +1,10 @@
 # Design a Mobile Push Notification System
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing a mobile push notification system involves understanding the end-to-end flow from a backend server generating a payload, routing it through Apple Push Notification service (APNs) or Firebase Cloud Messaging (FCM), and handling the notification on the client side. This problem is heavily tested at FAANG companies because it evaluates a candidate's knowledge of mobile-specific infrastructure, OS-level constraints, battery optimization, and large-scale message fanout.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Uber | Critical for real-time ride updates and driver dispatch | ★★★★★ |
-| Airbnb | Essential for host/guest messaging and booking confirmations | ★★★★★ |
-| Spotify | Used for new release alerts and background cache invalidation | ★★★★ |
-| Meta/Apple | Core OS integration and massive-scale notification fanout | ★★★★★ |
 
 ## Scope Definition
 
@@ -36,12 +31,14 @@ Designing a mobile push notification system involves understanding the end-to-en
 5. The system must track notification delivery (where possible) and open rates.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| APNs Payload Size | <= 4KB | Apple APNs Documentation |
-| Silent Push Frequency | ~3 per hour per app | iOS Battery Optimization limits |
-| Token Lifecycle | 1 year (typically) | Industry standard observation |
-| Delivery Latency | < 2 seconds for priority 10 | Production benchmarks |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- APNs Payload Size
+- Silent Push Frequency
+- Token Lifecycle
+- Delivery Latency
+
 
 ## High-Level Architecture (HLD)
 
@@ -350,13 +347,9 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
 - **Opt-in Rate:** % of DAU with push permissions enabled. Target: > 40%.
 - **Token Invalidation Rate:** Spikes indicate APNs issues or mass app uninstalls.
 
-## Production Benchmarks Reference
-| Metric | Number | Source |
-| :--- | :--- | :--- |
-| APNs Volume | 4 trillion+ per year | Apple WWDC 2021 |
-| Max Payload Size | 4KB | Apple APNs Docs |
-| Background Runtime | <= 30 seconds | Apple Background Execution Docs |
-| Silent Push Budget | ~3 per hour per app | Community observation / Apple Docs |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - ❌ **Common Mistake:** Only calling `registerForRemoteNotifications()` on first launch. Tokens change on OS update or device restore. Always call it on every launch.
@@ -378,7 +371,7 @@ A: Unless the server uses `apns-collapse-id`, the user will receive 10 separate 
 A: We can use a hybrid Universal Links approach. The notification tap opens a web URL. The web page fingerprints the device (or uses IDFA if permitted) and stores the intended destination, then redirects to the App Store. On first launch, the app queries the server with its IDFA/device fingerprint to retrieve the deferred destination and routes accordingly.
 
 **Q: "What's the difference between a silent push and a background fetch, and when would you use each?"**
-A: A silent push is server-triggered and guarantees the app wakes up (if not throttled) to process data immediately. It's best for critical cache invalidation or high-priority syncs. A background fetch (`BGAppRefreshTask`) is OS-scheduled based on user habits and battery state. It's best for periodic, non-urgent data refreshes like updating a news feed overnight.
+A: A silent push is a best-effort background update hint. Delivery and execution can be delayed or suppressed, so critical state must reconcile on foreground access or through a durable sync path. See [Apple background updates](https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app). A background fetch (`BGAppRefreshTask`) is OS-scheduled based on user habits and battery state. It's best for periodic, non-urgent data refreshes like updating a news feed overnight.
 
 ## Related Specs
 - [deep-linking-universal-links.md](./deep-linking-universal-links.md)
@@ -407,7 +400,7 @@ A: A silent push is server-triggered and guarantees the app wakes up (if not thr
 }
 ```
 - FCM vs direct APNs: FCM abstracts token management for cross-platform apps. Direct APNs gives more control + lower latency (one less hop). Use FCM if you have Android users; direct APNs if iOS-only.
-- FCM token refresh: `FirebaseMessagingDelegate.messaging(_:didReceiveRegistrationToken:)` called on token change — same problem as APNs, must sync to server.
+- FCM token refresh: `FirebaseMessagingDelegate.messaging(_:didReceiveRegistrationToken:)` called on token change - same problem as APNs, must sync to server.
 - FCM error codes: `registration-token-not-registered` → delete token from DB (same as APNs `Unregistered`).
 
 ### FCM vs APNs Comparison

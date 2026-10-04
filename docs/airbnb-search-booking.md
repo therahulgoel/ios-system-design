@@ -1,16 +1,10 @@
 # Design Airbnb Search & Property Booking Engine
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing an app like Airbnb involves creating a highly synchronized Map-to-Grid search experience, handling complex client-side filtering, optimizing a heavy image pipeline, and managing a robust multi-step booking state machine. This problem tests a candidate's ability to sync UI state across complex view hierarchies, manage performance with high-density images, and handle critical transaction states (payments and inventory holds).
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Airbnb | Core application functionality; UI sync is critical. | ★★★★★ |
-| Booking.com | Similar map/search grid and booking engine. | ★★★★★ |
-| Expedia / Hotels.com | Core product offering. | ★★★★☆ |
-| Zillow / Redfin | Heavy map-to-grid synchronization requirements. | ★★★★☆ |
-| Uber (Ride Selection) | State machine and pricing engine similarities. | ★★★☆☆ |
 
 ## Scope Definition
 
@@ -38,13 +32,15 @@ Designing an app like Airbnb involves creating a highly synchronized Map-to-Grid
 5. **Images**: Fast, memory-efficient loading of property photos.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Map Debounce Time | ~800ms after pan | Airbnb observation |
-| Image Render Time | < 100ms per cell | Standard UI goals |
-| Memory Footprint | < 150MB active RAM | iOS limitations |
-| Filter Application | < 100ms (perceived) | Local caching goals |
-| Inventory Hold Time | 15 minutes | OTA Industry Standard |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Map Debounce Time
+- Image Render Time
+- Memory Footprint
+- Filter Application
+- Inventory Hold Time
+
 
 ## High-Level Architecture (HLD)
 
@@ -323,13 +319,9 @@ When adding to a wishlist:
 - **Wishlist Sync Success**: Percentage of offline wishlist actions that successfully sync when online.
 - **Hold Expiry Rate**: How often users abandon the payment screen after holding inventory.
 
-## Production Benchmarks Reference
-| Metric | Real World Number | Source |
-| :--- | :--- | :--- |
-| API Payload Size | ~100KB compressed | Airbnb search results |
-| Booking Hold Time | 15 Minutes | Industry standard (Airbnb/Booking) |
-| Map Debounce | ~800ms | App behavior reverse engineering |
-| Blurhash String | ~20-30 characters | Blurhash specs |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Single Source of Truth**: Emphasize that Map and Grid share the *exact same* View Model. If they have separate state, syncing them becomes a nightmare.

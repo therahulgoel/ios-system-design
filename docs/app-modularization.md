@@ -1,16 +1,10 @@
 # App Modularization & Dependency Injection System
 
-## Overview
-As iOS codebases grow, monolithic architectures lead to slow build times, tight coupling, and merge conflicts. Modularization involves breaking the app into smaller, independent frameworks or packages. This problem is frequently asked for Staff/Senior roles at companies with large codebases, testing a candidate's ability to design scalable project structures, manage dependencies (Dependency Injection), and optimize build performance.
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
 
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Uber | Creators of Needle DI, huge monorepo, 200+ modules. | ★★★★☆ |
-| Airbnb | Extensive monorepo, custom tooling, strict modularization. | ★★★★☆ |
-| Google | Heavy focus on Bazel, micro-apps, and scalable architecture. | ★★★★☆ |
-| Grab | Large Super-app architecture, requires strict isolation. | ★★★☆☆ |
-| Any Large Tech | To solve "Xcode is too slow" and "we step on each other's toes." | ★★★☆☆ |
+
+## Overview
+As iOS codebases grow, monolithic architectures lead to slow build times, tight coupling, and merge conflicts. Modularization involves breaking the app into smaller, independent frameworks or packages.
 
 ## Scope Definition
 
@@ -36,12 +30,14 @@ As iOS codebases grow, monolithic architectures lead to slow build times, tight 
 4. Each module must be independently testable with mocked dependencies.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Incremental Build Time | < 30s | Developer Velocity Target |
-| Framework Overhead | ~500KB - 2MB | Apple / Industry observation |
-| Total App Binary Size | < 100MB (compressed) | App Store Over-The-Air Limit |
-| Module Count | 100-300+ | Uber / Airbnb Tech Blogs |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Incremental Build Time
+- Framework Overhead
+- Total App Binary Size
+- Module Count
+
 
 ## High-Level Architecture (HLD)
 
@@ -202,13 +198,9 @@ final class AppComponent: CheckoutDependency {
 - `binary_size_mb`: Tracked on PRs to prevent accidental bloat (e.g., adding large unused assets).
 - `dyld_launch_time`: Metric for app cold start, heavily affected by the number of dynamic frameworks.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-| :--- | :--- | :--- |
-| Uber iOS Modules | 200+ | Uber Engineering Blog |
-| Airbnb iOS Modules | 250+ | Airbnb Tech Blog |
-| Incremental Build Target| < 30s | General Developer Velocity Best Practice |
-| Dynamic Framework Limit| ~6 (Historically) | WWDC (Optimizing App Startup Time) |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Understand the "Why":** Modularization isn't just for neatness; it solves concrete scaling problems: build times, merge conflicts, and testability.
@@ -259,4 +251,4 @@ graph TD
 | :--- | :--- |
 | [Feature Flag System](feature-flag-system.md) | How to toggle features across different modular boundaries. |
 | [E-Commerce Catalog](e-commerce-catalog.md) | Example of a feature module that depends on CoreNetwork. |
-| [Design System](design-system.md) | Core UI module implementation details. |
+| Design System (no standalone specification in this repository) | Core UI module implementation details. |

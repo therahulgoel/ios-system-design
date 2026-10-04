@@ -1,15 +1,10 @@
 # Design Google Calendar Mobile Client
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 Designing a robust calendar application like Google Calendar requires handling complex recurring events, offline-first data synchronization, and highly performant infinite scrolling grids. This problem tests a candidate's ability to balance rich UI interactions with stringent data processing requirements, especially around RRULE parsing and delta syncing under background execution constraints.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Google | Core product (Google Calendar), tests complex UI + offline-first sync | ★★★★★ |
-| Apple | Core product (Apple Calendar), requires deep iOS framework knowledge | ★★★★★ |
-| Microsoft | Outlook Mobile, heavy focus on enterprise sync and recurring rules | ★★★★☆ |
-| Uber/Lyft | Complex scheduling and time-series data visualization | ★★★☆☆ |
 
 ## Scope Definition
 
@@ -36,13 +31,15 @@ Designing a robust calendar application like Google Calendar requires handling c
 5. Users can selectively edit single instances or entire series of recurring events.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Scroll Performance | 60 FPS | Apple HIG / Core Animation |
-| Offline Creation | < 100ms local write | Realm / SQLite Benchmarks |
-| Background Task Budget | < 30s execution time | Apple BGAppRefreshTask Docs |
-| Local Storage | < 50MB for 1 year of events | SQLite estimation |
-| Silent Push Throttling | Max 3 per hour | Apple APNs Documentation |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Scroll Performance
+- Offline Creation
+- Background Task Budget
+- Local Storage
+- Silent Push Throttling
+
 
 ## High-Level Architecture (HLD)
 
@@ -210,7 +207,7 @@ For delta syncs, we use cursor-based pagination with a `syncToken`. This represe
 
 ## Client Architecture Deep-Dives
 
-### Subsystem 1 — Calendar Grid Architecture (Infinite Scroll)
+### Subsystem 1 - Calendar Grid Architecture (Infinite Scroll)
 Rendering an infinite calendar grid efficiently requires custom `UICollectionViewLayout` to avoid instantiating millions of cells.
 
 **Concept:** 
@@ -258,7 +255,7 @@ class CalendarGridLayout: UICollectionViewLayout {
 }
 ```
 
-### Subsystem 2 — RRULE Parsing & Expansion
+### Subsystem 2 - RRULE Parsing & Expansion
 Never materialize infinite recurring events in the database. Store the RRULE and expand instances dynamically on the client for the visible date range.
 
 **Concept:**
@@ -308,7 +305,7 @@ struct RRuleExpander {
 }
 ```
 
-### Subsystem 3 — Offline-First Sync Engine & Push Notifications
+### Subsystem 3 - Offline-First Sync Engine & Push Notifications
 Handling background sync via Silent APNs pushes to keep the local database up to date without draining battery.
 
 ```swift
@@ -391,13 +388,9 @@ func application(_ application: UIApplication, didReceiveRemoteNotification user
 - **Cold Start Time**: Target < 1.2s to interactable UI.
 - **Local DB Size**: Monitor p99 DB size to ensure cleanup routines are functioning.
 
-## Production Benchmarks Reference
-| Metric | Real World Number | Source |
-| :--- | :--- | :--- |
-| Silent Push Limits | ~3 per hour dynamically throttled | Apple APNs Developer Docs |
-| Background Task Budget | 30 seconds max | Apple WWDC 2019 (BGTasks) |
-| RRULE Standard | RFC 5545 (iCalendar) | IETF RFC 5545 |
-| SQLite Batch Insert | ~50,000 rows/sec | SQLite Official Benchmarks |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Do not materialize recurring events in the DB.** This is the most common failing mistake. Always store the rule and expand lazily.

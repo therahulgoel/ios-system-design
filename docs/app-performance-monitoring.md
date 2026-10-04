@@ -1,15 +1,10 @@
 # Design Mobile App Performance Monitoring System (APM)
 
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
+
 ## Overview
 App Performance Monitoring (APM) systems measure, aggregate, and report application performance metrics from real user devices in production. At FAANG-scale companies, even small degradations in performance metrics like cold start time, responsiveness, or network latency can directly impact engagement, user retention, and revenue.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Meta | Heavy focus on performance across massive codebases with complex dependency graphs. | ★★★★★ |
-| Uber | Critical flow relies on real-time responsiveness and low latency across varying networks. | ★★★★★ |
-| Google | Extensive engineering standards; maintaining strict binary size and start time budgets. | ★★★★☆ |
-| Airbnb | Focus on smooth scrolling, hitch-free animations, and fast initial paint. | ★★★★☆ |
 
 ## Scope Definition
 
@@ -38,13 +33,15 @@ App Performance Monitoring (APM) systems measure, aggregate, and report applicat
 6. **Batching and Uploading**: Persist metrics locally and upload in batches to avoid battery drain.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| **Cold Start** | < 1.2s | Apple HIG / WWDC 2019 |
-| **Hitch Rate** | < 5ms/s | Apple MetricKit Guidelines |
-| **Hang Threshold** | > 250ms main thread block | Xcode Organizer / App Store Connect |
-| **OOM Limit** | ~350MB (iPhone 12 class) | Empirical / Instruments |
-| **Overhead** | < 1% CPU, < 0.1% CPU for Network | Apple URLSession metrics |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- **Cold Start**
+- **Hitch Rate**
+- **Hang Threshold**
+- **OOM Limit**
+- **Overhead**
+
 
 ## High-Level Architecture (HLD)
 
@@ -330,13 +327,9 @@ class MetricKitReceiver: NSObject, MXMetricManagerSubscriber {
   - Hang rate > 0.5%: P2
   - Network p99 > 5s: P1
 
-## Production Benchmarks Reference
-| Metric | Benchmark | Source |
-| :--- | :--- | :--- |
-| **Cold Start** | < 1.2s | Apple HIG / WWDC 2019 Session 423 |
-| **Hang Threshold** | 250ms | Xcode Organizer |
-| **OOM Threshold** | ~350MB (dirty+compressed) | Instruments on iPhone 12 |
-| **MetricKit Delivery** | Once per 24 hours | Apple MetricKit Docs |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - ❌ **Common Mistake:** Suggesting `didFinishLaunchingWithOptions` as the start time. This completely misses `dyld` load time. Always bring up `ProcessInfo.processInfo.systemUptime`.

@@ -1,15 +1,9 @@
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
 Design Deep Linking & Universal Links System for iOS
 ## Overview
 Designing a deep linking and Universal Links system is a critical infrastructure problem for any consumer iOS application. It involves routing incoming URLs (from web, emails, social media) to the correct in-app screen, handling deferred deep links for uninstalled apps, and ensuring security against URL hijacking. It is frequently asked at FAANG because it touches OS-level APIs, complex state management, routing architectures, and strict security requirements.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Meta | Cross-app navigation (IG to FB), ad attribution, heavy reliance on deferred links | ★★★★★ |
-| Airbnb | Complex booking flows, referral links, sharing listings | ★★★★☆ |
-| Spotify | Sharing playlists/songs, email campaign integrations | ★★★★☆ |
-| Uber | Rider-to-driver web links, receipt emails, promotional codes | ★★★★☆ |
-| Google | Inter-app navigation (Maps to Search to YouTube) | ★★★★☆ |
 
 ## Scope Definition
 
@@ -37,13 +31,15 @@ Designing a deep linking and Universal Links system is a critical infrastructure
 5. The app must track link attribution for marketing analytics.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Cold-start Routing | Queue link if launch < 500ms | Industry standard for initial navigation |
-| Deferred Link Window | 72 hours max expiry | AppsFlyer / Branch standard |
-| AASA File Size | < 128KB | Apple official requirement |
-| Open Rate | 25-40% engagement | Industry average |
-| Crash-free rate | > 99.9% on link parsing | Standard SLA |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Cold-start Routing
+- Deferred Link Window
+- AASA File Size
+- Open Rate
+- Crash-free rate
+
 
 ## High-Level Architecture (HLD)
 
@@ -251,32 +247,13 @@ struct MyApp: App {
 
 ### Subsystem 3: Security & Validations
 Deep links are an attack vector. Never trust parameters for authentication.
-```swift
-func validateDeepLink(_ url: URL) -> Bool {
-    // 1. Check scheme
-    let allowedSchemes = ["https", "myapp"]
-    guard let scheme = url.scheme, allowedSchemes.contains(scheme) else { return false }
-    
-    // 2. Protect sensitive actions (require confirmation)
-    if url.path.contains("/payment/") {
-        coordinator.showConfirmationDialog(for: url)
-        return false // Wait for user confirmation
-    }
-    
-    // 3. Prevent XSS/injection via encoding checks
-    let absoluteString = url.absoluteString
-    guard absoluteString == absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else {
-        return false
-    }
-    
-    return true
-}
-```
+Validate the parsed scheme, exact allowed host, path and typed parameters against the actual app routing contract. Reject unsupported routes and ambiguous encodings. Require server authorization for sensitive resources and explicit confirmation when the product flow requires it. URL percent-encoding equality is not an injection or authorization check.
+
 
 ## Performance & Optimizations
 | Optimization | Technique | Benchmark/Impact |
 | :--- | :--- | :--- |
-| AASA Hosting | Serve directly from origin, avoid aggressive CDN caching | Prevents multi-day delays in OS picking up AASA updates |
+| AASA Hosting | Host a valid AASA file and account for Apple-managed CDN retrieval | Verify entitlement, origin response and propagation using Apple documentation |
 | Regex caching | Pre-compile URL matching regex at startup | Sub-millisecond URL parsing |
 | Cold Start Queuing | Buffer URL intent until UI stack is ready | Eliminates 100% of dropped links on cold launch |
 
@@ -300,15 +277,11 @@ func validateDeepLink(_ url: URL) -> Bool {
 - **Deferred Link Match Rate:** Percentage of first launches successfully matched to a pending link click.
 - **Routing Latency:** Time from `onOpenURL` to view appearing (target < 100ms).
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-| :--- | :--- | :--- |
-| AASA File Limit | < 128 KB | Apple Documentation |
-| Deferred Link Expiry | 72 hours | Standard via AppsFlyer/Branch |
-| AASA OS Cache TTL | ~24 hours | Apple OS behavior observation |
-| Attribution Window | 30 days | Meta Ads default attribution |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
-- **Beware of CDNs:** Emphasize that caching the AASA file on a CDN can cause critical issues because iOS caches it aggressively. If the CDN returns a stale version, it can take days for the OS to request it again.
+- **AASA retrieval:** iOS 14 and later use an Apple-managed CDN. Do not claim CDNs are forbidden or a universal cache TTL. See [Apple associated domains](https://developer.apple.com/documentation/xcode/supporting-associated-domains).
 - **Security is paramount:** Explicitly mention that you should *never* use a deep link for auto-login (`?token=123`) or immediate destructive actions without user confirmation. Custom schemes are easily hijacked by malicious apps.
 - **The Cold Start Problem:** Many candidates forget that clicking a link when the app is killed means the OS launches the app and passes the URL *before* the navigation stack exists. Mention queuing the deep link state until the UI is ready.

@@ -1,14 +1,9 @@
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
 Short-form Video Feed (TikTok / Instagram Reels / YouTube Shorts)
 ## Overview
 Designing a short-form video feed focuses heavily on perceived latency, buttery smooth scrolling, memory management, and bandwidth conservation. It requires sophisticated prefetching strategies, AVPlayer connection pooling, and strict UI recycling.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-|---------|--------------|-----------|
-| Meta | Instagram Reels is a core product. | ★★★★★ |
-| ByteDance| Core business (TikTok). | ★★★★★ |
-| Google | YouTube Shorts architecture. | ★★★★★ |
-| Snap | Spotlight feature relies on this. | ★★★★☆ |
 
 ## Scope Definition
 
@@ -36,13 +31,15 @@ Designing a short-form video feed focuses heavily on perceived latency, buttery 
 5. Respect system states (Low Power Mode, Background).
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-|-------------|--------|--------|
-| Time to First Frame (TTFF) | < 300ms | TikTok Engineering Blog |
-| Scroll FPS | 60 FPS (16ms/frame) | Apple WWDC Core Animation |
-| Payload Size (Feed Page) | < 15KB | Meta Engineering |
-| Cache Hit Ratio (Thumbnails) | > 95% | General CDN guidelines |
-| Memory Overhead | < 150MB total | AVFoundation guidelines |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Time to First Frame (TTFF)
+- Scroll FPS
+- Payload Size (Feed Page)
+- Cache Hit Ratio (Thumbnails)
+- Memory Overhead
+
 
 ## High-Level Architecture (HLD)
 
@@ -300,12 +297,9 @@ class NetworkMonitor {
 - `feed_cache_hit_ratio`: How often a requested thumbnail/video was already on disk.
 - `memory_warning_count`: Monitor for memory leaks in the player pool.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-|--------|-------|--------|
-| AVPlayer Memory | ~15MB per instance | Apple Developer Forums |
-| Low Bandwidth Video | ~200Kbps at 240p | Meta Engineering |
-| JSON Feed Payload | 8-12KB per 10 items | Instagram Reels network trace |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **The Pool is the key**: If you suggest instantiating a new `AVPlayer` for every cell, you will fail the interview. Emphasize the 3-item sliding window.
@@ -347,7 +341,7 @@ flowchart TD
 
 ## Mock Interview Q&A
 **Q: What happens to memory if a user fast-scrolls through 50 videos?**
-A: If not managed, the app will OOM crash. We prevent this by implementing a strict `AVPlayerPool` of exactly 3 players (previous, current, next). When a cell scrolls off-screen, its player is paused, its `AVPlayerItem` is set to nil, and the player is returned to the pool. This keeps AVFoundation memory overhead stable at around 45-50MB regardless of scroll depth.
+A: If not managed, the app will OOM crash. We prevent this by implementing a strict `AVPlayerPool` of exactly 3 players (previous, current, next). When a cell scrolls off-screen, its player is paused, its `AVPlayerItem` is set to nil, and the player is returned to the pool. Bound the pool and measure retained player, buffer and image memory across device cohorts. Pool size alone does not imply a fixed memory footprint.
 
 > 🔍 *Interviewer follow-up: How do you handle the case where the next video isn't buffered when the user swipes?*
 > A: We monitor the `playbackLikelyToKeepUp` flag. If the user swipes faster than the `PrefetchEngine` can download, we immediately display the cached WebP thumbnail and show a lightweight loading spinner. To mitigate this happening frequently, we trigger the prefetch of index N+1 when index N reaches 80% playback completion.

@@ -1,16 +1,10 @@
-# Design Slack Mobile App — Multi-Workspace Channel Sync
+# Design Slack Mobile App - Multi-Workspace Channel Sync
+
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
+
 
 ## Overview
-Designing a mobile messaging application like Slack requires handling real-time multi-workspace synchronization efficiently. This problem is frequently asked at FAANG and top-tier tech companies because it tests a candidate's ability to design a resilient real-time architecture, handle complex database schemas (multi-tenant/workspace isolation), and optimize for both battery life and perceived performance under poor network conditions.
-
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency |
-| :--- | :--- | :--- |
-| Slack | Core product architecture; multi-workspace DB isolation is critical. | ★★★★★ |
-| Salesforce | Parent company of Slack; enterprise collaboration focus. | ★★★★☆ |
-| Microsoft | Teams has similar multi-tenant architecture and real-time needs. | ★★★★☆ |
-| Meta | Messenger/WhatsApp rely heavily on SQLite and real-time syncing. | ★★★☆☆ |
-| Discord | Similar server/channel structure with high-throughput WebSockets. | ★★★☆☆ |
+Designing a mobile messaging application like Slack requires handling real-time multi-workspace synchronization efficiently.
 
 ## Scope Definition
 
@@ -40,14 +34,16 @@ Designing a mobile messaging application like Slack requires handling real-time 
 6. **Presence**: Accurate user presence (active/away) indicators.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| App Launch Time | < 2.0s | Apple HIG |
-| Message Send Latency | < 200ms (Optimistic) | Slack Eng Blog |
-| Real-time Event Latency | < 500ms (WebSocket) | Slack Eng Blog |
-| Battery Drain | < 2% per hour active | iOS System Norms |
-| Database Size limit | ~500MB per workspace | Mobile Constraints |
-| Crash-free sessions | > 99.9% | Industry Standard |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- App Launch Time
+- Message Send Latency
+- Real-time Event Latency
+- Battery Drain
+- Database Size limit
+- Crash-free sessions
+
 
 ## High-Level Architecture (HLD)
 
@@ -440,14 +436,9 @@ The same applies to messages. Messages are inserted with `local_state = .pending
 - **SQLite DB Size**: Track 99th percentile DB size per workspace to plan for eviction policies (e.g., deleting messages > 90 days old if size > 500MB).
 - **Crash Rate**: Monitor `WorkspaceManager` and CoreData/GRDB concurrency crashes. Target > 99.9% crash-free.
 
-## Production Benchmarks Reference
-| Metric | Real World Number | Source |
-| :--- | :--- | :--- |
-| Daily Active Users | 32M+ | Slack 2023 Earnings |
-| Ping Interval | 30s | Slack RTM API Docs |
-| Message Page Size | 50 messages | Slack API Defaults |
-| SQLite Architecture | 1 DB per workspace | Slack Engineering Blog (2022) |
-| Badge Update Latency | < 500ms | Slack App Observation |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Emphasize Data Isolation**: Always start by separating databases per workspace. This shows you understand enterprise security and data leakage risks.

@@ -1,15 +1,10 @@
 # E-Commerce Product Catalog & Discovery Feed
 
-## Overview
-The Product Catalog and Discovery Feed is the entry point for most e-commerce applications. It involves displaying an image-heavy grid of products, handling complex filtering/search, and managing local cart/wishlist state. This problem is frequently asked because it tests UI performance (UICollectionView), pagination, image caching strategies, and data synchronization between client and server.
+> Reference status: client architecture study material. Embedded code and payloads are incomplete design sketches, not verified production implementations or records from the named products. Do not quote remaining numeric tuning choices as employer benchmarks. For backend preparation, start with the [backend guide](backend-engineering-manager-guide.md) and [evidence standard](evidence-and-sources.md).
 
-## Target Companies & Frequency
-| Company | Why They Ask | Frequency (★ rating) |
-| :--- | :--- | :--- |
-| Amazon / Shopify | Core to their product. Tests scalability, image pipelines, and caching. | ★★★★★ |
-| Etsy / Pinterest | Heavy focus on image grid performance and visual discovery. | ★★★★☆ |
-| Fashion/Retail Apps | Tests UI slickness, prefetching, and state management. | ★★★★☆ |
-| Generic Consumer | Good general-purpose system design question for iOS. | ★★★☆☆ |
+
+## Overview
+The Product Catalog and Discovery Feed is the entry point for most e-commerce applications. It involves displaying an image-heavy grid of products, handling complex filtering/search, and managing local cart/wishlist state.
 
 ## Scope Definition
 
@@ -36,13 +31,15 @@ The Product Catalog and Discovery Feed is the entry point for most e-commerce ap
 5. Product prices and availability must be kept relatively fresh.
 
 ### Non-Functional Requirements
-| Requirement | Target | Source |
-| :--- | :--- | :--- |
-| Scroll Frame Rate | 60/120 fps | Apple UI Guidelines |
-| Image Cache (Memory) | ~50 MB | NSCache limits |
-| Image Cache (Disk) | ~500 MB | App limits |
-| Thumbnail Size | 50-100 KB (WebP) | Amazon/Industry standard |
-| Search Debounce | 300ms | UI best practice |
+
+Define and measure these dimensions for the actual workload; values require evidence under [the evidence standard](evidence-and-sources.md):
+
+- Scroll Frame Rate
+- Image Cache (Memory)
+- Image Cache (Disk)
+- Thumbnail Size
+- Search Debounce
+
 
 ## High-Level Architecture (HLD)
 
@@ -313,12 +310,9 @@ actor CartManager {
 - `search_latency_ms`: Time from user typing to results rendered.
 - `cart_add_success_rate`: Percentage of optimistic updates that successfully sync.
 
-## Production Benchmarks Reference
-| Metric | Value | Source |
-| :--- | :--- | :--- |
-| Thumbnail Size | 50-100KB | Amazon Mobile guidelines |
-| Prefetch Distance | 10-20 items | Standard iOS implementation |
-| Grid Layout Cell | (screenWidth/2 - 16px) | Standard 2-column layout math |
+## Measurement and evidence
+
+Use [the evidence standard](evidence-and-sources.md) for published limits and measurement methods. The previous benchmark table lacked traceable support and has been removed. Establish workload, device or server configuration, metric denominator and observation window before setting targets.
 
 ## Interview Tips
 - **Nail the Image Pipeline:** This is the most critical part of this question. You must mention downsampling. Just caching full-resolution images will cause an OOM crash.
@@ -361,6 +355,6 @@ graph TD
 ## Related Specs
 | Spec | Description |
 | :--- | :--- |
-| [Checkout Flow](checkout-flow.md) | What happens after items are added to the cart. |
-| [Image Pipeline](image-pipeline.md) | Deep dive into downsampling and caching strategies. |
-| [Offline Sync](offline-sync.md) | Detailed architecture for background syncing. |
+| [Checkout Flow](payment-checkout.md) | What happens after items are added to the cart. |
+| [Image Pipeline](image-loading-library.md) | Deep dive into downsampling and caching strategies. |
+| [Offline Sync](offline-sync-engine.md) | Detailed architecture for background syncing. |
