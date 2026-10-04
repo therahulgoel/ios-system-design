@@ -44,6 +44,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Decoding Thread
 
 
+## Worked learning walkthrough: A reused cell receives an old image
+
+**Failure drill:** A scrolling cell switches to another item while its previous download/decode is still in flight. This is a proposed design walkthrough.
+
+1. Bind each subscription to item identity and generation. Coalesce downloads by resource/cache variant, while tracking subscribers separately.
+2. Decode/downsample off the presentation path to the requested display requirements. Recheck subscriber identity before publishing results.
+3. Cancel a departed subscriber; cancel shared work only when no relevant subscriber remains. Bound decoded memory and disk retention independently.
+
+**Why the obvious answer breaks:** Cancelling a task does not prevent a late result already produced from updating a reused cell. One subscriber cancellation must not break every coalesced subscriber.
+
+**Answer to rehearse:**
+
+> I would separate raw-byte disk cache from decoded-memory cache and include transformation/auth scope in cache identity. Prefetch is bounded speculative work, not a guarantee of instant display.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -268,13 +282,13 @@ actor NetworkManager {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Downsampling | Use `CGImageSourceCreateThumbnailAtIndex` | Reduces 12MB (3000x3000px) down to 360KB (300x300px) in memory |
-| Decoding Off-Main | Dispatch to global queue / Task.detached | Saves 20-50ms main thread time per image, keeping app at 60fps |
-| Deduplication | Dictionary of in-flight `[URL: Task]` | Prevents 5 identical requests consuming 5x bandwidth |
-| Format Choice | Negotiate WebP/AVIF via `Accept` header | WebP is 25-35% smaller than JPEG, AVIF even smaller |
-| Priority Queueing | Set `URLSessionTask.priority` | Visible UI (1.0) loads before prefetch (0.1) |
+| Downsampling | Decode for actual display pixel requirements | Measure decoded bytes, peak memory and visual quality |
+| Request coalescing | Share matching resource work with separate subscribers | Count duplicate requests and cancellation correctness |
+| Format negotiation | Choose supported formats against real assets | Compare payload, decode cost and compatibility |
+| Priorities | Hint visible versus speculative work; bound admission | Observe useful completion order; priority is not a hard ordering guarantee |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

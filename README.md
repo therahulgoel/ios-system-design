@@ -60,6 +60,18 @@ A payment timeout, a lost message acknowledgement and a failed ad decision have 
 
 The diagrams and sketches support reasoning. Worked responses describe proposed designs; career answers must come from your own experience. The repo does not supply invented success stories or guaranteed hiring scripts.
 
+### Start with a worked lesson
+
+| Learn directly in this repository | What the page walks through |
+| :--- | :--- |
+| [Checkout from request to reconciliation](docs/backend-interview-track.md#worked-app-checkout-from-request-to-reconciliation) | Records, transaction, worker, lost provider result and customer recovery |
+| [Chat from send to reconnect](docs/backend-interview-track.md#worked-app-chat-from-send-to-reconnect) | Stable message identity, durable acceptance, sequence and missed-history recovery |
+| [Streaming startup and failures](docs/backend-interview-track.md#assemble-an-answer-for-a-streaming-app) | Entitlement, manifest, DRM, first frame, ads and CDN failover |
+| [All twelve worked backend cases](docs/backend-system-design-casebook.md) | Mechanism, persisted evidence, failure decision and spoken answer in each case |
+| [Leadership answers from actual work](docs/behavioral-engineering-manager-staff-guide.md#worked-preparation-turn-a-project-into-a-defensible-answer) | Project decisions, cost attribution, coaching, disagreement and reflection |
+
+Topic guides include **Worked learning walkthroughs** before their architecture sections. Read the walkthrough first, then use the models and diagrams to deepen the answer. External sources support verification; the learning flow is explained here.
+
 ## What a stronger answer sounds like
 
 **Practice prompt: What if the payment request times out?**

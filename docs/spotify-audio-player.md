@@ -42,6 +42,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Offline Key Expiry
 
 
+## Worked learning walkthrough: An offline track has an expired license
+
+**Failure drill:** The media file is local, but its playback authorization is no longer usable. This is a proposed design walkthrough.
+
+1. Track downloaded asset readiness and license/access state separately. Do not treat bytes on disk as proof of playable entitlement.
+2. Resolve renewal through the supported DRM flow when connectivity and policy allow; retain user-facing recoverable state.
+3. Keep queue intent and playback state independent of download callbacks. Handle route/interruption changes under an explicit product policy.
+
+**Why the obvious answer breaks:** A queued player is not a universal zero-gap guarantee. Codec/container continuity, readiness and device behavior still matter. Deleting every key on error can erase recoverable state.
+
+**Answer to rehearse:**
+
+> I would trace a track transition and an offline start separately. I would measure audible gaps and interruptions rather than promise a fixed latency from the player class name.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -108,7 +122,7 @@ flowchart TD
 3. `AVQueuePlayer` wraps URL in `AVPlayerItem` and begins buffering.
 4. `AVAudioSession` is set to `.playback` and activated.
 5. Audio begins playing; `MPNowPlayingInfoCenter` is updated with artwork.
-6. When item is 80% complete, `AVQueuePlayer` buffers the next item for gapless play.
+6. Prepare the next item under an explicit bounded prefetch policy; inspect readiness and measure track-transition behavior.
 
 ## Data Models
 
@@ -184,7 +198,7 @@ CREATE TABLE playlist_tracks (
 ## Client Architecture Deep-Dives
 
 ### Subsystem 1 - Gapless Playback Engine
-To achieve 0ms latency between tracks, you cannot destroy and recreate `AVPlayer`. You must use `AVQueuePlayer`.
+`AVQueuePlayer` supports sequential items. Prepare compatible next-item media and measure audible gaps; the class alone does not guarantee gapless playback.
 
 ```swift
 import AVFoundation
@@ -224,7 +238,7 @@ class AudioPlayerEngine {
 ```
 
 ### Subsystem 2 - Offline DRM Downloads
-Downloading DRM-protected HLS streams requires a specialized URL session and writing into a specialized bundle format (`.movpkg`). Standard `URLSession` will corrupt DRM assets.
+Use the supported HLS asset-download APIs for offline assets and manage DRM license state separately. Ordinary byte download does not itself manage the playable HLS package and license lifecycle.
 
 ```swift
 import AVFoundation
@@ -328,17 +342,17 @@ class OSIntegrationManager {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Gapless** | `AVQueuePlayer` pre-buffering | 0ms latency between tracks (vs 500ms+ for `AVPlayer` recreation) |
-| **App Storage** | Save `.movpkg` to Application Support | Prevents OS from randomly deleting downloaded tracks on low disk space |
-| **Artwork Caching** | `NSCache` for UIImage + `MPMediaItemArtwork` | Avoids Lock Screen flicker and network spikes on track change |
-| **Bandwidth** | Limit concurrent downloads to 3 | Prevents TCP congestion, ensures current streaming track doesn't stutter |
+| Queue preparation | Prepare supported next-item playback | Measure audible gaps; queue class alone does not guarantee zero gap |
+| Offline lifecycle | Track asset availability separately from license validity | Check usable offline playback and renewal policy |
+| Download admission | Prioritize playback and bound speculative transfer | Measure stalls, bytes and competing transfer pressure |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 | :--- | :--- | :--- |
-| **DRM Key Expiry** | Offline play fails with AVError | Delete local key, prompt user to go online briefly to re-authenticate with KMS. |
+| **DRM Key Expiry** | Offline play fails with AVError | Classify license validity/renewal failure and recover under the supported DRM policy; do not erase recoverable keys on every error. |
 | **Headphone Unplug** | `AVAudioSession.routeChangeNotification` | Pause playback immediately. Do not auto-resume on re-plug unless explicitly built. |
 | **Network Loss Mid-Stream** | AVPlayerItem stalls | Fallback to next track if it happens to be offline, or surface network UI. |
 | **Background Download Killed** | App terminated by OS | Background `URLSession` wakes app when download completes; reconcile state via `task.taskDescription`. |

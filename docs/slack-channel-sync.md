@@ -45,6 +45,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Crash-free sessions
 
 
+## Worked learning walkthrough: Workspace switch races with message delivery
+
+**Failure drill:** The user selects another workspace while a previous socket/query completes. This is a proposed design walkthrough.
+
+1. Scope databases, cache keys, credentials, connection state and view subscriptions by workspace/session generation. Separation can be logical or physical if access rules are enforced.
+2. Apply incoming changes to the correct workspace store and advance its cursor atomically. Presentation validates the currently selected workspace.
+3. Recover durable history after reconnect and keep unsent operations when repairing storage. Define unread watermark and membership rules explicitly.
+
+**Why the obvious answer breaks:** Separate databases alone do not prevent a late response appearing in the wrong UI. One socket per workspace is a design option, not proof of a named product architecture.
+
+**Answer to rehearse:**
+
+> I would trace one workspace switch through storage, transport and presentation. Unread counts derive from a declared read policy; background execution does not guarantee a cheap query.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -267,7 +281,7 @@ Slack uses cursor-based pagination. Cursor pagination prevents duplicate items w
 ## Client Architecture Deep-Dives
 
 ### 1. Multi-Workspace Database Isolation
-One of the most critical aspects of Slack's architecture is strict workspace isolation. Using a single SQLite database for all workspaces risks data leakage (e.g., querying channels across workspaces by mistake) and makes deleting a workspace complex.
+For this workspace-chat design exercise, strict workspace isolation is a requirement. Using a single SQLite database for all workspaces risks data leakage (e.g., querying channels across workspaces by mistake) and makes deleting a workspace complex.
 
 **Implementation**:
 - Store databases in `Application Support/Workspaces/{workspaceId}.db`.
@@ -306,7 +320,7 @@ actor WorkspaceManager {
 ```
 
 ### 2. WebSocket Per Workspace & Battery Optimization
-Slack requires a persistent WebSocket per active workspace. A user with 5 workspaces maintains 5 sockets. Sockets must handle reconnects with exponential backoff and respond to server `ping`s to maintain liveness.
+A per-workspace WebSocket is one proposed option; a multiplexed connection has different isolation, lifecycle and recovery trade-offs. Sockets must handle reconnects with exponential backoff and respond to server `ping`s to maintain liveness.
 
 ```swift
 class WorkspaceSocketManager {
@@ -406,20 +420,20 @@ When a user adds a 👍 reaction, the UI updates instantly.
 The same applies to messages. Messages are inserted with `local_state = .pending`. The `client_msg_id` UUID prevents duplicates if a network retry occurs. Upon success, update to `.sent`.
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| DB Isolation | One SQLite DB per workspace | Fast queries, 0% cross-leakage |
-| Unread Calc | Background `Task.detached` `COUNT(*)` | 0ms main thread blocking |
-| Idempotency | `client_msg_id` on POST requests | Eliminates duplicate messages |
-| Jitter Backoff | Random ±20% delay on WS reconnects | Prevents thundering herd on server |
-| Presence Decay | Client-side 5min TTL for active state | Reduces network spam for presence |
+| Workspace scope | Partition state, credentials and subscriptions | Verify cross-workspace isolation at every boundary |
+| Unread access path | Query or materialize under explicit read policy | Inspect plans, contention and consistency |
+| Stable message identity | Server-enforced unique identity and durable result | Verify concurrent retry and lost acknowledgement recovery |
+| Reconnect jitter | Bound attempts with supported recovery cursor | Measure reconnection demand and time to restored history |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 | :--- | :--- | :--- |
 | WebSocket Disconnect | `URLSessionWebSocketTask` failure | Exponential backoff reconnect. Sync missing history via REST. |
-| Message Send Failure | HTTP timeout or 500 | Mark local state `.failed`, show retry button. |
-| DB Corruption | SQLite `SQLITE_CORRUPT` error | Delete `.db` file, re-sync from scratch from server. |
+| Message Send Failure | HTTP timeout or 500 | Keep an ambiguous acceptance state when outcome is unknown; recover using the same message identity before starting another send. |
+| DB Corruption | SQLite `SQLITE_CORRUPT` error | Preserve/recover unsent operations where possible; rebuild recoverable server history separately from local-only intent. |
 | Low Power Mode | `ProcessInfo` notification | Disconnect inactive workspace WS, rely on polling/APNs. |
 
 ## Trade-off Analysis

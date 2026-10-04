@@ -107,3 +107,66 @@ Record each dimension as missing, partially supported, or defended under follow-
 | Scope | Evidence matches the role being sought |
 
 A successful rehearsal reveals both the strongest evidence and remaining gaps. Repair the gap with actual experience, documentation or relevant practice; never invent a story to complete the matrix.
+
+## Worked preparation: turn a project into a defensible answer
+
+The earlier version contained long first-person stories with invented team sizes and outcomes. The useful part was their depth of probing. The method below restores that depth using the actual SonyLiv CSAT project named in Rahul's resume. It does not fill in missing career facts.
+
+### Technical ownership: CSAT platform
+
+**Question:** "Tell me about a system you designed or drove end to end."
+
+Open with the project's user problem and your actual remit. Then draw the implemented feedback-to-report path from memory. Name which APIs, persistence, queries and delivery decisions you personally owned, and where another person made the decision. Reconstruct those details before claiming server-side expertise.
+
+| Probe | What to explain in the answer | Evidence to recover |
+| :--- | :--- | :--- |
+| Why was the system needed? | The feedback/reporting problem and who used its output | Original requirement or stakeholder request |
+| Why that data model? | Main entities, ingestion identity, report filters and access boundaries | Schema/API/design artifacts you are allowed to discuss |
+| What was hard? | One actual race, slow query, security boundary or delivery constraint | The actual diagnosis and alternatives considered |
+| What did you do? | A sequence of personal decisions and execution, giving others credit | Reviews, implementation ownership or decision record |
+| How did it help? | Observed stakeholder/customer outcome and measurement method | Real usage, feedback or operational evidence |
+| What would you change? | A real limitation and a justified next decision | An incident, unresolved risk or measured bottleneck |
+
+**Weak:** "I built a scalable platform and improved customer experience."
+
+**Stronger approach:** name the implemented request path, the actual constraint that determined your decision, the rejected option and the observed result. You do not need a dramatic metric to explain a consequential decision. If a field or outcome cannot be recalled, recover it rather than substituting a practice architecture.
+
+### Cost judgment: streaming optimization
+
+Use the Sharechat streaming work as a starting point. Separate encoding/packaging, origin requests, CDN delivery, wasted prefetch and client playback behavior. Those cost categories have different levers. Recover which category actually changed in your project.
+
+The answer needs a causal chain: the observed source of waste, your intervention, its effect on the relevant bill or utilization measure, and the playback guardrail. Compare equivalent cohorts/windows and explain any traffic or pricing change. Annualized savings are an estimate; actual billed reduction is an observation. State which one the resume result represents.
+
+**Probe:** "Could the cost fall simply because fewer people watched?" Explain the actual normalization and comparison used. **Probe:** "What downside did you accept?" Describe the real effect on quality, startup, bandwidth, operational effort or flexibility, rather than pretending the optimization was free.
+
+### Developing an engineer: the management mechanism
+
+Choose a real person and preserve confidentiality. Describe the observed capability gap, not a personality label. Distinguish insufficient skill from unclear remit, excessive load or missing support. Agree a goal visible in ordinary work, then choose a scoped responsibility that develops that capability.
+
+Explain your intervention: how you reviewed reasoning, supplied feedback, arranged support and gradually reduced dependence on you. Describe what happened when progress or delivery slipped. The result must be the actual change in independent work or scope, not an assumed promotion.
+
+| Follow-up | Depth expected |
+| :--- | :--- |
+| Why that assignment? | Connection between the diagnosed gap and the responsibility |
+| Did you take over? | What remained the engineer's decision, and when escalation was necessary |
+| How did you protect delivery? | Scope, support, checkpoints and explicit risk ownership |
+| How did you know it worked? | Observed independent behavior and stakeholder evidence |
+| What if it did not work? | Changed support/expectations and applicable performance process |
+
+This restores the teaching from the old coaching story without inventing an employee, a timeline or a promotion.
+
+### Disagreement: show the competing reasoning
+
+Start with the actual decision, options and decision authority. Give the partner's strongest reason, not a caricature. Explain which evidence discriminated between options, how you gathered it and what trade-off remained uncertain. If the decision went against your recommendation, describe how you executed it and monitored the risk you raised.
+
+The follow-up is often: "What would change your mind?" Name an observable condition, such as an access path that no longer meets requirements, rather than restating your preference. For staff, show adoption without reporting authority. For EM, show how team expectations and delivery changed after the decision.
+
+### Failure and stopping work
+
+A failure story needs a wrong decision or assumption you actually made. Explain what you knew at the time, why the option looked reasonable, what evidence disproved it, and how you repaired the customer/team consequence. The durable lesson is a changed review, rollout or ownership mechanism, not simply "we communicated better."
+
+For a project stop decision, separate sunk effort from future value. Compare remaining investment, recoverable assets, future operating burden and alternatives. Explain who made the stop decision and how you supported the team afterward. Do not recycle a fictional cache project into your career history.
+
+### Rehearse both the opening and the probe
+
+Prepare a short opening containing context, your remit, decision, action and observed result. Then practice one branch at a time: technical mechanism, rejected option, conflicting stakeholder, evidence and reflection. The opening earns the follow-up; the detailed branch establishes that the story is yours.

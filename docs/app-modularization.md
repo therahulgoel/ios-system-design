@@ -39,6 +39,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Module Count
 
 
+## Worked learning walkthrough: Extract checkout without breaking the app
+
+**Failure drill:** A team wants independent checkout development while existing routing and payment dependencies remain. This is a proposed design walkthrough.
+
+1. Map imports, public types and runtime ownership before extracting targets. Identify the cycle rather than splitting by file count.
+2. Define the checkout interface around its entry point and dependencies. The app composition root injects implementations so the feature does not locate hidden globals.
+3. Move one vertical slice behind the interface, preserve behavior, then enforce graph rules in CI. Measure clean and incremental builds separately.
+
+**Why the obvious answer breaks:** Moving the same dependency cycle into more targets keeps the cycle. Large shared models can still cause broad recompilation even when implementation imports are removed.
+
+**Answer to rehearse:**
+
+> I would accept the extra interface and wiring cost only where it improves ownership or change isolation. I would compare build graphs and test-host setup before claiming faster builds.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -107,7 +121,7 @@ Not strictly applicable for modularization, but modules interact via explicit Sw
 ## Client Architecture Deep-Dives
 
 ### Strict Interface / Implementation Separation
-To achieve parallel builds and prevent circular dependencies, features are split into two targets: Interface and Implementation. If Feature A needs Feature B, it only depends on `FeatureBInterface`. Since Interfaces rarely change and contain no logic, they build instantly.
+To achieve parallel builds and prevent circular dependencies, features are split into two targets: Interface and Implementation. If Feature A needs Feature B, it only depends on `FeatureBInterface`. Narrow stable interfaces can reduce rebuild coupling. Their compile cost and change frequency still need measurement.
 
 ```swift
 // Package.swift snippet
@@ -172,12 +186,12 @@ final class AppComponent: CheckoutDependency {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Parallel Compilation | Interface/Impl separation | Flattens dependency graph; xcodebuild can compile multiple feature Impls concurrently. |
-| Dynamic vs Static | Static linking (mostly) | Reduces app launch time (dyld overhead). Apple recommends < 6 dynamic frameworks. |
-| Build Caching | Bazel or Tuist caching | Remote build caches can reduce CI times from 30m to <5m. |
-| Asset Catalog Slicing | App Thinning | Deliver only 2x/3x assets to appropriate devices, reducing OTA binary size. |
+| Dependency graph | Use focused interfaces and composition-root wiring | Compare clean/incremental builds and invalidated targets |
+| Linking choice | Evaluate actual static/dynamic dependencies | Measure startup, artifact size and duplication |
+| Build cache | Key artifacts by relevant source/toolchain/dependency inputs | Check cache correctness, hit rate and rebuild latency |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
@@ -241,8 +255,8 @@ graph TD
 ## Mock Interview Q&A
 - **Q: How do you prevent Feature A from importing Feature B directly?**
   **A:** We use Interface modules. Feature B exposes a lightweight `FeatureBInterface` module containing only protocols and models. Feature A imports `FeatureBInterface`, and the actual implementation is injected at runtime by the App target.
-- **Q: Uber has 200+ modules. How do they manage build times?**
-  **A:** They use strict interface segregation so implementation changes don't trigger recompilation of dependents. They also use build systems like Bazel or Buck to cache artifacts remotely, so developers only compile the modules they actually changed.
+- **Q: How would you manage build times in a large modular application?**
+  **A:** I would evaluate focused interface separation so implementation changes don't trigger recompilation of dependents. They also use build systems like Bazel or Buck to cache artifacts remotely, so developers only compile the modules they actually changed.
 - **Q: How do you test a feature module in isolation when it has dependencies?**
   **A:** Because dependencies are injected via interfaces (protocols), we can create a lightweight test host target that injects mock implementations for all dependencies, allowing the feature to be tested completely in isolation.
 

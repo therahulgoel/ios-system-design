@@ -50,3 +50,10 @@ Reviewed on 4 October 2026. Distinguish a published protocol limit, a measuremen
 ## Repository verification
 
 Run `python3 scripts/check_docs.py` from the repository root. It checks local Markdown paths and anchors, fenced-block balance, forbidden long dashes, and README catalog coverage. It does not compile embedded Swift, render every diagram, verify external URLs, or certify technical statements. Review [the repair record](repository-review.md) for the actual audit scope.
+
+
+## Learning first, verification second
+
+Worked lessons must explain the request path, state, enforcement and failure recovery on the page. A source link or a command to "explain consistency" cannot replace that teaching. Read the conceptual walkthrough before consulting the source for exact platform/version behavior.
+
+The repaired performance tables describe mechanisms and the observations needed to assess them. They do not supply fabricated measured gains. During an interview, derive estimates from given inputs and state missing measurements explicitly. Rehearsal designs must also remain distinct from career stories.

@@ -34,8 +34,8 @@ Study module ownership, release coordination, incident response and developer pr
 +-----------------------------------------------------------------------------------+
 ```
 
-### Module Separation Principles (Uber / Google Model)
-To prevent build times from exploding as engineering headcount scales from 10 to 150+ engineers, every domain must be split into **two distinct targets**:
+### Module Separation Principles
+A proposed separation for domains needing independent ownership is **interface and implementation targets**. Apply it where the dependency graph and build evidence justify the extra boundaries:
 
 1. **`FeatureInterface`**: Protocols, data models, public API contracts. *Zero implementation dependencies.*
 2. **`FeatureImplementation`**: Internal SwiftUI views, ViewModels, business logic. *Imports only `FeatureInterface` targets.*
@@ -79,3 +79,25 @@ Measure build latency, flakiness, crash-free sessions, startup, adoption and mit
 1. **First Line of Defense**: Use remote feature flag kill switches to disable a supported broken path for clients that receive the configuration. Measure propagation and retain a recovery path for offline clients.
 2. **Second Line of Defense**: If the crash is un-flagged (e.g., memory corruption in pre-main setup), immediately **Halt Rollout** in App Store Connect to prevent further user updates.
 3. **Hotfix Branching**: Branch directly from the current live release tag (`release/12.4.0`), apply the minimal cherry-picked commit, run targeted regression suites, and submit to Apple using **Expedited App Review request** without assuming a guaranteed review completion time.
+
+## 5. Worked release incident: backend recovery versus installed clients
+
+**Drill:** a newly distributed app crashes before remote configuration loads. Trace the recovery options in order.
+
+1. Identify the affected binary, OS/device cohorts and crash signature. Compare actual installed-version behavior, not only the aggregate crash-free rate.
+2. Pause further automatic distribution where supported. This limits additional exposure; it does not remove installed binaries or stop every manual download.
+3. Check whether the broken code has a shipped safe path and whether affected users reach flag evaluation. A pre-main crash cannot be fixed by a flag fetched afterward.
+4. Prepare the minimal compatible binary fix from the actual release lineage. Verify the affected startup path, signing, dependencies and matching symbols.
+5. Request the appropriate review/distribution process without promising completion time. Track recovery as users install the fixed version; preserve support guidance for those still affected.
+
+**EM answer:** "I would assign incident command, diagnosis, release execution and customer communication separately. I would stop new exposure where possible and distinguish those users from people already on the bad binary. Recovery is not complete when the backend is healthy or the fix is uploaded; it requires observing successful sessions on affected cohorts."
+
+**Staff probe:** "Why did the kill switch fail?" Explain whether configuration loading was unreachable, the alternative was absent, the client was offline or the rules were incompatible. Each cause requires a different mechanism.
+
+## 6. Worked platform migration: earn adoption
+
+Before extracting shared networking into a platform module, map current consumers, auth behavior, error contracts and cancellation. Migrate one representative feature behind an adapter and prove its user path. Supply compatibility, a test host, diagnostics and a supported rollback while consumers move. Measure actual adoption and remaining divergent implementations.
+
+The platform team's deliverable is a usable contract and migration support, not just a new package. Interfaces that force every product team into synchronized release can undermine the intended autonomy.
+
+**Leadership probe:** "Why invest now?" Connect recurring incidents, duplicated work or blocked delivery to the proposed investment and identify what work is deferred. Build time alone is not the whole business case.

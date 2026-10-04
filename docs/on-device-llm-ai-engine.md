@@ -77,3 +77,52 @@ Use authorized representative inputs and record actual outcomes. Evaluate task a
 - What does the EM own across model, client, privacy and backend teams?
 
 Related material: [summarization mechanics](how-ai-summarization-agents-work.md), [evidence standard](evidence-and-sources.md), [backend guide](backend-engineering-manager-guide.md).
+
+## Beginner primer: what executes on the device
+
+| Term | Plain-language meaning | Consequence for this design |
+| :--- | :--- | :--- |
+| Model weights | Learned numeric parameters used by the computation | They must be available in a compatible format and fit the runtime's supported resource envelope |
+| Tokenizer | Converts text to the model's input/output units | Use the exact model tokenizer; arbitrary word counts do not prove context fit |
+| Prefill | Processing the prompt before incremental generation | Long input can delay the first output even if later decoding is fast |
+| Decode | Generating further tokens using prompt and generated context | Completion cost depends on output length and serving conditions |
+| KV-cache | Stored attention keys/values for prior positions | Context and concurrent sequences increase memory demand |
+| Quantization | Representing some computation/weights with reduced precision | Smaller representation may trade quality or runtime compatibility; validate the exact artifact |
+| Retrieval | Selecting relevant authorized source chunks | It changes available context, not the model's learned parameters |
+| Fine-tuning | Updating parameters through training | It has data, training and evaluation obligations beyond indexing documents |
+| Tool calling | Proposing structured requests to application functions | The application still authorizes and executes; model text is not permission |
+
+### Follow a local summary request
+
+```mermaid
+sequenceDiagram
+    participant V as ViewModel
+    participant P as Access and route policy
+    participant R as Retrieval
+    participant M as Model runtime
+    V->>P: Summarize authorized selected document
+    P->>R: Obtain permitted versioned text
+    R-->>P: Text and source references
+    P->>M: Tokenize, validate limits, process prompt
+    M-->>V: Stream generation for current request
+    V->>V: Validate state and display supported output
+    V->>M: Cancel if intent becomes obsolete
+```
+
+The model does not directly read every app database. The retrieval service supplies only material permitted for this request. Keep source version and request generation together so a late summary cannot replace a newer edit.
+
+### Why a small file still fails at runtime
+
+A packed model file accounts for only part of demand. Runtime buffers, activations, decoding cache, input/output storage and concurrent app work can push peak memory higher. A long document may fit the tokenizer limit but still exceed the measured device envelope. Warm-model performance also omits initialization and model loading.
+
+**Answer:** "I would measure the selected artifact/runtime on supported devices with representative context and output lengths. I would bound concurrent generation and optional app work. On pressure, I would cancel safely and preserve user intent; I would not assume a fixed file-size limit protects the process."
+
+### Cloud fallback is a data-policy decision
+
+If local inference fails, first check whether the selected content may leave the device and whether the user has authorized the permitted route. If not, return a recoverable local failure. If allowed, disclose/execute the intended route and apply the cloud service's authorization, retention and deadline. Never switch providers mid-output and present a mixed partial answer as one completed summary without an explicit policy.
+
+### Tool loop without privilege escalation
+
+The proposed loop is: model proposes a typed action, application validates schema and caller permission, tool executes under bounded credentials, result returns as data, then the model may continue within budget. Durable action identity is needed for mutating tools. If a worker crashes after a tool effect, reconcile that action before reissuing it. Retrieved instructions cannot expand tool permissions.
+
+**EM follow-up:** name owners for model quality, device performance, source access and cloud operations. Gate a release on both task quality and device behavior; successful token streaming alone does not prove a useful feature.

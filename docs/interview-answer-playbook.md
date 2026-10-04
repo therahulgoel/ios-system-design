@@ -38,14 +38,14 @@ Adapt the sequence to the interview. Ask for missing workload inputs and keep ca
 
 ### Follow-up responses
 
-| Probe | A defensible response should explain |
+| Probe | Concrete answer |
 | :--- | :--- |
-| Two requests arrive together | Which atomic mechanism permits only the intended operation and how the second caller observes its state |
-| The same key carries a different payload | Fingerprint validation and a defined conflict response |
-| The provider accepts but the worker crashes | Persisted attempt identity, status/callback reconciliation and replay behavior |
-| A callback arrives twice | Authenticated event handling, deduplication and legal state transitions |
-| Inventory expires before confirmation | The chosen business recovery policy rather than an assumed rollback |
-| Why not call it exactly once? | The precise guarantee boundary and cooperation required from the external destination |
+| Two requests arrive together | Both attempt the same caller-scoped unique operation claim. The database arbitrates it; only the accepted operation creates work. The other reads the durable result after that transaction resolves |
+| Same key, different payload | Compare the canonical fingerprint stored with the operation. Reject the conflicting request rather than returning an unrelated checkout |
+| Provider accepts, worker crashes | The attempt identity was persisted before calling. Reconcile the same attempt through supported provider status/events or safe retry; do not allocate another charge identity |
+| Callback arrives twice | Validate provider authenticity, then commit event deduplication and the legal business transition together. Replayed evidence must not duplicate fulfillment |
+| Inventory expires before confirmation | Expiry and confirmation coordinate on reservation state. Late payment follows the chosen reacquisition or refund policy; a refund is another tracked external operation |
+| Why not exactly once? | The local transaction covers order state and outbox, not the provider's effect. The destination contract and reconciliation define the external guarantee |
 
 Sources: [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests) and [AWS transactional outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html). See the [payment exercise](backend-system-design-casebook.md#1-checkout-payments-and-inventory) for the broader design.
 
@@ -102,3 +102,19 @@ Explain the conditions. These are design examples, not universal architecture pr
 - Did I add the role's required technical or leadership depth?
 
 Record the specific unresolved point, repair it, then repeat that part aloud. Use [the behavioral guide](behavioral-engineering-manager-staff-guide.md) and [backend practice rubric](backend-engineering-manager-guide.md#12-practice-evaluation) for deeper review.
+
+
+## 7. Walk a design rather than name its components
+
+For checkout, use this spoken sequence:
+
+1. **Contract:** "The caller gets durable acceptance and a status path, not an immediate claim that payment succeeded."
+2. **Local commit:** "One transaction claims the scoped operation, allocates stock and stores the order, attempt and outbox. A conflict rolls back those local changes."
+3. **External effect:** "A worker calls the provider using the persisted attempt identity outside the inventory transaction."
+4. **Crash:** "If the provider accepts and the worker dies, the attempt remains unresolved. Recovery uses that same identity and provider evidence."
+5. **Customer outcome:** "The client shows pending and can resume status after restart. Late success after reservation expiry follows the explicit business policy."
+6. **Operations:** "An owner handles reconciliation age and terminal exceptions; endpoint health alone does not establish business recovery."
+
+Now change one constraint: multiple merchants, partial fulfillment, expired provider identity or regional data loss. Identify exactly which record, boundary and recovery rule changes. That is how to demonstrate depth without adding a wall of code.
+
+The [backend track](backend-interview-track.md) contains complete checkout, chat and streaming walkthroughs. The [casebook](backend-system-design-casebook.md) contains the same mechanism-and-failure format for all twelve cases.

@@ -41,6 +41,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Memory Overhead
 
 
+## Worked learning walkthrough: Fast scroll leaves obsolete prefetches alive
+
+**Failure drill:** The user skips several items while speculative playback work is still running. This is a proposed design walkthrough.
+
+1. Separate current visible item identity from prefetched candidates. Maintain a measured bounded player/buffer budget, not a universal player count.
+2. Cancel obsolete subscribers, detach observers and release no-longer-needed items. A late completion must check the active item generation.
+3. Prioritize current playback over speculative downloads; reduce optional work under constrained network, memory or thermal conditions.
+
+**Why the obvious answer breaks:** A memory warning can arrive too late to prevent termination. A fixed player count does not fix retained observers, decoded images or buffers.
+
+**Answer to rehearse:**
+
+> I would explain ownership and cancellation through a fast-scroll trace. Network path type is not measured throughput; quality adaptation must use playback/network evidence and supported player behavior.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -168,7 +182,7 @@ Fetches a batch of videos.
 ## Client Architecture Deep-Dives
 
 ### AVPlayer Pool (Memory Guard)
-Creating `AVPlayer` instances is expensive (~15MB memory overhead each). We use a sliding window of exactly 3 players: Previous, Current, Next.
+Player/item buffers and observers contribute to memory. Use a bounded sliding window chosen from measured device and content behavior; no fixed per-player memory cost or universal count is assumed.
 
 ```swift
 import AVFoundation
@@ -270,12 +284,12 @@ class NetworkMonitor {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
-|--------------|-----------|------------------|
-| Prefetch Trigger | Start buffering next item at 80% duration | Decreases TTFF to almost 0ms on scroll |
-| Thumbnail Format | WebP progressive loading, 320px | Reduces payload by 30% compared to JPEG |
-| Battery Guard | Check `ProcessInfo.processInfo.isLowPowerModeEnabled` | Pauses aggressive prefetching, extends battery life |
-| Memory Guard | strict 3-player pool, clear thumbnails via `NSCache` | Keeps RAM usage < 100MB, prevents OOM jetsam |
+
+| Decision | Mechanism | What to verify |
+| :--- | :--- | :--- |
+| Prefetch policy | Prepare likely next item within measured budget | Measure first-frame delay and wasted bytes |
+| Bounded resource ownership | Limit players, buffers, decoded images and observers | Measure retained memory across devices; no universal pool-size guarantee |
+| Power/network adaptation | Reduce optional speculation based on observed constraints | Measure energy and playback quality together |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
@@ -341,13 +355,13 @@ flowchart TD
 
 ## Mock Interview Q&A
 **Q: What happens to memory if a user fast-scrolls through 50 videos?**
-A: If not managed, the app will OOM crash. We prevent this by implementing a strict `AVPlayerPool` of exactly 3 players (previous, current, next). When a cell scrolls off-screen, its player is paused, its `AVPlayerItem` is set to nil, and the player is returned to the pool. Bound the pool and measure retained player, buffer and image memory across device cohorts. Pool size alone does not imply a fixed memory footprint.
+A: If not managed, the app will OOM crash. We prevent this by implementing a bounded `AVPlayerPool` with explicit ownership and cancellation. When a cell scrolls off-screen, its player is paused, its `AVPlayerItem` is set to nil, and the player is returned to the pool. Bound the pool and measure retained player, buffer and image memory across device cohorts. Pool size alone does not imply a fixed memory footprint.
 
 > 🔍 *Interviewer follow-up: How do you handle the case where the next video isn't buffered when the user swipes?*
 > A: We monitor the `playbackLikelyToKeepUp` flag. If the user swipes faster than the `PrefetchEngine` can download, we immediately display the cached WebP thumbnail and show a lightweight loading spinner. To mitigate this happening frequently, we trigger the prefetch of index N+1 when index N reaches 80% playback completion.
 
 **Q: How do you handle changing network conditions while swiping?**
-A: We use `NWPathMonitor` to detect drops from WiFi to Cellular or Low Data Mode. If bandwidth drops, our Feed API requests the lower-bitrate variant (e.g., 240p MP4 at 200Kbps) instead of the 1080p variant, prioritizing zero-stall playback over visual fidelity.
+A: We use `NWPathMonitor` to detect drops from WiFi to Cellular or Low Data Mode. A path-type change alone does not measure bandwidth. Based on actual playback/network evidence and product policy, the Feed API may request an eligible lower-bitrate variant (e.g., 240p MP4 at 200Kbps) instead of the 1080p variant, prioritizing zero-stall playback over visual fidelity.
 
 ## Related Specs
 | Related Spec | Why It's Related |

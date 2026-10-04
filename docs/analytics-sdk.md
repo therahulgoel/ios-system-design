@@ -43,6 +43,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Batch Size
 
 
+## Worked learning walkthrough: An upload response is lost
+
+**Failure drill:** The server accepts an event batch, but the app dies before deleting its local rows. This is a proposed design walkthrough.
+
+1. Persist event identities and payloads before claiming durable acceptance. Best-effort in-memory collection has a different loss contract.
+2. Upload a bounded batch with stable event identities. The server defines whether its acknowledgement covers durable ingestion or only receipt.
+3. Delete acknowledged rows transactionally. After restart, replay the remaining rows and deduplicate at the defined destination boundary.
+
+**Why the obvious answer breaks:** Crash before local deletion creates replay; deleting before server acceptance creates loss. A lifecycle callback cannot close every crash window.
+
+**Answer to rehearse:**
+
+> I would define which events may be dropped under disk pressure and which require durable acceptance. Actor isolation protects shared state but does not persist it or remove suspension races automatically.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -233,12 +247,12 @@ class EnvironmentMonitor {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Compression | `gzip` the JSON body | Reduces 100KB payload to ~15-20KB |
-| Serialization | Avoid `JSONSerialization` on main thread | Enqueue raw dictionaries, serialize to Data on background task |
-| Database Writes | SQLite Transactions `BEGIN`/`COMMIT` | Inserting 100 items takes 2ms in a transaction vs 100ms individually |
-| Memory Allocations | `removeAll(keepingCapacity: true)` | Reuses buffer memory, preventing ARC thrashing |
+| Batch persistence | Commit bounded groups of event records | Measure write duration, acceptance loss and replay behavior |
+| Compression | Compress sufficiently large permitted batches | Compare transferred bytes with CPU/energy overhead |
+| Bounded collection | Separate best-effort from durable acceptance | Measure queue pressure, dropped events by policy and app responsiveness |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

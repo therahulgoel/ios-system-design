@@ -40,6 +40,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - SSO Browser Launch
 
 
+## Worked learning walkthrough: Refresh succeeds after the user logs out
+
+**Failure drill:** Protected requests wait for refresh, but the user signs out before it completes. This is a proposed design walkthrough.
+
+1. Associate requests and credentials with a session generation. Serialize refresh through a shared in-flight operation, not independent refreshes per request.
+2. Logout advances the generation and clears permitted session state. The completing refresh checks that its originating generation is still active before saving tokens.
+3. Waiting requests resume only for the current session. Bound retry and distinguish invalid credentials from transient service/network failure.
+
+**Why the obvious answer breaks:** Saving late tokens can silently recreate a logged-out session. An actor still permits interleaving across await points, so isolation alone is not the session policy.
+
+**Answer to rehearse:**
+
+> I would choose Keychain accessibility based on the required foreground/background flow and threat model. Local biometric success does not independently authorize a server resource or identify the remote account.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -227,7 +241,7 @@ actor TokenRefresher {
 ```
 
 ### 2. Secure Storage (KeychainManager)
-Never store tokens in `UserDefaults`. Use Keychain, ensuring `kSecAttrAccessibleAfterFirstUnlock` so background tasks can operate, but restricting iCloud sync.
+Never store tokens in `UserDefaults`. Use Keychain with accessibility and access-control chosen for the actual foreground/background requirement and threat model. Synchronization policy is a separate decision.
 
 ```swift
 import Security
@@ -303,18 +317,19 @@ class BiometricAuthManager {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Pre-emptive Refresh | Refresh token 5 mins before expiry | Avoids blocking user API requests entirely |
-| Ephemeral Sessions | `prefersEphemeralWebBrowserSession = true` | Bypasses SSO, forces login (good for multi-account) |
-| Actor Synchronization | Centralize refresh logic in Swift Actor | Solves concurrency / `invalid_grant` races with ~0 overhead |
+| Shared refresh | One in-flight operation per active session | Check replay bounds, rotation races and logout generation |
+| Refresh scheduling | Provider expiry policy plus useful deadline | Measure requests waiting for credentials; background execution is not assured |
+| Browser session policy | Choose permitted ephemeral/shared behavior | Verify supported account switching and privacy behavior |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 | :--- | :--- | :--- |
 | Refresh Token Expired | API returns `401` even on refresh call | Force local logout, clear Keychain, present Login UI |
 | User Changes Face ID | `LAContext.evaluatedPolicyDomainState` changes | Invalidate Secure Enclave keys, force password re-entry |
-| Keychain Read Failure | `SecItemCopyMatching` returns error code | Treat as logged out, prompt re-authentication |
+| Keychain Read Failure | `SecItemCopyMatching` returns error code | Distinguish temporary locked-device unavailability from absent/invalid credentials; defer or prompt appropriately |
 
 ## Trade-off Analysis
 | Decision | Option A | Option B | Chosen | Why |
@@ -340,13 +355,13 @@ Use [the evidence standard](evidence-and-sources.md) for published limits and me
 
 ## Mock Interview Q&A
 **Q: "Walk me through the complete OAuth2 PKCE flow for a mobile app. Why can't we use the standard authorization code flow with a client secret?"**
-A: Mobile apps cannot securely store a `client_secret` since the binary can be decompiled. PKCE solves this by generating a dynamic secret (`code_verifier`) per request. The app hashes it into a `code_challenge` and sends it in the first auth request. When exchanging the auth code for tokens, the app sends the raw `code_verifier`. The server hashes it and verifies it matches the original challenge, proving the app requesting the token is the exact same app that initiated the login.
+A: Mobile apps cannot securely store a `client_secret` since the binary can be decompiled. PKCE solves this by generating a dynamic secret (`code_verifier`) per request. The app hashes it into a `code_challenge` and sends it in the first auth request. When exchanging the auth code for tokens, the app sends the raw `code_verifier`. The server hashes it and verifies it matches the original challenge, binding the code exchange to possession of the verifier. Also validate the redirect/session and use the appropriate native-app authorization flow.
 
 **Q: "5 API calls return 401 simultaneously. Your token refresh endpoint only accepts a refresh token once. What happens without proper synchronization, and how do you fix it?"**
 A: Without synchronization, all 5 requests will call the refresh API. The first one succeeds and invalidates the refresh token (due to token rotation). The other 4 fail with `invalid_grant`, logging the user out. I would fix this using a Swift `actor` that flags `isRefreshing = true`. The 4 subsequent requests will suspend via `withCheckedContinuation` and wait until the first network call finishes, then reuse the newly fetched token.
 
 **Q: "Where do you store tokens on iOS and why? What are the risks of each alternative?"**
-A: Tokens must be stored in the iOS Keychain. It provides hardware-backed encryption via the Secure Enclave. `UserDefaults` is completely insecure as it stores data in plaintext XML/plist files and is visible in iTunes/iCloud backups. `CoreData` without SQLCipher is also plaintext. I would also set `kSecAttrSynchronizable` to false so sensitive tokens don't sync to other Apple devices unnecessarily.
+A: Tokens must be stored in the iOS Keychain. It provides platform-protected secret storage; a Keychain token is not automatically a non-exportable Secure Enclave key. `UserDefaults` is completely insecure as it stores data in plaintext XML/plist files and is visible in iTunes/iCloud backups. `CoreData` without SQLCipher is also plaintext. I would also set `kSecAttrSynchronizable` to false so sensitive tokens don't sync to other Apple devices unnecessarily.
 
 **Q: "A user enables Face ID for your banking app. Walk me through the Secure Enclave flow."**
 A: When Face ID is enabled, we create a cryptographic key pair inside the Secure Enclave. The private key never leaves the chip. We configure its access control list (`SecAccessControl`) to require biometric authentication. When the user performs a sensitive action, we ask the Secure Enclave to sign a challenge. The Enclave prompts for Face ID, validates it locally, signs the data, and returns the signature to the app, which is then verified by the backend.

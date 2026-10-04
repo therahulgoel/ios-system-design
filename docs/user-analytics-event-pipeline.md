@@ -25,6 +25,20 @@ Everything else is derivative. A well-designed event schema answers all 3 from â
 
 ---
 
+## Worked learning walkthrough: A funnel mixes anonymous and signed-in identity
+
+**Failure drill:** Offline events arrive after sign-in and are replayed into aggregate reports. This is a proposed design walkthrough.
+
+1. Preserve event identity, event-time identity context, consent and schema version. Define which identity links may be applied retroactively.
+2. Deduplicate and transform under a versioned policy; late arrivals may correct earlier windows. Persist replay progress and output effects consistently.
+3. Validate the funnel denominator and exposure conditions. Propagate deletion and consent changes to derived tables and exports.
+
+**Why the obvious answer breaks:** Joining solely on the current account can misattribute shared-device history. Dropping all late events silently changes conversion denominators.
+
+**Answer to rehearse:**
+
+> I would define the business question and identity policy before the event taxonomy. A detailed event payload is useful only if it is authorized, interpretable and retained for a justified purpose.
+
 ## A Minimal Event Taxonomy to Evaluate Against Product Needs
 
 > **Staff-level insight**: Most companies track 300+ events. The best teams get 90% of insight from 8.  

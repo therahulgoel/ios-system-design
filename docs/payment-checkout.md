@@ -44,6 +44,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - 3DS Fraud Reduction
 
 
+## Worked learning walkthrough: The app restarts during an unknown payment
+
+**Failure drill:** The provider outcome is unresolved when the user closes the app. This is a proposed design walkthrough.
+
+1. Persist order/operation identity and pending status before relying on recoverable UI. Server owns price and payment attempt state.
+2. On relaunch, retrieve authorized status rather than initiating a fresh attempt. Server reconciles the persisted provider identity through its supported contract.
+3. Handle late success, failure and expired inventory with explicit policy. Polling ends according to deadline/lifecycle, but unresolved backend state remains recoverable.
+
+**Why the obvious answer breaks:** A local timeout or polling deadline is not proof that the provider failed. Erasing the pending identity can cause another charge when the user returns.
+
+**Answer to rehearse:**
+
+> I would separate customer navigation from business recovery: the user can leave a pending screen while durable reconciliation continues. Support needs the same operation trace and exception owner.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -332,11 +346,12 @@ class PaymentManager: ObservableObject {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Connection Reuse | Keep-alive HTTP connections | Saves ~100ms on TLS handshake per request |
-| Certificate Pinning | Pin public key of payment API | Mitigates MITM attacks, required for PCI compliance |
-| Background Tasks | `BGProcessingTask` for pending checks | Ensures state resolution even if app is backgrounded |
+| Connection reuse | Supported pooled transport | Measure handshake frequency and request latency |
+| Pinning policy | Supported pin validation with rotation/recovery | Assess threat coverage and outage exposure; pinning alone is not compliance |
+| Durable reconciliation | Server workers with client foreground status recovery | Measure unknown-attempt age; background tasks are optional opportunities |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

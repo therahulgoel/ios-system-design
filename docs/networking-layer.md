@@ -42,6 +42,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - SSL Pinning Rotation
 
 
+## Worked learning walkthrough: Cancelled request completes after a new search
+
+**Failure drill:** The user changes intent while the previous request is awaiting a response. This is a proposed design walkthrough.
+
+1. Carry request identity/generation and deadline through the service. Cancellation should reach underlying network work when supported.
+2. Validate the active generation before mutating view state, even if cancellation was requested. Classify authentication, transport, HTTP and domain failures separately.
+3. Retry only repeat-safe operations under their business identity and deadline. Share refresh work without reviving a logged-out session.
+
+**Why the obvious answer breaks:** Transport cancellation and business cancellation differ. A request may have committed remotely even though the local task is cancelled.
+
+**Answer to rehearse:**
+
+> I would reuse connections where available and measure actual handshakes/waits. I would never infer a duplicate-safe mutation from HTTP retry machinery alone.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -259,12 +273,12 @@ class MockURLProtocol: URLProtocol {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Connection Reuse** | Keep-Alive and HTTP/2 Multiplexing | Eliminates ~100-200ms TCP/TLS handshake latency for subsequent requests. |
-| **Prioritization** | `task.priority = 1.0` (UI) vs `0.1` (Analytics) | Ensures critical user-facing JSON loads before heavy background logs. |
-| **JSON Decoding** | Use default Swift `JSONDecoder` | Very fast in Swift 5+, but can optimize via custom `init(from decoder:)` for massive payloads. |
-| **GZIP Compression** | `Accept-Encoding: gzip` | Reduces JSON payload sizes by up to 70%. URLSession handles decompression automatically. |
+| Connection reuse | Reuse supported sessions and multiplexing | Observe connection/TLS counts and actual wait time |
+| Priorities | Bound and prioritize useful foreground demand | Measure deadline success; hints do not enforce strict scheduling |
+| Payload handling | Compress/parse off presentation when justified | Compare bytes, decoding CPU and user-perceived latency |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

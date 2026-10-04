@@ -16,7 +16,9 @@ Follow MVVM for app/UI examples as specified in [REPO_SPEC.md](REPO_SPEC.md). Ba
 
 Identify incomplete snippets as sketches. To claim runnable code, provide a buildable target, actual dependencies, platform/toolchain versions and relevant execution checks. Never claim a code snippet alone is production-certified.
 
-For each design, include requirements, authoritative state, invariant, API semantics, concurrency, retry and replay behavior, overload, recovery, authorization, migration and observability. Add the leadership lens where relevant.
+For each design, teach the mechanism before adding practice questions. Include a normal request, the records/state it changes, a concurrent or failed execution, and a complete spoken answer. A list such as "explain retries" is not a substitute for explaining which identity is reused, what is persisted and how the outcome is recovered.
+
+Include requirements, authoritative state, invariant, API semantics, concurrency, retry and replay behavior, overload, recovery, authorization, migration and observability. Add the leadership lens where relevant. Keep the high-level explanation self-contained; primary sources support verification rather than replace the lesson.
 
 Use standard ASCII hyphens. Use clear Markdown links and fenced blocks. Mermaid diagrams should show trust, persistence and acknowledgement boundaries where useful.
 

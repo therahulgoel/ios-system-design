@@ -44,6 +44,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Battery Impact
 
 
+## Worked learning walkthrough: A sent message stays pending after restart
+
+**Failure drill:** The server persisted the message but the sender lost its acknowledgement. This is a proposed design walkthrough.
+
+1. Persist pending local message identity before sending. Do not allocate a new identity merely because a timeout occurred.
+2. Retry or look up acceptance under the same identity. Merge the returned server message/sequence with the pending record atomically.
+3. Fetch missed history after reconnect and advance the local cursor only after application. Keep delivered and read receipt state separate.
+
+**Why the obvious answer breaks:** Marking a timeout terminally failed and resending as a new message can duplicate a send. Ordering by device time breaks when clocks differ.
+
+**Answer to rehearse:**
+
+> I would explain durable acceptance and recovery before the WebSocket. Local pending state is recoverable intent; server history and authorization are authoritative.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -352,12 +366,12 @@ In a FAANG interview, understanding the concepts of E2EE is a strong signal:
 - **Client implementation**: The payload is encrypted *before* hitting the SQLite database for outbox, and decrypted *after* retrieval for inbox. The server only sees ciphertext.
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
-|--------------|-----------|------------------|
-| Pagination | Cursor-based indexing on `(thread_id, created_at)` | O(1) fetch vs O(N) for offset |
-| Smooth Scrolling | Pre-calculate row heights, cache text layouts (CoreText) | 60fps / 120fps (ProMotion) |
-| Image Loading | Downsample before memory load (`CGImageSource`) | Reduces memory footprint by 80% |
-| Batching | Batch SQLite inserts for incoming message floods | 100 inserts in 5ms vs 500ms |
+
+| Decision | Mechanism | What to verify |
+| :--- | :--- | :--- |
+| Keyset history | Stable conversation order, tie-breaker and matching index | Inspect examined rows and plan; fetching a page is not O(1) |
+| Batched persistence | Commit bounded message changes with cursor | Measure writes and restart correctness |
+| Layout/image work | Cache valid layouts and downsample media | Measure retained memory and scrolling responsiveness |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

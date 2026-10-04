@@ -41,6 +41,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Thermal Mgmt
 
 
+## Worked learning walkthrough: Signaling works but media cannot connect
+
+**Failure drill:** Both callers join successfully, but their network path does not permit direct media. This is a proposed design walkthrough.
+
+1. Keep room membership/signaling distinct from media connectivity. Exchange the negotiated session information under authenticated room access.
+2. Trace ICE candidate gathering/checks and the configured relay path. A successful signaling response does not prove media can traverse the network.
+3. Expose connection state and recover within a bounded policy. Adapt media based on observed quality while monitoring device resource pressure.
+
+**Why the obvious answer breaks:** Scaling the signaling API cannot fix an unreachable media path. A relay adds bandwidth cost and dependencies but may be necessary for connectivity.
+
+**Answer to rehearse:**
+
+> I would distinguish setup latency, first media, packet loss and ongoing quality. WebSocket is a signaling choice; it does not carry or guarantee the negotiated realtime media path.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -273,12 +287,12 @@ class AudioSessionManager {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **GPU Rendering** | `RTCMTLVideoView` (Metal) | CPU usage drops from ~60% (OpenGL/CPU) to ~15% (Metal) |
-| **Simulcast / SVC** | Client sends 3 resolutions (1080p, 360p, 180p) | SFU routes low-res to mobile, high-res to desktop based on bandwidth |
-| **Thermal Mitigation** | Observe `ProcessInfo.thermalState` | At `.serious`, turn off camera to prevent OS force-quit |
-| **Background Mode** | Pause video, keep audio track | Massively reduces battery drain while app is in background |
+| Supported rendering | Use compatible hardware/media rendering path | Measure CPU, energy and frame quality on target devices |
+| Layered media | Choose negotiated simulcast/SVC support | Measure bandwidth, relay cost and delivered quality |
+| Thermal adaptation | Reduce optional work under observed pressure | Verify media continuity and resource recovery |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

@@ -42,6 +42,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - OOM Kill Threshold
 
 
+## Worked learning walkthrough: A crash report cannot be symbolicated
+
+**Failure drill:** A report arrives but matching symbols are not yet available. This is a proposed design walkthrough.
+
+1. Capture only through platform-supported or verified crash-safe facilities. Normal Swift logging and allocation do not become safe in fatal-signal context.
+2. Persist a recoverable report identity and upload outside the crashing context on an allowed lifecycle opportunity. Apply privacy and bounded retention.
+3. Match binary identifiers to the corresponding symbols. Keep unresolved reports visible and reprocess when symbols arrive; retain build provenance.
+
+**Why the obvious answer breaks:** A guessed next-launch flag cannot distinguish every termination cause. A missing dSYM is a symbol pipeline problem, not evidence that the stack had no useful frames.
+
+**Answer to rehearse:**
+
+> I would trace collection, durable retention, upload and symbol matching separately. I would use OS diagnostics to distinguish memory termination, hangs and native crashes instead of inventing one OOM threshold.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -82,7 +96,7 @@ flowchart TD
 | **Crash Uploader** | Upload crash reports safely upon next app launch. | Background URLSession tasks, SQLite pending queue. |
 
 ### Data Flow
-1. **App Launch**: SDK initializes (<10ms). Registers signal handlers, starts hang detector background thread, checks for OOM from last session.
+1. **App Launch**: SDK initializes supported diagnostics, bounded ordinary-path monitoring and previous-session recovery. An interrupted-session flag alone cannot establish OOM.
 2. **App Runtime**: App logs breadcrumbs. Breadcrumb buffer uses a lock-free pointer increment to store events in memory.
 3. **Crash Occurs**: App hits `SIGSEGV` (e.g., null pointer). OS transfers control to registered signal handler.
 4. **Crash Handling**: Signal handler suspends other threads, extracts `backtrace()` and CPU registers. Flushes breadcrumbs and crash data to a pre-allocated mmap region safely. Terminates app.
@@ -180,7 +194,7 @@ Fatal-signal context is severely restricted. Do not call Swift, Objective-C, all
 An interrupted session is not proof of an OOM. User termination, OS actions, watchdogs and other causes can leave similar persisted state. Label next-launch heuristics as suspected abnormal termination. Use [Apple jetsam reports](https://developer.apple.com/documentation/xcode/identifying-high-memory-use-with-jetsam-event-reports) for memory diagnosis; there is no universal app threshold in this guide.
 
 ### Breadcrumb Trail
-Breadcrumbs must be extremely fast to record. A lock-free circular buffer mapped to memory ensures zero memory allocations during runtime and safety during a crash.
+Breadcrumbs must be extremely fast to record. A bounded preallocated breadcrumb buffer can limit ordinary-path overhead. Lock-free behavior, memory ordering and crash-context access still require a verified native implementation.
 
 ```swift
 class BreadcrumbBuffer {
@@ -208,17 +222,17 @@ class BreadcrumbBuffer {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Zero Init Overhead** | Register signals via C APIs asynchronously without blocking main thread. | < 10ms init time |
-| **Memory-Mapped Files** | `mmap` pre-allocated region for crash reports. | < 1ms write time during crash |
-| **Lock-free Data Structures** | Atomic pointer increment for breadcrumbs. | < 1µs per breadcrumb record |
-| **Batch Uploads** | Limit upload to 5 pending crashes per session. | Saves network bandwidth / server load |
+| Bounded initialization | Use supported collection facilities and preplanned storage | Measure init overhead without unsafe deferred setup claims |
+| Crash-safe capture | Only verified operations in fatal context | Inspect report completeness and preservation of OS reporting |
+| Upload policy | Bound queue, payload and lifecycle work | Measure retained reports, retry age and app impact |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 | :--- | :--- | :--- |
-| **Signal Handler Deadlock** | Watchdog kills app if signal handler hangs > 2s. | Rely on OS crash report logs as fallback. |
+| **Signal Handler Deadlock** | Fatal handler fails to return or deadlocks; no universal watchdog duration is asserted. | Rely on OS crash report logs as fallback. |
 | **Failed Upload** | Network error or 5xx from server. | Exponential backoff, store in SQLite `pending_crashes`. |
 | **Missing dSYMs** | Server cannot find UUID in its dSYM store. | Store crash report in holding queue on backend for 7 days awaiting dSYM upload. |
 

@@ -242,3 +242,68 @@ This is a self-assessment tool, not a company's internal scorecard. Record each 
 - The role-specific leadership or implementation depth is demonstrated.
 
 Repeat practice with a changed constraint or injected failure. If the design only works when every dependency is healthy, deepen the failure model before adding more technologies.
+
+## 13. Learn the architecture by building one working path
+
+The earlier master guide had separate authentication, feed, search, checkout and notification diagrams. Those are useful domains, but beginning with all of them can obscure what a backend actually does. This section restores a connected explanation before choosing independent services.
+
+### Begin with a modular service and one transactional store
+
+A service receives a request, establishes identity, checks permission, executes domain logic, accesses storage and returns a contractually meaningful result. A module can separate checkout from search logic without requiring a network call between them. Separate deployment becomes useful when ownership, scaling, isolation or independent release needs justify the extra contract and operational cost.
+
+```mermaid
+flowchart TD
+    Client --> Ingress[Ingress and bounded admission]
+    Ingress --> API[API contract and identity]
+    API --> Catalog[Catalog module]
+    API --> Order[Order module]
+    API --> Report[Reporting module]
+    Catalog --> Store[(Authoritative transactional store)]
+    Order --> Store
+    Report --> Store
+    Store --> Outbox[Durable outbox]
+    Outbox --> Workers[Bounded background work]
+    Workers --> External[Payment and notification providers]
+    Store --> Derived[Derived search and cache paths]
+```
+
+These are proposed logical boundaries, not a claim about a named application's implementation. Do not assume each box needs its own service or database.
+
+| Component | What it solves | What it does not solve |
+| :--- | :--- | :--- |
+| Load balancer | Select eligible app destinations | Make business mutations repeat-safe |
+| API gateway | Shared ingress policy and routing | Replace resource-level authorization |
+| Transactional database | Atomic local state changes under specified isolation | Roll back an external payment |
+| Cache | Reduce repeated eligible read work | Prove current inventory or authorization |
+| Queue/log | Decouple durable acceptance from execution | Make every destination effect exactly once |
+| Search index | Serve a derived query access path | Own truth or automatically obey deletion |
+| Worker | Execute accepted asynchronous work | Know whether a lost provider response means failure |
+
+### Know when to split a service
+
+If reports exhaust connections needed by checkout, first inspect query plans, bounded concurrency and scheduling. A separate analytical store may then isolate a measured read workload, but introduces freshness, ingestion and deletion obligations. If payment workers scale independently, a separate worker deployment may be enough without separating all order logic.
+
+If teams repeatedly block each other's release, look at contract boundaries, data ownership and compatibility. Splitting deployments while both services mutate the same tables preserves coupling and adds failure modes. State the specific constraint you are solving.
+
+### A practical scaling decision ladder
+
+| Observed constraint | Explain this first | Next decision if evidence justifies it |
+| :--- | :--- | :--- |
+| Expensive reads | Correct query and matching index | Cache eligible derived results or isolate analytical reads |
+| App CPU saturation | Request work, payload and concurrency | More app capacity after validating downstream headroom |
+| Writer lock contention | Transaction scope and hot allocation | Partition independent ownership or redesign the contested invariant |
+| Slow external dependency | Deadline, pending state and recovery | Asynchronous execution with bounded admission |
+| Hot conversation/tenant | Key distribution and required ordering | Isolate hot work or redesign partition/sequence protocol |
+| Regional recovery requirement | Write ownership and replication acknowledgement | Choose topology from actual loss/recovery objectives |
+
+### The EM answer must describe execution
+
+For checkout, the ownership map includes order transitions, inventory allocation, provider reconciliation, customer status and support exceptions. One accountable integration owner must resolve cross-boundary decisions, even if several teams implement parts.
+
+Sequence delivery around enforceable contracts: agree the late-payment policy, implement durable state and recovery, prove concurrent retry/expiry behavior, verify observability, then expand rollout under customer-outcome checks. Staffing follows the work and dependencies. Do not invent a standard team size or assume people can parallelize a transaction protocol without coordination.
+
+**Question:** "The roadmap deadline is fixed, but recovery is incomplete."
+
+**Answer to rehearse:** "I would show the unresolved customer risk and the minimum safe scope. We can reduce product breadth, but an unknown payment outcome still needs a recoverable status and owner. I would propose a concrete staged launch with the necessary correctness and operational gates, then ask the accountable stakeholder to decide the residual business risk."
+
+For deeper self-contained request, transaction and app walkthroughs, continue with the [backend track](backend-interview-track.md) and [worked cases](backend-system-design-casebook.md).

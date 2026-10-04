@@ -42,6 +42,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Payload Size
 
 
+## Worked learning walkthrough: The unknown component is the pay button
+
+**Failure drill:** An older app receives a layout containing an unsupported critical action. This is a proposed design walkthrough.
+
+1. Send capability/schema information and choose a compatible server layout. Validate size, depth, required fields and action allowlists.
+2. Classify components as optional decoration or required journey elements. Optional omission may be safe; missing checkout or consent cannot silently become an empty view.
+3. Use a compatible last-known-good layout or explicit supported fallback. Action handling still checks authorization and business operation identity.
+
+**Why the obvious answer breaks:** Silently hiding a critical control can break the journey without a crash. A cache hit does not prove the cached layout remains permitted or compatible.
+
+**Answer to rehearse:**
+
+> I would separate rendering schema from executable behavior. The server selects among shipped capabilities; arbitrary payloads cannot invent privileged client actions.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -357,18 +371,18 @@ struct SDUILayoutView: View {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
-|--------------|-----------|------------------|
-| Payload Size | Protobuf vs JSON | Protobuf reduces payload size by ~40-50% (Uber engineering blog). JSON is easier for debugging, often gzip is sufficient. |
-| Parse Time | Decodable vs Manual Parsing | `JSONDecoder` can be slow for massive trees. Avoid deeply nested AnyCodable/Type Erasures where possible. |
-| Over-rendering | Equatable Views | Conform SwiftUIs `View` to `Equatable` so unaffected components don't redraw. |
-| Cache Policy | Stale-while-revalidate | Show cached layout instantly (< 50ms), background fetch, update UI transparently. |
+
+| Decision | Mechanism | What to verify |
+| :--- | :--- | :--- |
+| Payload format | Compare compatible JSON/Protobuf on actual schemas | Measure bytes, parsing cost and tooling complexity |
+| Rendering state | Stable component identity and bounded layout | Measure recomputation and interaction latency |
+| Cached layout | Validate compatibility/expiry before display | Observe time to useful UI and fallback journey completeness |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 |------------------|-----------|-------------------|
 | Network timeout | URLSession throws URLError.timedOut | Read from FallbackEngine (SQLite disk cache). |
-| Unknown component type | Type not found in `ComponentRegistry` | Render `EmptyView()`, log to analytics/Crashlytics. Never crash. |
+| Unknown component type | Type not found in `ComponentRegistry` | Omit only optional components. Missing required actions trigger a compatible layout or explicit safe fallback; record the compatibility failure. |
 | Unsupported Schema Version | Server sends `version: 3`, client is `2` | Show cached version `2` or force app update prompt. |
 | Missing properties | JSON decode fails for specific props | Provide default values in `SDUIProps` custom init. |
 
@@ -429,7 +443,7 @@ flowchart TD
 
 ## Mock Interview Q&A
 **Q: How do you handle a new component type your app doesn't know about?**
-A: We use a `ComponentRegistry` pattern. The JSON decoder maps the component type to a string. The registry looks up a registered SwiftUI `ViewBuilder` for that string. If the type is missing (e.g., the backend shipped a new feature but the user hasn't updated the app), the registry safely returns an `EmptyView()` and fires a non-fatal error to Crashlytics. Validate payloads, bounds and compatibility and measure crash-free sessions; missing-component fallback cannot guarantee an application reliability percentage.
+A: We use a `ComponentRegistry` pattern. The JSON decoder maps the component type to a string. The registry looks up a registered SwiftUI `ViewBuilder` for that string. If the type is missing (e.g., the backend shipped a new feature but the user hasn't updated the app), the registry distinguishes optional content from required actions. It can omit optional decoration, but must select a compatible fallback for a missing critical journey component. Validate payloads, bounds and compatibility and measure crash-free sessions; missing-component fallback cannot guarantee an application reliability percentage.
 
 > 🔍 *Interviewer follow-up: How would you version the schema to avoid breaking old clients entirely?*
 > A: We pass a `Supported-SDUI-Version: 2` header in the API request. The backend filters the layout, stripping `v3` components or replacing them with `v2` fallbacks. Alternatively, the client checks the root `version` field in the response; if it's unsupported, we fallback to our disk cache or force an app update prompt.

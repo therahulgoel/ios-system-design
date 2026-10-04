@@ -44,3 +44,41 @@ Evaluate success on versioned tasks and actual observations. Count quality failu
 - Which parts are research uncertainty and which are ordinary software reliability?
 
 Rahul's AI workflow experience supports discussing real tooling adoption and safeguards. It does not by itself establish model research or distributed-training experience. See [the resume plan](rahul-backend-interview-plan.md) and [AI infrastructure practice](backend-system-design-casebook.md#12-ai-inference-gateway-and-evaluation-platform).
+
+## Understand the loops without leaving this page
+
+### Training: improve parameters over a dataset
+
+The system samples training data, computes outputs/loss, calculates an update and changes parameters. Evaluation checks the resulting model on a defined task set. A checkpoint is recoverable training state, not proof that a deployed model continues learning from each chat. In reinforcement learning, interaction and reward supply a learning signal under the chosen algorithm; that is distinct from merely calling a tool in an app.
+
+### Inference: generate with current parameters
+
+Input is tokenized and processed, then output is generated under a decoding policy. Context can condition behavior without changing weights. KV-cache is request/runtime state, not permanent learning. Cancelling a generation must reclaim active work under the supported serving contract; dropping the client connection alone may leave provider computation running.
+
+### Search: compare alternatives before selecting
+
+A search/planning loop keeps a state representation, proposes alternatives and evaluates them under an objective. More exploration can improve some tasks but consumes compute and requires a valid evaluation mechanism. A list of candidates is not proof that the system found the best action, and the evaluator can be wrong.
+
+### Tool orchestration: effects happen outside generation
+
+```mermaid
+flowchart LR
+    Task[Authorized task] --> Model[Model proposes next step]
+    Model --> Gate[Schema, policy and budget gate]
+    Gate --> Tool[Execute permitted tool]
+    Tool --> State[(Durable action and observation state)]
+    State --> Model
+    Gate --> Stop[Complete, reject, cancel or escalate]
+```
+
+The model proposes; application policy authorizes. Reads and writes have different recovery needs. A tool result is data, including hostile text, and cannot grant a broader credential. Persist mutating action identity before relying on recovery. If the tool succeeds and the worker crashes, retrieve/reconcile that same action before considering another execution.
+
+| Interviewer asks | Explain the mechanism |
+| :--- | :--- |
+| Is every chatbot an agent? | A generation-only conversation differs from an application-controlled action loop |
+| Why does the loop stop? | Explicit terminal state, useful deadline, action/token budget or permission failure |
+| How does it recover? | Durable task/action records and destination-aware reconciliation |
+| What is evaluated? | Actual task outcome, unsupported claims, permission violations, spend and service behavior |
+| How does a new model launch safely? | Same versioned tasks, policy checks and rollout evidence; faster output alone is insufficient |
+
+This is the practical architectural meaning of the milestone table. The papers provide research context; the learner can explain the request lifecycle and effect boundaries here.

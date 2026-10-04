@@ -41,6 +41,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Crash-free rate
 
 
+## Worked learning walkthrough: A protected link arrives during cold start
+
+**Failure drill:** The app receives an order link before navigation and account state are ready. This is a proposed design walkthrough.
+
+1. Parse an allowlisted host/path and typed parameters into a navigation intent. Do not execute arbitrary actions from URL strings.
+2. Queue the intent until the app and required session are ready. Preserve only the data needed for recovery and define deduplication of repeated callbacks.
+3. Authorize the resource on the server before showing protected data. If login is required, resume the pending intent only after the correct session is established.
+
+**Why the obvious answer breaks:** A URL identifier is not permission. Device fingerprinting cannot reliably carry an install identity across privacy constraints and should not be the default recovery design.
+
+**Answer to rehearse:**
+
+> I would separate verified app association, navigation readiness and resource authorization. For install gaps, use an explicit supported account/link handoff rather than claiming fingerprint matching is dependable.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -251,11 +265,12 @@ Validate the parsed scheme, exact allowed host, path and typed parameters agains
 
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| AASA Hosting | Host a valid AASA file and account for Apple-managed CDN retrieval | Verify entitlement, origin response and propagation using Apple documentation |
-| Regex caching | Pre-compile URL matching regex at startup | Sub-millisecond URL parsing |
-| Cold Start Queuing | Buffer URL intent until UI stack is ready | Eliminates 100% of dropped links on cold launch |
+| Association hosting | Valid entitlement, AASA origin and propagation | Verify supported association behavior |
+| Routing readiness | Queue typed navigation intent until ready | Check cold start, login and repeated-callback races |
+| Route matching | Validate exact allowed host/path and parameters | Measure routing work and unauthorized-route rejection |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

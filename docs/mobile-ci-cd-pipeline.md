@@ -35,6 +35,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Crash-free gate
 
 
+## Worked learning walkthrough: Reproduce the release artifact
+
+**Failure drill:** An emergency fix must target the binary users actually installed. This is a proposed design walkthrough.
+
+1. Record source revision, dependency resolution, toolchain, signing environment and artifact identity. Build provenance connects symbols and diagnostics to the shipped binary.
+2. Run the affected regression and compatibility checks against the release lineage, not only the moving development branch. Keep secrets outside build logs.
+3. Publish under an explicit release gate and observe installed-version cohorts. A build passing CI does not prove distribution or customer recovery.
+
+**Why the obvious answer breaks:** Rebuilding an old revision with drifting dependencies can yield a different artifact. Pausing rollout cannot replace binaries already installed.
+
+**Answer to rehearse:**
+
+> I would distinguish reproducible build, trusted signing, distribution and mitigation. I would own flaky-test repair rather than hiding failures with indiscriminate retries.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -160,11 +174,12 @@ A scalable team cannot wait for feature completion to merge code.
 - **Rollback:** If a feature causes crashes in production, flip the remote flag. This is much faster than waiting for Apple to review a hotfix.
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Dependency Caching | Hash `Podfile.lock` or `Package.resolved` to cache resolved dependencies | Saves 5-10 mins per CI run |
-| Derived Data Cache | Use Bazel or Tuist to share compilation artifacts across runners | Uber reduced 30m builds to <5m |
-| Parallel Simulators | `xcodebuild test -parallel-testing-workers 4` | Reduces UI test time by ~60% |
+| Dependency caching | Use resolution/toolchain-aware keys | Verify cache invalidation and restore latency |
+| Artifact caching | Reuse compatible build outputs | Compare clean/incremental CI and trusted artifact provenance |
+| Parallel testing | Allocate workers within runner capacity | Measure wall time, contention and flakiness |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

@@ -41,6 +41,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Silent Push Throttling
 
 
+## Worked learning walkthrough: A recurring event changes during offline editing
+
+**Failure drill:** One device edits a recurring series while another edits an occurrence offline. This is a proposed design walkthrough.
+
+1. Represent event identity, series rule, exceptions, time-zone semantics and version. Distinguish local wall-clock recurrence from elapsed durations.
+2. Persist the offline edit with its base version and intended scope: occurrence or series. Send under a conflict-aware contract.
+3. Reconcile server changes without overwriting local intent silently. Recompute the affected visible range and preserve stable identities for exceptions.
+
+**Why the obvious answer breaks:** Adding a fixed number of seconds is not a correct general daily local-time recurrence across daylight-saving transitions. Expanding every occurrence forever is also unnecessary.
+
+**Answer to rehearse:**
+
+> I would define recurrence semantics before choosing storage. Range queries and exception indexing drive the schema; conflicting scope needs a product resolution path.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -359,12 +373,12 @@ func application(_ application: UIApplication, didReceiveRemoteNotification user
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Grid Rendering** | Virtualized `UICollectionViewLayout` | Renders 1000+ events at 60fps; memory stable at ~50MB |
-| **RRULE Caching** | Cache expanded occurrences in memory for current view | Reduces CPU spikes during rapid month swiping |
-| **DB Batching** | Wrap sync inserts in SQLite transactions | Write 1000 events in < 50ms (vs 2s for individual inserts) |
-| **Background Sync** | Silent push + `BGAppRefreshTask` | Keeps app warm, reduces cold start perceived latency |
+| Visible-range expansion | Expand recurrence for requested range | Measure query/CPU cost and exception correctness |
+| Batch sync | Persist changes and cursor transactionally | Measure write duration and restart recovery |
+| Background hints | Use supported opportunities plus foreground sync | Observe freshness; do not promise continuous warm state |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

@@ -45,6 +45,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Batch Sync Limits
 
 
+## Worked learning walkthrough: A server update races with an offline edit
+
+**Failure drill:** The local record is dirty while the remote record changes before synchronization. This is a proposed design walkthrough.
+
+1. Commit the local edit and pending operation together with a base version. UI reads local durable state rather than a separate unsaved buffer.
+2. Send the operation with conflict context. The server checks version/permissions and either accepts, merges under a defined rule, or returns a conflict.
+3. Apply remote acknowledgement and clear only the matched operation. A later local edit must remain pending; persist pull data and cursor atomically.
+
+**Why the obvious answer breaks:** Clearing a generic dirty flag after await can erase a newer edit. Advancing a cursor before persisting fetched data can permanently skip changes after restart.
+
+**Answer to rehearse:**
+
+> I would define conflicts and deletions per entity. Last-write-wins is a product choice with loss risk, not a universal sync algorithm. Resync must preserve unsent work.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -371,12 +385,13 @@ When a conflict occurs:
 For complex entities (e.g., collaborative rich text), a **CRDT (Conflict-free Replicated Data Type)** or **Operational Transformation (OT)** is necessary, but that often lives as an opaque blob in the database and requires dedicated merge functions.
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Batching** | Send up to 50 records per push request | Reduces HTTP overhead; cuts sync time by 80% for bulk edits |
-| **Delta Sync** | Send `last_sync_token` so server only returns changes | Reduces payload size from MBs to KBs |
-| **Tombstones** | Mark items as `is_deleted=1` locally instead of deleting | Allows sync engine to propagate deletions to server safely |
-| **Indexes** | `CREATE INDEX` on `is_dirty` | Reduces query time for finding sync candidates from O(N) to O(1) |
+| Delta pull | Checkpointed changes with cursor expiry | Measure transferred changes and full-resync recovery |
+| Batch push | Bound operation groups and preserve identity | Measure call overhead and partial-failure semantics |
+| Pending index | Index fields matching sync access path | Inspect plan and selectivity; an index is not O(1) |
+| Tombstones | Versioned deletion and retention policy | Check deletion propagation and stale replay rejection |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

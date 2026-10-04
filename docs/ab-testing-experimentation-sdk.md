@@ -41,6 +41,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Config Payload Size
 
 
+## Worked learning walkthrough: Assignment is not exposure
+
+**Failure drill:** A user is assigned a variant, but leaves before its component is displayed. This is a proposed design walkthrough.
+
+1. Load a validated, versioned experiment definition and apply eligibility before bucketing. Keep assignment stable under the declared identity policy.
+2. Render the actual variant, then emit exposure when the agreed visibility condition is met. Attach experiment version and assignment identity.
+3. Persist retryable exposure identity before upload when durability is required. Deduplicate according to the experiment metric definition, not an arbitrary session rule.
+
+**Why the obvious answer breaks:** Logging assignment as exposure biases analysis toward people who never saw the change. Repeating exposures on reconnect can bias counts in the opposite direction.
+
+**Answer to rehearse:**
+
+> I would separate eligibility, assignment and exposure. Stable bucketing prevents flicker, but it does not define the analytical unit or prove an experiment result. Config expiry and emergency fallback must also be explicit.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -193,7 +207,7 @@ class DeterministicBucketAssigner {
 ```
 
 ### Exposure Tracking & Deduplication
-For data scientists to calculate significance, they need to know *exactly* when a user saw a variant. We only fire the exposure event once per session to save bandwidth.
+For data scientists to calculate significance, they need to know *exactly* when a user saw a variant. Define exposure at the actual rendered/eligible boundary and deduplicate by the declared analytical unit. Session-only deduplication is not universally correct.
 
 ```swift
 actor ExposureTracker {
@@ -260,19 +274,19 @@ actor ConfigStore {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **In-Memory Reads** | Serve all `isEnabled` queries from memory. | < 1µs resolution |
-| **ETag Caching** | Send `If-None-Match` on config fetches. | 304 responses save 90% bandwidth |
-| **Deduplicated Exposures** | `Set<String>` tracks exposures per session. | Massive reduction in analytics event volume |
-| **Non-blocking Cold Start** | Fetch new config asynchronously in background. | Zero impact on app launch time |
+| Local evaluation | Validated in-memory assignment rules | Measure evaluation time and config-load overhead; define config expiry |
+| Conditional fetch | ETag with correctly scoped cached representation | Measure bytes avoided and successful refresh, not a fixed savings percentage |
+| Exposure deduplication | Identity aligned with analytical unit | Check missing and duplicate exposures against actual rendering |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 | :--- | :--- | :--- |
-| **Server Outage** | 5xx errors or timeouts. | Serve stale cached config indefinitely. |
+| **Server Outage** | 5xx errors or timeouts. | Use eligible validated cached config within its expiry policy; otherwise use declared safe defaults. |
 | **Empty/Corrupt Payload** | JSON decoding fails. | Keep existing cache, don't overwrite with bad data. |
-| **Catastrophic Feature Bug** | Feature flag causes 100% crash rate. | APNs silent push triggers emergency config fetch (Kill Switch). |
+| **Catastrophic Feature Bug** | Feature flag causes 100% crash rate. | A background push can request refresh but is not guaranteed. Ship a safe fallback, refresh on foreground and measure mitigation propagation. |
 
 ## Trade-off Analysis
 | Decision | Option A | Option B | Chosen | Why |

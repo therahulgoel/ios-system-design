@@ -44,6 +44,20 @@ Define and measure these dimensions for the actual workload; values require evid
 
 ---
 
+## Worked learning walkthrough: A secret is unavailable while the device is locked
+
+**Failure drill:** Background work attempts to read a credential protected by the chosen Keychain policy. This is a proposed design walkthrough.
+
+1. Choose accessibility and access-control policy from the actual use case and threat model. Handle temporary unavailability distinctly from credential absence.
+2. Avoid logging secret material or automatically clearing it after every read error. Defer work or ask for permitted user authentication as applicable.
+3. Server still authorizes the requested resource. Local biometric or encryption success does not grant arbitrary server permission.
+
+**Why the obvious answer breaks:** Treating every storage error as logout can destroy a valid session. Weakening protection merely to make background work convenient changes the security policy.
+
+**Answer to rehearse:**
+
+> I would map each sensitive data flow, required access time and recovery. Certificate pinning also needs rotation and incident handling; adding a pin without that plan creates an availability dependency.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram

@@ -44,6 +44,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Cache TTL
 
 
+## Worked learning walkthrough: A like and unlike cross in flight
+
+**Failure drill:** The user toggles a reaction before the first network operation returns. This is a proposed design walkthrough.
+
+1. Represent current intended reaction and operation generation locally. A set-state API is easier to recover than an unqualified toggle.
+2. Apply authoritative response only if it matches the relevant operation; reconcile old completions without overwriting newer intent.
+3. Keep pagination tied to total ordering or feed-session semantics. Filter current access/deletion rules even when candidates are cached.
+
+**Why the obvious answer breaks:** Blind rollback from an old failed like can undo a later successful unlike or like. Cursor pagination alone does not freeze changing ranking.
+
+**Answer to rehearse:**
+
+> I would distinguish optimistic display from authoritative state and explain interleaving across await points. Impression visibility is a metric definition, not an arbitrary universal threshold.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -301,12 +315,12 @@ class FeedViewController: UICollectionViewController {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| UI Rendering | `UICollectionViewDiffableDataSource` | $O(N)$ safe UI updates without `NSInternalInconsistencyException` |
-| Image Prefetching | `SDWebImagePrefetcher` | Reduces perceived image load time to 0ms for the next 20 cells |
-| Cell Reusability | `prepareForReuse` | Prevents memory explosion by capping UI views to visible + buffer (~10 cells) |
-| Off-Screen Memory | Cancel network requests in `didEndDisplaying` | Saves user bandwidth and CPU during fast scrolling |
+| Stable UI identity | Apply validated snapshot updates | Check reused-cell and concurrent update behavior |
+| Prefetch | Bound work for likely visible content | Measure readiness versus speculative waste |
+| Cancellation | Remove obsolete subscribers and reject late results | Check shared-work ownership and current-intent correctness |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

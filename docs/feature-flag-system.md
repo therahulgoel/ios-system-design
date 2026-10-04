@@ -40,6 +40,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Payload Size
 
 
+## Worked learning walkthrough: A kill switch arrives too late
+
+**Failure drill:** A bad feature crashes before the app can fetch the new configuration. This is a proposed design walkthrough.
+
+1. Ship safe bundled defaults and a validated last-known-good configuration with version and eligibility rules. Evaluate locally for supported client features.
+2. Fetch off the hot UI path, validate the entire applicable update, and apply the chosen atomic/versioned policy. Reject incompatible config.
+3. For incident recovery, determine whether the installed binary reaches evaluation and can receive configuration. Pause distribution or ship a binary fix where it cannot.
+
+**Why the obvious answer breaks:** A remote flag cannot disable pre-main failure or guarantee delivery to offline devices. Indefinite stale configuration can also violate access/security requirements.
+
+**Answer to rehearse:**
+
+> I would define expiry per flag class and retain a real safe path in the binary. The operational check is successful mitigation among affected versions, not merely publishing a new config.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -280,11 +294,12 @@ class RemoteConfigFetcher {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Strict Timeouts** | `timeoutIntervalForRequest = 2.0` | Ensures app TTI (Time to Interactive) is never severely degraded by bad network. |
-| **Dumb Client** | Server evaluates rules | Saves CPU battery on client, reduces payload size (client only gets flat Map). |
-| **Concurrent Reads** | `DispatchQueue` with `.concurrent` and `.barrier` writes | Allows massive multi-threaded UI access (O(1) reads) without data races. |
+| Local hot path | Validated cached evaluation without synchronous fetch | Measure launch/evaluation overhead and expiry behavior |
+| Evaluation placement | Choose server/local rules by privacy and offline needs | Compare payload, device work and rule compatibility |
+| Atomic config update | Publish a validated versioned representation | Check concurrent-reader consistency and safe fallback |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

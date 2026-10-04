@@ -69,3 +69,33 @@ The client documents contain inline code sketches, example payloads and numeric 
 Removed unsafe crash-signal backtrace code, an unreliable fixed-threshold OOM classifier, a fake-token refresh implementation, and a lossy detached analytics insert example. Corrected the SQLCipher algorithm description and removed an incorrect raw-public-key-as-SPKI implementation. Rewrote the three AI references around primary readings, actual memory arithmetic, permissions and measured evaluation.
 
 Validation completed: `python3 scripts/check_docs.py` passed across 51 Markdown files. `git diff --check` passed. No backend or Swift build target exists in this checkout, so no application build, runtime benchmark or full snippet compilation is claimed. External primary references for new substantive guidance were consulted; all legacy external URLs were not exhaustively checked.
+
+
+## Teaching-depth repair after the rewrite
+
+### Historical comparison
+
+There is no commit dated 3 October 2026 in the inspected history. The latest baseline before today's changes is `ccc67ed`, dated 4 September 2026. For material added earlier on 4 October, the comparison uses `e44f4aa`, immediately before the large rewrite `b54d9c8`. The published state before this repair is `a390383`.
+
+The rewrite removed useful explanatory depth along with unsupported claims. Comparing `e44f4aa` with the pre-repair files shows the backend master guide falling from roughly 5,900 to 3,100 words, behavioral preparation from 9,800 to 1,300, and on-device AI from 3,100 to 800. Word count is not quality evidence, but the deleted beginner primers, diagrams and probing sequences identified a substantive learning gap.
+
+### What this repair teaches inside the repository
+
+| Area | Concrete repair |
+| :--- | :--- |
+| Backend foundations | Plain-language components, request trace, actual inventory update, unique operation claim, stale-cache race, outbox replay, stale ownership, capacity reasoning and migration sequence |
+| Complete app answers | Checkout, chat and streaming with records, boundaries, normal execution, crashes and spoken responses |
+| Backend casebook | All twelve cases now include a worked mechanism, persisted-evidence/recovery table and a rehearsable answer |
+| Client/domain catalog | Thirty-two topic guides gain distinct worked learning walkthroughs before their architecture/reference material |
+| Performance sections | Twenty-nine tables replace unsupported benchmark claims with mechanisms and concrete observations to verify |
+| Leadership | Recovered depth for actual-project reconstruction, cost attribution, coaching, disagreement, failure and release/platform execution |
+| AI | Restored beginner vocabulary, computation pipeline, long-document strategy comparison, recoverable jobs and authorized tool-loop diagrams |
+| Navigation | README links directly to worked lessons rather than only naming preparation topics |
+
+This is an editorial and reasoning review across the documentation catalog, with historical comparison of the major rewrites. It does not certify every inherited snippet or numerical tuning choice. The new walkthroughs are proposed designs with symbolic state, not invented production records or employer stories.
+
+Corrected contradictory legacy passages include unlimited stale experiment configuration, guaranteed urgent push recovery, erased pending collaborative edits, fixed APNs stream counts, universal player memory/gap claims, HTTP requests requiring fresh connections, and treating all credential-read errors as logout. Existing code sketches remain incomplete and are not advertised as executable implementations.
+
+### Validation for this repair
+
+`python3 scripts/check_docs.py` checks all 54 Markdown files. `git diff --check` checks patch whitespace. Diagram fences and SVG XML are structurally checked where applicable; this pass does not claim rendered-diagram or runtime verification. Primary database, HTTP, messaging, provider and Apple platform documentation was consulted for the changed technical behavior. Resume-specific missing evidence remains explicitly unresolved.

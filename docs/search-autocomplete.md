@@ -37,6 +37,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - **Offline Index Size**
 
 
+## Worked learning walkthrough: The old query finishes last
+
+**Failure drill:** The user changes query while the earlier request is still running. This is a proposed design walkthrough.
+
+1. Advance the active query generation including filters and account scope. Show eligible local results immediately under a freshness policy.
+2. Debounce remote work and cancel superseded operations, but also validate generation before applying a response.
+3. Persist only appropriate recent queries under privacy policy. Bound local index size and use the access path justified by data/device measurements.
+
+**Why the obvious answer breaks:** Debounce reduces calls but does not establish response ordering. Network cancellation alone cannot stop an already completed stale response from overwriting current results.
+
+**Answer to rehearse:**
+
+> I would explain query identity, cancellation and rendering separately. A trie suits some prefix workloads; database full-text search suits different access patterns and measured sizes.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -254,12 +268,12 @@ func searchOfflineCatalog(query: String) -> [Suggestion] {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Avoid Over-fetching** | 300ms Debounce. | Reduces API load by 70-80% for fast typists. |
-| **Prevent Stale UI** | Request Cancellation / ID Matching. | Ensures final UI state matches input exactly. |
-| **Background Querying** | Dispatch SQLite FTS queries to a background queue. | Prevents main thread hangs / dropped frames. |
-| **Delta Updates** | Only fetch `catalog` diffs using `ETag`. | Reduces background data usage significantly. |
+| Debounce | Delay superseded remote work within UX policy | Measure call reduction and added suggestion latency |
+| Generation check | Reject responses for obsolete query/filter/session | Test out-of-order completion and account switch |
+| Local query | Choose index from actual search semantics | Inspect CPU, memory and presentation responsiveness |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

@@ -39,6 +39,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Heartbeat sync delay
 
 
+## Worked learning walkthrough: Media downloads but playback never starts
+
+**Failure drill:** Manifest and segments are reachable while license acquisition fails. This is a proposed design walkthrough.
+
+1. Trace session access, playlist, media, DRM key and first frame as separate stages. Correlate them through a permitted playback session identity.
+2. Persist offline asset and license lifecycle separately; enumerate/reconcile actual task and asset state after allowed relaunch.
+3. Bound startup and renewal retries. Existing licensed playback and a new unlicensed session follow different permitted continuation policies.
+
+**Why the obvious answer breaks:** Healthy segment HTTP status does not prove decryption or decoding. Background transfer behavior also does not mean every download always finishes after every termination.
+
+**Answer to rehearse:**
+
+> I would keep control dependencies out of the segment path and diagnose the failing startup stage. ABR and bitrate preferences cannot guarantee a stall-free experience.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -270,18 +284,19 @@ class OfflineDownloadManager: NSObject, AVAssetDownloadDelegate {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
-|--------------|-----------|------------------|
-| ABR Logic | Let `AVFoundation` handle parsing | Apple optimizes this at the OS level; don't write manual segment parsing unless required. |
-| Prefetch Buffering | `preferredForwardBufferDuration` | Set to 10-15 seconds. Too high wastes bandwidth if user exits; too low causes stalls. |
-| Stall Recovery | Observer `isPlaybackLikelyToKeepUp` | If false for > 3s, show low-impact UI loader, drop preferred bitrate constraint. |
+
+| Decision | Mechanism | What to verify |
+| :--- | :--- | :--- |
+| Adaptive playback | Use compatible AVFoundation streaming behavior | Observe rendition choice, stalls and startup |
+| Buffer policy | Tune supported preference against actual content/network | Compare wasted bytes, latency and stalls |
+| Recovery | Bound retries and classify media/license/network failures | Verify new-start and renewal outcomes separately |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
 |------------------|-----------|-------------------|
 | Network Stall | `playbackBufferEmpty` == true | Pause player, show spinner, wait for `playbackLikelyToKeepUp`. |
 | DRM Key Failure | `AVContentKeySession` fails | Display clear error "Content unavailable for playback on this device." |
-| App Killed in BG | Standard app lifecycle | Background `AVAssetDownloadURLSession` continues via OS daemon. |
+| App Killed in BG | Standard app lifecycle | Supported background asset tasks may continue under OS policy. Force-quit cancels active downloads; reconcile actual task state on relaunch. |
 
 ## Trade-off Analysis
 | Decision | Option A | Option B | Chosen | Why |
@@ -336,10 +351,10 @@ flowchart TD
 
 ## Mock Interview Q&A
 **Q: How does ABR (Adaptive Bitrate) work and when would you step down quality?**
-A: ABR works via an HLS master manifest containing multiple stream variants (e.g., 480p, 720p, 1080p). AVFoundation handles this automatically by estimating bandwidth. However, we can step down quality manually by capping the `preferredPeakBitRate` on the `AVPlayerItem` if we detect `NWPathMonitor` shifting to cellular, or if `isPlaybackLikelyToKeepUp` drops to false, ensuring a stall-free experience.
+A: ABR works via an HLS master manifest containing multiple stream variants (e.g., 480p, 720p, 1080p). AVFoundation handles this automatically by estimating bandwidth. However, we can step down quality manually by capping the `preferredPeakBitRate` on the `AVPlayerItem` if we detect `NWPathMonitor` shifting to cellular, or if `isPlaybackLikelyToKeepUp` drops to false, with measured startup/stall trade-offs. A preference is not a stall-free guarantee.
 
 > 🔍 *Interviewer follow-up: What's your strategy for offline download with DRM?*
-> A: We use `AVAssetDownloadURLSession` which runs in a background daemon, ensuring downloads continue even if the app is suspended. For DRM, we use `AVContentKeySession` to fetch a persistent offline FairPlay key (CKC) from the license server, which we bind to the downloaded asset on disk.
+> A: We use `AVAssetDownloadURLSession` for supported background asset transfer under OS policy. Suspension and force-quit have different behavior; force-quit cancels active downloads. For DRM, we use `AVContentKeySession` to fetch a persistent offline FairPlay key (CKC) from the license server, which we bind to the downloaded asset on disk.
 
 **Q: A user is watching a movie on their TV, then opens your iOS app. How do you sync the state?**
 A: The TV client fires a heartbeat API every 10s. When the iOS app launches, it fetches the `/manifest` endpoint which includes a `resume_position` (e.g., 1245.5s). We instantiate the `AVPlayer` and immediately call `seek(to: CMTime(seconds: 1245.5))` before beginning playback.

@@ -42,6 +42,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Inventory Hold Time
 
 
+## Worked learning walkthrough: Browsing dates is not reserving inventory
+
+**Failure drill:** Two callers search the same dates and both proceed to payment. This is a proposed design walkthrough.
+
+1. Treat search availability as a derived observation. Keep chosen dates and party size in a recoverable client draft.
+2. Ask the authoritative booking service to allocate a hold using the resource/interval invariant. Store hold identity, state and server deadline.
+3. Confirm the existing hold; resolve unknown payment outcome without inventing a new booking. Expiry and confirmation coordinate through atomic state transitions.
+
+**Why the obvious answer breaks:** Both clients can display available dates. Only the allocation boundary chooses the winner. A countdown in the UI cannot lock inventory or extend a server hold.
+
+**Answer to rehearse:**
+
+> I would explain the interval allocation rule before discussing map rendering. The client preserves intent and recovery identity; the server owns price, allocation and confirmation. Late payment needs an agreed refund or reacquisition policy.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -245,12 +259,12 @@ class SearchViewModel: ObservableObject {
     }
 }
 ```
-*Map Clustering*: Use `MKClusterAnnotation`. When zoomed out, group markers within a 50pt radius to avoid UI clutter.
+*Map Clustering*: Use supported annotation clustering and tune display behavior against map density and interaction requirements.
 
 ### 2. High-Density Image Pipeline
-An Airbnb grid shows 16+ images simultaneously. Downloading full-resolution JPEGs will cause OOM crashes.
+An image-heavy grid can retain substantial decoded memory. Downloading and decoding full-resolution images for small cells increases pressure; measure the actual working set.
 1. **Format**: Server serves WebP format (smaller size).
-2. **Placeholder**: Use `blurhash` strings provided in the JSON payload to render a blurry color block instantly (1ms decode time).
+2. **Placeholder**: Use `blurhash` strings provided in the JSON payload to render a placeholder while the full image loads; measure decode overhead on supported devices.
 3. **Downsampling**: Decode the image at exactly the cell size using `CGImageSourceCreateThumbnailAtIndex`.
 4. **Caching**: Memory cache for decoded bitmaps (L1), Disk cache for raw WebP data (L2).
 
@@ -276,7 +290,7 @@ func downsample(imageAt imageURL: URL, to pointSize: CGSize, scale: CGFloat) -> 
 Booking involves steps. If the app crashes, the user shouldn't lose their dates. 
 - State is saved to `booking_drafts` SQLite table on every step transition.
 - **Price Calculation MUST be server-side**. Never calculate taxes/fees on the client.
-- **Soft Hold**: Before moving to the payment screen, call `/v1/bookings/hold` to lock the inventory for 15 minutes. This prevents two users from booking the same exact dates while one is entering credit card details.
+- **Soft Hold**: Before moving to the payment screen, call `/v1/bookings/hold` to request a server-enforced allocation with a documented expiry policy. The authoritative resource/interval constraint and atomic transition prevent conflicting allocation, not the client timer.
 
 ### 4. Wishlist & Offline Mutations
 Users often browse Airbnb on planes or in spotty reception.
@@ -289,13 +303,12 @@ When adding to a wishlist:
 `NWPathMonitor` listens for network restoration and syncs pending actions.
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Map Debouncing | 800ms delay on API call | Reduces API load by ~80% |
-| Blurhash | Base64 decode to placeholder | 0 network latency perceived |
-| Image Downsampling| `CGImageSource` thumbnailing | RAM per image drops 5MB → 500KB |
-| ETag Caching | Conditional GET requests | Saves bandwidth on repeated map pans |
-| Grid Prefetching | `prefetchItemsAt` | Prevents scroll stutter |
+| Search coordination | Debounce plus active-generation validation | Measure calls, stale-response rejection and time to useful results |
+| Image downsampling | Decode to display requirements | Measure peak decoded memory and scroll hitches |
+| Prefetch | Bound speculative image/page work | Compare visible-item readiness with wasted downloads |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

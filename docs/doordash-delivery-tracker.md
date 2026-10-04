@@ -42,6 +42,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Battery Drain
 
 
+## Worked learning walkthrough: A delayed event follows delivery
+
+**Failure drill:** A queued location/state event arrives after the order has reached a newer state. This is a proposed design walkthrough.
+
+1. Persist authoritative order version and last observation time. The UI distinguishes current server state from locally cached display.
+2. Apply updates under the server version/snapshot contract; older incremental events must not regress the order. Snapshot recovery can legitimately skip intermediate UI steps.
+3. On reconnect or foreground, retrieve current state and reconcile the cursor. Location animation stays separate from the business order state.
+
+**Why the obvious answer breaks:** A delayed location must not imply the courier is still moving after confirmed delivery. The client cannot derive the order transition solely from arrival order.
+
+**Answer to rehearse:**
+
+> I would use realtime transport for responsiveness and authoritative recovery for correctness. I would show freshness and bound extrapolation rather than animate uncertain positions indefinitely.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -193,7 +207,7 @@ CREATE TABLE orders (
 ## Client Architecture Deep-Dives
 
 ### 1. Order State Machine & Persistence
-Order state must be rigorously validated. A client shouldn't transition from `placed` to `delivered` skipping intermediate states unless instructed by the server. Storing this in SQLite ensures that if the user force-kills the app and re-opens it, the app instantly reads the last known state while establishing the WebSocket.
+Order state must be rigorously validated. Validate event versions and state semantics. A current authoritative snapshot may legitimately skip intermediate observations; the client must not invent missing transitions. Storing this in SQLite ensures that if the user force-kills the app and re-opens it, the app instantly reads the last known state while establishing the WebSocket.
 
 ```swift
 actor OrderStateMachine {
@@ -312,12 +326,12 @@ func animateDriverMarker(to newCoordinate: CLLocationCoordinate2D) {
 *Note*: For extreme accuracy, use a client-side Kalman filter or predictive path-snapping, but typically the backend provides snapped coordinates via Google Maps Roads API.
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Battery | Disconnect WS in background, use APNs | Saves ~10% battery per hour |
-| Rendering | Animate annotation instead of removing/adding | 60fps map rendering, no flicker |
-| Polyline | Only redraw active segment of route | Reduces CPU load on MKMapView |
-| Networking | Multiplex state + location in 1 WS | Reduces TCP overhead |
+| Lifecycle transport | Active realtime plus supported background hints | Measure freshness and energy; foreground recovery remains required |
+| Map rendering | Update existing annotation and bounded route work | Measure hitches rather than claim universal frame rate |
+| Shared transport | Multiplex where the contract permits | Measure connection/resource use and recovery coupling |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

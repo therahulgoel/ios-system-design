@@ -146,7 +146,9 @@ Conflict resolution:
 
 ---
 
-## Image Pipeline (Universal - Used in 80% of Specs)
+<a id="image-pipeline-universal---used-in-80-of-specs"></a>
+
+## Image Pipeline: Shared Design Pattern
 
 ```
 imageView.load(url, targetSize: imageView.bounds.size × UIScreen.scale)

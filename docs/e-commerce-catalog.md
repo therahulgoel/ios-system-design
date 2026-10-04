@@ -41,6 +41,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - Search Debounce
 
 
+## Worked learning walkthrough: The displayed price changed before checkout
+
+**Failure drill:** A cached product page shows an earlier price while the server has a newer one. This is a proposed design walkthrough.
+
+1. Use cacheable catalog data for browsing with an explicit freshness policy. Keep selected quantity/cart intent locally.
+2. Checkout retrieves authoritative pricing, currency, promotions and stock. Return the changed terms and obtain required user confirmation.
+3. Persist checkout operation identity independently of catalog cache entries, so retry is recovery rather than another purchase.
+
+**Why the obvious answer breaks:** Catalog cache invalidation cannot arbitrate money or inventory. Removing the cache to make checkout correct unnecessarily slows browsing.
+
+**Answer to rehearse:**
+
+> I would permit stale discovery only within product policy and recompute transactional terms at checkout. I would explain cache keys and pagination, then the separate authoritative write boundary.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -283,12 +297,12 @@ actor CartManager {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| Image Downsampling | `CGImageSourceCreateThumbnail` | Reduces memory footprint from 10MB per image to <500KB. |
-| Prefetching | `UICollectionViewDataSourcePrefetching` | Trigger next page API request at 70% scroll depth. Trigger image downloads for cells just outside viewport. |
-| Conditional GET | HTTP ETag | Return 304 Not Modified if catalog hasn't changed. Saves bandwidth and parsing time. |
-| Cell Reuse | standard reuse identifier | Prevents view allocation overhead during fast scrolling. |
+| Image pipeline | Downsample and bound decoded cache | Measure retained memory by device and screen |
+| Conditional GET | ETag with valid representation scope | Measure avoided bytes and freshness |
+| Prefetch/reuse | Bound speculation and clear obsolete subscriptions | Measure visible readiness, cancellation and scroll hitches |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |

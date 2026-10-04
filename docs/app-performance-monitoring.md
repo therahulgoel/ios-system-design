@@ -43,6 +43,20 @@ Define and measure these dimensions for the actual workload; values require evid
 - **Overhead**
 
 
+## Worked learning walkthrough: Startup became slower after a release
+
+**Failure drill:** The first usable screen is delayed, but server response time looks normal. This is a proposed design walkthrough.
+
+1. Define launch-to-usable boundary and distinguish cold/warm launches, device, OS and release cohorts. A timestamp recorded in app code omits earlier process work.
+2. Separate initialization, main-thread work, storage waits and network-dependent content. Correlate traces and OS diagnostics rather than merging unlike measurements.
+3. Investigate the changed stage and run a controlled compatible mitigation. Validate both responsiveness and usable content after the change.
+
+**Why the obvious answer breaks:** A healthy API p99 does not rule out synchronous decoding, database waits or blocked presentation. Monitoring overhead can itself become part of the delay.
+
+**Answer to rehearse:**
+
+> I would explain which stage changed and how I measured it. I would bound collection, avoid sensitive payloads, and verify the monitoring SDK does not become the bottleneck.
+
 ## High-Level Architecture (HLD)
 
 ### Component Diagram
@@ -181,7 +195,7 @@ N/A for metric uploads. If the payload is too large, the client splits it into m
 ## Client Architecture Deep-Dives
 
 ### 1. Cold Start Measurement
-To measure the true cold start, we cannot simply use `didFinishLaunching` as the starting point, as this ignores dynamic linking (`dyld`) and framework initialization time. We use `ProcessInfo.processInfo.systemUptime`.
+To measure the true cold start, we cannot simply use `didFinishLaunching` as the starting point, as this ignores dynamic linking (`dyld`) and framework initialization time. Use OS launch metrics and stage instrumentation. `systemUptime` is system uptime, not the process-start timestamp; capturing it after launch cannot measure omitted pre-main work.
 
 ```swift
 import UIKit
@@ -275,7 +289,7 @@ class HangDetector {
 ```
 
 ### 3. MetricKit Integration
-Apple's built-in framework delivers highly accurate, OS-level aggregated metrics every 24 hours.
+MetricKit reports aggregate metrics for the preceding observation period at most daily; diagnostics have separate delivery behavior. It is not a synchronous per-launch tracing service.
 
 ```swift
 import MetricKit
@@ -300,11 +314,12 @@ class MetricKitReceiver: NSObject, MXMetricManagerSubscriber {
 ```
 
 ## Performance & Optimizations
-| Optimization | Technique | Benchmark/Impact |
+
+| Decision | Mechanism | What to verify |
 | :--- | :--- | :--- |
-| **Minimize Pre-Main** | Remove static initializers (`+load`), reduce dynamic frameworks, use statically linked frameworks. | Shaves 100-300ms off dyld time. |
-| **Avoid Main Thread I/O** | Move CoreData setup and heavy SQLite reads to background queues. | Eliminates early app hangs. |
-| **Metric Cardinality** | Use URL templates (`/user/:id`) instead of raw URLs (`/user/123`). | Reduces backend TSDB cardinality from ∞ to ~500. |
+| Startup diagnosis | Measure stages and launch cohorts | Separate pre-main work, first frame and first usable content |
+| Background I/O | Remove synchronous heavy storage from presentation | Measure main-thread stalls and contention |
+| Metric cardinality | Use bounded dimensions and normalized routes | Measure distinct series and collection cost |
 
 ## Failure Modes & Fallbacks
 | Failure Scenario | Detection | Fallback Strategy |
