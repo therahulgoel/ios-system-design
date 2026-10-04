@@ -2,6 +2,20 @@
 
 Connect the revenue model to entitlement, media delivery, advertising, measurement and operations. Definitions are sourced below; architecture questions and exercises are preparation advice, not claims about a company's internal implementation. Sources reviewed on 4 October 2026.
 
+## Read by preparation need
+
+| Need | Jump to |
+| :--- | :--- |
+| Business models | [FAST, SVOD, AVOD and TVOD](#1-separate-monetization-from-viewing-behavior) |
+| Protected playback | [DRM licensing walkthrough](#8-drm-licensing-media-access-is-not-key-access) |
+| Advertising evidence | [Ad measurement walkthrough](#9-ad-measurement-insertion-delivery-and-viewing-differ) |
+| Delayed live video | [Live latency walkthrough](#10-live-latency-find-the-delay-before-changing-the-player) |
+| Delivery outage | [CDN failover walkthrough](#11-cdn-failover-origin-failover-and-multi-cdn-steering-differ) |
+| Paid access denied | [Entitlement walkthrough](#12-entitlement-payment-access-and-active-playback-have-different-state) |
+| Complete app response | [Join the failure paths](#13-put-all-five-failure-paths-into-one-app-answer) |
+
+For the fundamentals behind these decisions, follow the [backend interview track](backend-interview-track.md).
+
 ## 1. Separate monetization from viewing behavior
 
 | Term | Meaning | Design questions to practice |
@@ -100,7 +114,161 @@ For each selected standard, consult the actual version and provider contract. Do
 
 No benchmark results are supplied here. Use measured evidence. Concurrent viewers do not directly determine control-plane QPS; derive request demand from actual session, manifest, segment and renewal behavior.
 
-## 8. EM, staff and leadership follow-ups
+## 8. DRM licensing: media access is not key access
+
+A CDN may serve encrypted media successfully while playback fails because the device cannot acquire or use the required license. Separate account authentication, entitlement, media URL authorization and DRM licensing in both the diagram and telemetry.
+
+In FairPlay's documented exchange, the client creates an SPC request and the key service returns a CKC response. Key expiration and persistent/offline contexts have specific platform semantics. FairPlay does not replace application authentication. Consult [Apple's FairPlay overview](https://developer.apple.com/streaming/fps/FairPlayStreamingOverview.pdf) and the current [FairPlay resources](https://developer.apple.com/streaming/fps/) rather than treating its older overview as a current compatibility matrix. For other devices, assess the supported [Widevine architecture](https://developers.google.com/widevine/drm/overview).
+
+### What to put on the whiteboard
+
+```mermaid
+sequenceDiagram
+    participant P as Player
+    participant S as Session service
+    participant E as Entitlement authority
+    participant L as License service
+    participant C as Media CDN
+    P->>S: Request playback for asset
+    S->>E: Check access and session policy
+    E-->>S: Authorized decision or denial
+    S-->>P: Scoped playback configuration
+    P->>L: Authenticated DRM challenge
+    L->>E: Validate applicable access policy
+    L-->>P: Platform-specific license response
+    P->>C: Fetch encrypted media
+    C-->>P: Media bytes
+```
+
+This is a proposed logical flow. The exact exchange and any repeated entitlement check depend on the platform and contract. Bind the license request to the correct asset, key and session context. Never expose raw content keys in application logs or shared caches.
+
+### Failure walkthrough: media loads, license acquisition times out
+
+| Step | State or observation | Decision to explain |
+| :--- | :--- | :--- |
+| Session accepted | An authorized playback session exists | Session acceptance alone does not prove playable content |
+| Manifest and media reachable | CDN delivery succeeds | Diagnose the licensing path separately |
+| License response missing | Client lacks a usable outcome | Distinguish network failure, invalid challenge, denied access and service failure |
+| Retry considered | Request and platform context are known | Follow the DRM challenge contract; do not assume arbitrary challenge replay is valid |
+| Existing playback considered | A usable license may already exist | Continue only within its actual permitted scope and expiry behavior |
+| Recovery unavailable | Required key cannot be used | Return an actionable playback failure; do not bypass DRM |
+| Service recovers | New authorized request can succeed | Check playback outcomes, not only license endpoint health |
+
+**Spoken answer:**
+
+> I would separate entitlement success from license acquisition and media delivery. I would classify the license failure, bound retries using the platform contract, and verify whether an existing license permits continuation. If the required key cannot be acquired, I would fail playback explicitly rather than weakening content protection.
+
+**Probes:** what happens during key rotation? Does the backup region have the right key mapping and protected credentials? What happens when an offline license expires? Can a cached response be reused for another device? How do you avoid a renewal retry storm?
+
+## 9. Ad measurement: insertion, delivery and viewing differ
+
+An ad decision, stitched manifest, segment request, rendered start and completion are different events. Define which event a metric measures before calling it an impression or completion. VAST provides ad-response and tracking structures; follow the applicable measurement and vendor contract. [MediaTailor client-side tracking](https://docs.aws.amazon.com/mediatailor/latest/ug/ad-reporting-client-side.html) exposes tracking information for player-emitted events; [its beaconing guidance](https://docs.aws.amazon.com/mediatailor/latest/ug/ad-reporting-client-side-beaconing.html) discusses timing.
+
+### Failure walkthrough: prefetch succeeds but the viewer leaves
+
+| Step | Observation | Measurement consequence |
+| :--- | :--- | :--- |
+| Ad selected | Decision server returns an eligible creative | A selection is not a rendered impression |
+| Media prefetched | Bytes are requested ahead of playback | Prefetch must not be mistaken for completed viewing |
+| Viewer exits | Playback never reaches the ad | Emit only events actually justified by the measurement contract |
+| Tracking retries | A previously observed event may be resent | Preserve event identity and define deduplication and retry window |
+| Server and client both report | Two reporting paths exist | Assign ownership; do not blindly sum both streams |
+| Reporting connection fails | Observation exists but delivery is uncertain | Buffer only within consent and retention policy and expose reporting uncertainty |
+| Reports reconciled | Provider and internal counts differ | Compare definitions, clocks, deduplication and excluded events before attributing fraud or revenue loss |
+
+**Spoken answer:**
+
+> I would track ad selection, media delivery and observed playback separately. I would assign one reporting responsibility for each event, preserve identity across retries, and reconcile vendor counts using the same definitions. If the viewer exits after prefetch, I would not infer completion from successful segment delivery.
+
+**Probes:** can seeking retrigger a beacon? What is the rule after a reconnect? What happens when consent changes? What evidence exists when client reporting is unavailable? Is the source authorized for billing, diagnostic analysis or both?
+
+## 10. Live latency: find the delay before changing the player
+
+Explain the path from capture through encoding, packaging, origin/CDN discovery, transfer, player buffering and presentation. Distinguish live delay, time to first frame and rebuffering. A measured capture-to-display delay needs a trustworthy timestamp mapping; otherwise state the limitation of the proxy being used.
+
+Low-Latency HLS introduces partial segments and blocking playlist reload behavior, among other mechanisms. It requires compatible origin, CDN and player behavior. See [Apple's LL-HLS guidance](https://developer.apple.com/documentation/http-live-streaming/enabling-low-latency-http-live-streaming-hls) and [blocking reload explanation](https://developer.apple.com/videos/play/wwdc2020/10231/). It is not a guarantee of one universal latency number.
+
+### Failure walkthrough: delay grows while playback remains smooth
+
+| Investigation | What to establish | Possible response to defend |
+| :--- | :--- | :--- |
+| Measurement | Does the delay represent capture-to-display or distance from a playlist edge? | Validate clock and timeline mapping before interpreting the number |
+| Source | Is capture/encoding producing timely output? | Repair upstream delay rather than forcing the player to chase unavailable media |
+| Packaging | Are parts and playlists published consistently? | Correct publication timing and inspect missing media |
+| Delivery | Is a cached playlist stale or a blocking reload unsupported? | Inspect cache keys, freshness and timeout behavior for the selected protocol |
+| Transfer | Does the available bitrate exceed network capacity? | Select a sustainable rendition and avoid repeated failed fetches |
+| Player | Has buffering or a reconnect moved playback behind the target? | Use a supported bounded catch-up or seek policy and measure viewing impact |
+| Recovery | Do delay and stalls improve together? | Evaluate both rather than declaring success from latency alone |
+
+**Spoken answer:**
+
+> I would identify where delay accumulates and validate the measurement first. I would then inspect source timing, publication, cache freshness and player position. Reducing the buffer can lower delay but raise stalls, so I would choose a recovery policy against the actual viewing goal and network evidence.
+
+**Probes:** what is different for sports and an interactive event? How does DVR change the target? What happens to an ad break during catch-up? What does a player do when the playlist points to a missing part?
+
+## 11. CDN failover: origin failover and multi-CDN steering differ
+
+Origin failover changes where a CDN fetches content; multi-CDN steering changes the viewer's delivery pathway. DNS, control-plane changes, manifest steering and player fallback have different timing and compatibility constraints. [Apple HLS Content Steering](https://developer.apple.com/streaming/HLSContentSteeringSpecification.pdf) defines pathway selection behavior for compatible clients.
+
+CloudFront origin groups use configured failover conditions and support failover for GET, HEAD and OPTIONS requests, not arbitrary write APIs. Consult [CloudFront's actual behavior](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/high_availability_origin_failover.html). An origin group does not itself solve regional entitlement or licensing availability.
+
+### Failure walkthrough: a delivery region fails during live playback
+
+| Step | Check | Recovery decision |
+| :--- | :--- | :--- |
+| Detect | Segment errors, delay and stalls by pathway and region | Avoid switching everyone because one viewer has a local network failure |
+| Validate alternate | Asset versions, timeline, current manifests and rights | A reachable backup is insufficient if its media is incompatible or stale |
+| Validate access | Signed URL, host, cookie and license policy | Ensure alternate delivery is authorized without weakening access checks |
+| Bound switching | Request deadlines, retries and client support | Choose a supported pathway and avoid repeated oscillation |
+| Absorb traffic | Backup capacity and cold-cache origin load | Ramp or shed eligible work; protect the surviving origin |
+| Verify continuity | Playback state, timeline and ad session | Preserve progress and avoid replaying an ad or resetting entitlement accidentally |
+| Fail back | Stable recovery and comparable outcome evidence | Return deliberately rather than flip on each successful health check |
+
+**Spoken answer:**
+
+> I would determine whether the failed boundary is the origin, CDN pathway or a control dependency. Before switching, I would verify media alignment, authorization and backup capacity. I would use bounded supported steering, inspect playback continuity and avoid oscillating between pathways.
+
+**Probes:** what if the backup has a stale manifest? How do cache keys affect personalization? What happens to signed URLs on a different hostname? What if both CDNs depend on the same unavailable origin? Can existing installed clients understand the steering method?
+
+## 12. Entitlement: payment, access and active playback have different state
+
+Represent the commerce event, authoritative access decision and active playback session separately. Determine asset rights, tier, geography, rental window and concurrency policy from trusted data. A signed media URL is a time-scoped access mechanism; it is not the complete business entitlement model.
+
+For App Store purchases, use the actual [App Store Server API](https://developer.apple.com/documentation/appstoreserverapi) and associated verification/notification contracts. Do not infer paid access merely from client-provided fields. Other payment providers have their own status and event semantics.
+
+### Failure walkthrough: purchase succeeds, access still appears denied
+
+| Step | State | Decision to explain |
+| :--- | :--- | :--- |
+| Payment attempt accepted | Provider outcome may still be pending | Preserve the attempt and request identity |
+| Confirmation received | A trusted successful commerce event exists | Apply only validated, legal transitions |
+| Access update delayed | Entitlement projection is stale | Reconcile or read authoritative state within policy; do not ask the user to pay again |
+| Callback duplicated | Same event arrives again | Make the access update repeat-safe |
+| Older event arrives later | It could overwrite newer cancellation/refund state | Order or reconcile events using the provider's actual semantics, not blind arrival order |
+| Active session exists | Viewer has time-scoped playback access | Define renewal, cancellation and revocation effects explicitly |
+| Regional store unavailable | New decisions cannot be verified | Distinguish existing valid sessions from new grants; follow the agreed availability and rights policy |
+
+**Spoken answer:**
+
+> I would treat purchase and entitlement as related but separate state. A verified confirmation updates access through a replay-safe process. If that projection lags, I would reconcile the existing transaction rather than create another charge. Active-session continuation and revocation would follow an explicit rights and freshness policy.
+
+**Probes:** how do you reserve a concurrent-stream slot atomically? What frees it after a crash? Can an old heartbeat extend a replaced session? What is the maximum permitted stale access? Can offline playback be revoked immediately without communication?
+
+## 13. Put all five failure paths into one app answer
+
+**Practice prompt:** design a streaming service with a subscription tier, advertising tier and live channels.
+
+1. Clarify catalog, live/linear/VOD behavior, rights, tier rules and target devices.
+2. Define authoritative account, commerce, entitlement, playback-session and asset/key identities.
+3. Trace session creation, license acquisition, manifest/segment delivery and optional ads.
+4. Explain entitlement lag and licensing failure without weakening access enforcement.
+5. Trace live delay and delivery failover without claiming every healthy endpoint proves healthy playback.
+6. Define observed ad events and replay-safe reporting.
+7. Finish with launch rehearsals, ownership, recovery criteria and measured unit cost.
+
+Start with a coherent baseline. Add complexity when the requirement justifies it. These walkthroughs describe proposed interview designs, not actual outages or results from Rahul's employers.
+
+## 14. EM, staff and leadership follow-ups
 
 **Staff:** defend manifest correctness, entitlement freshness, timing, cache keys, failure isolation and retry semantics. Trace one playback session through authorization, media and advertising.
 
@@ -110,7 +278,7 @@ No benchmark results are supplied here. Use measured evidence. Concurrent viewer
 
 These role lenses are rehearsal guidance, not a private company scorecard.
 
-## 9. Practice sequence and related material
+## 15. Practice sequence and related material
 
 1. Design SVOD playback authorization and restoration after an ambiguous payment.
 2. Add a permitted AVOD tier and defend ad-service failure behavior.

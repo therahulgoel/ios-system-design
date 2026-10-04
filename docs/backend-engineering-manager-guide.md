@@ -1,6 +1,6 @@
 # Master Guide: Backend Engineering Management, Staff Engineering & Leadership
 
-A preparation guide for distributed systems, technical judgment, and organizational execution. Start with [Rahul's evidence and preparation plan](rahul-backend-interview-plan.md), then use the [backend casebook](backend-system-design-casebook.md) for practice. The mobile specifications are supporting client architecture material.
+A preparation guide for distributed systems, technical judgment, and organizational execution. Build the fundamentals through [the backend interview track](backend-interview-track.md). Start with [Rahul's evidence and preparation plan](rahul-backend-interview-plan.md), then use the [backend casebook](backend-system-design-casebook.md) for practice. The mobile specifications are supporting client architecture material.
 
 This guide does not claim access to company hiring rubrics or guarantee an offer. Recommendations below are preparation advice. Published technical behavior is linked to primary sources. Workload, latency, budget, and staffing inputs must come from the interview prompt or measured evidence; no universal production numbers are supplied.
 

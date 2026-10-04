@@ -16,7 +16,7 @@ Interview preparation for **Senior iOS, Staff / Principal, EM / SDM and engineer
 
 Study a domain, build an answer, stress-test it with failure questions, and connect your decisions to real experience.
 
-[Start here](#your-first-visit-start-here) · [How to answer](docs/interview-answer-playbook.md) · [Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md) · [Streaming business models](docs/streaming-business-and-architecture.md) · [Reference library](#primary-source-reference-library) · [About the author](#about-the-author)
+[Start here](#your-first-visit-start-here) · [How to answer](docs/interview-answer-playbook.md) · [Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Backend track: basics to apps](docs/backend-interview-track.md) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md) · [Streaming business models](docs/streaming-business-and-architecture.md) · [Reference library](#primary-source-reference-library) · [About the author](#about-the-author)
 
 </div>
 
@@ -28,6 +28,7 @@ Study a domain, build an answer, stress-test it with failure questions, and conn
 | :--- | :--- | :--- |
 | A clear way to answer | [Interview answer playbook](docs/interview-answer-playbook.md) | An opening structure, worked responses and follow-up practice |
 | A system to design | [Choose an industry](#explore-by-industry-and-domain) | A focused problem and the decisions to defend |
+| Backend from the basics | [Progressive backend interview track](docs/backend-interview-track.md) | Requests, APIs, data, distributed systems and complete app answers |
 | Backend design practice | [Twelve-case backend workbook](docs/backend-system-design-casebook.md) | APIs, invariants, failure drills and role-specific probes |
 | EM or leadership stories | [Behavioral preparation](docs/behavioral-engineering-manager-staff-guide.md) | Real examples structured around decisions, actions and evidence |
 | Streaming interview depth | [FAST / SVOD / AVOD / TVOD](docs/streaming-business-and-architecture.md) | Business-model implications, architecture questions and failure responses |
@@ -67,8 +68,8 @@ The diagrams and sketches support reasoning. Worked responses describe proposed 
 | :--- | :--- | :--- |
 | Senior iOS / mobile frontend | Pick a client design in your domain, then use the [cheatsheet](docs/cheatsheet.md) | State, concurrency, networking, persistence, performance and debugging |
 | Staff / principal mobile | [Mobile platform guide](docs/mobile-platform-engineering-em.md) and [modularization](docs/app-modularization.md) | Technical depth, migration, cross-team adoption and durable architecture decisions |
-| Backend EM / Amazon SDM | [Backend leadership guide](docs/backend-engineering-manager-guide.md) and [behavioral guide](docs/behavioral-engineering-manager-staff-guide.md) | Correctness, operations, people development and delivery judgment |
-| Staff / principal backend | [Backend casebook](docs/backend-system-design-casebook.md) | APIs, schemas, concurrency, replay, failure recovery and technical influence |
+| Backend EM / Amazon SDM | [Basics-to-apps track](docs/backend-interview-track.md), [backend leadership guide](docs/backend-engineering-manager-guide.md) and [behavioral guide](docs/behavioral-engineering-manager-staff-guide.md) | Correctness, operations, people development and delivery judgment |
+| Staff / principal backend | [Basics-to-apps track](docs/backend-interview-track.md), [backend casebook](docs/backend-system-design-casebook.md) | APIs, schemas, concurrency, replay, failure recovery and technical influence |
 | Director / engineering leadership | [Leadership guide](docs/behavioral-engineering-manager-staff-guide.md) | Actual multi-team scope, portfolio decisions, resource allocation and leadership development |
 
 For a worked preparation path grounded in the author's experience, see [Rahul's resume-based plan](docs/rahul-backend-interview-plan.md). It identifies evidence already present and gaps that require real examples or hands-on work.
@@ -97,7 +98,7 @@ Pair these with the casebook's [checkout, payments and inventory exercise](docs/
 
 | Resource | Decisions to practice |
 | :--- | :--- |
-| [FAST, SVOD, AVOD and TVOD guide](docs/streaming-business-and-architecture.md) | Business models, entitlement, channel schedules, ad insertion, measurement and leadership drills |
+| [FAST, SVOD, AVOD and TVOD guide](docs/streaming-business-and-architecture.md) | Business models plus detailed DRM, ad measurement, live latency, CDN failover and entitlement failure walkthroughs |
 | [Long-form video player](docs/video-streaming-player.md) | Playback lifecycle, adaptive streaming, DRM and downloads |
 | [Short-form video feed](docs/video-feed-streaming.md) | Player reuse, prefetching, cancellation and memory pressure |
 | [Audio player and offline mode](docs/spotify-audio-player.md) | Playback queues, background audio, system integration and offline media |
@@ -166,6 +167,7 @@ Pair these with [feed and recommendation design](docs/backend-system-design-case
 
 | Resource | What it provides |
 | :--- | :--- |
+| [Backend interview track: basics to complete apps](docs/backend-interview-track.md) | Ten stages with plain-language concepts, spoken responses, exit questions and app mappings |
 | [Backend EM, staff and leadership master guide](docs/backend-engineering-manager-guide.md) | Consistency, transactions, caching, CDC, security, capacity, migrations and organizational ownership |
 | [Backend system design casebook](docs/backend-system-design-casebook.md) | Twelve authored exercises with data-model questions, failure drills and role-specific follow-ups |
 | [Networking layer](docs/networking-layer.md) | The client side of API contracts, credential refresh, request handling and recovery |
