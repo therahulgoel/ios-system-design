@@ -1,3 +1,5 @@
+<a id="top"></a>
+
 <div align="center">
 
 ![Distributed systems and mobile architecture](assets/banner.jpg)
@@ -16,7 +18,7 @@ Interview preparation for **Senior iOS, Staff / Principal, EM / SDM and engineer
 
 Study a domain, build an answer, stress-test it with failure questions, and connect your decisions to real experience.
 
-[Start here](#your-first-visit-start-here) · [How to answer](docs/interview-answer-playbook.md) · [Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Backend track: basics to apps](docs/backend-interview-track.md) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md) · [Streaming business models](docs/streaming-business-and-architecture.md) · [Reference library](#primary-source-reference-library) · [About the author](#about-the-author)
+**[Start learning](#your-first-visit-start-here) · [Browse industries](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Reference library](#primary-source-reference-library)**
 
 </div>
 
@@ -24,18 +26,17 @@ Study a domain, build an answer, stress-test it with failure questions, and conn
 
 ## Your first visit: start here
 
-| What you need today | Open this | Leave with |
-| :--- | :--- | :--- |
-| A clear way to answer | [Interview answer playbook](docs/interview-answer-playbook.md) | An opening structure, worked responses and follow-up practice |
-| A system to design | [Choose an industry](#explore-by-industry-and-domain) | A focused problem and the decisions to defend |
-| Backend from the basics | [Progressive backend interview track](docs/backend-interview-track.md) | Requests, APIs, data, distributed systems and complete app answers |
-| Backend design practice | [Twelve-case backend workbook](docs/backend-system-design-casebook.md) | APIs, invariants, failure drills and role-specific probes |
-| EM or leadership stories | [Behavioral preparation](docs/behavioral-engineering-manager-staff-guide.md) | Real examples structured around decisions, actions and evidence |
-| Streaming interview depth | [FAST / SVOD / AVOD / TVOD](docs/streaming-business-and-architecture.md) | Business-model implications, architecture questions and failure responses |
+Choose one route. Each route leads to concepts, an answer structure and questions to rehearse.
 
-**One useful practice session:** choose a problem, explain your design aloud, inject a failure, answer the follow-up, then record what you could not defend.
+| Build your foundation | Practice your interview |
+| :--- | :--- |
+| **Backend: basics to real apps**<br>[Follow the progressive track](docs/backend-interview-track.md)<br>Requests, APIs, data and distributed systems. | **Learn how to answer**<br>[Open the answer playbook](docs/interview-answer-playbook.md)<br>Worked responses and challenging follow-ups. |
+| **Client architecture**<br>[Choose an industry below](#explore-by-industry-and-domain)<br>State, networking, persistence and device constraints. | **Design a backend system**<br>[Open the twelve-case workbook](docs/backend-system-design-casebook.md)<br>APIs, invariants and recovery drills. |
+| **Streaming depth**<br>[Explore FAST / SVOD / AVOD / TVOD](docs/streaming-business-and-architecture.md)<br>DRM, ads, live latency, CDN and entitlement. | **Prepare EM and leadership stories**<br>[Build your evidence bank](docs/behavioral-engineering-manager-staff-guide.md)<br>Real decisions, people outcomes and lessons. |
 
-## Why this is interview preparation
+> **Your first session:** pick one problem, explain your design aloud, inject a failure, answer the follow-up, then record what you could not defend.
+
+## What makes this repository different
 
 The material connects **what to design**, **how to explain it**, and **what happens when the interviewer challenges it**. Its distinguishing combination is client behavior, backend correctness and engineering leadership in the same preparation path.
 
@@ -52,7 +53,7 @@ A payment timeout, a lost message acknowledgement and a failed ad decision have 
 
 The diagrams and sketches support reasoning. Worked responses describe proposed designs; career answers must come from your own experience. The repo does not supply invented success stories or guaranteed hiring scripts.
 
-## See the answer style before you browse
+## What a stronger answer sounds like
 
 **Practice prompt: What if the payment request times out?**
 
@@ -76,141 +77,6 @@ For a worked preparation path grounded in the author's experience, see [Rahul's 
 
 **Coverage boundary:** the frontend material focuses on iOS and mobile. Web frontend candidates need additional browser, JavaScript/TypeScript, accessibility and framework preparation. Backend candidates need implementation and operational practice beyond reading these documents.
 
-## Explore by industry and domain
-
-Product names in document titles identify familiar design problems. They do not imply access to those companies' internal architectures or private interview questions.
-
-### Payments & financial workflows
-
-**Central question:** how do you preserve a correct money movement when the client, service or provider can fail independently?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Payment checkout](docs/payment-checkout.md) | Stable request identity, pending outcomes, authentication challenges, persisted client state and reconciliation |
-| [Authentication, OAuth and biometrics](docs/authentication-oauth-biometric.md) | Token lifecycle, credential storage and authentication recovery |
-| [Mobile security and privacy](docs/mobile-security-privacy-engine.md) | Trust boundaries, key protection, encrypted storage and certificate rotation |
-
-Pair these with the casebook's [checkout, payments and inventory exercise](docs/backend-system-design-casebook.md#1-checkout-payments-and-inventory). Be ready to explain why a timeout is not proof of failure and where duplicate-effect protection actually lives.
-
-### Streaming, media & live experiences
-
-**Central question:** how do you sustain playback quality across device constraints, variable networks and service failures?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [FAST, SVOD, AVOD and TVOD guide](docs/streaming-business-and-architecture.md) | Business models plus detailed DRM, ad measurement, live latency, CDN failover and entitlement failure walkthroughs |
-| [Long-form video player](docs/video-streaming-player.md) | Playback lifecycle, adaptive streaming, DRM and downloads |
-| [Short-form video feed](docs/video-feed-streaming.md) | Player reuse, prefetching, cancellation and memory pressure |
-| [Audio player and offline mode](docs/spotify-audio-player.md) | Playback queues, background audio, system integration and offline media |
-| [Video calling and WebRTC](docs/google-meet-webrtc.md) | Connection establishment, relay fallback, media sessions and thermal constraints |
-
-Pair client behavior with the [live-event backend exercise](docs/backend-system-design-casebook.md#8-streaming-platform-and-live-event-control-plane). Separate media delivery from entitlement and metadata, and distinguish playback success from server request success.
-
-### E-commerce, marketplaces & booking
-
-**Central question:** how do you keep discovery responsive while inventory and order state remain correct?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Product catalog and discovery](docs/e-commerce-catalog.md) | Pagination, image-heavy screens and local cart state |
-| [Property search and booking](docs/airbnb-search-booking.md) | Search coordination, reservations and booking state |
-| [Search and autocomplete](docs/search-autocomplete.md) | Debounce, cancellation, stale results and local search |
-| [Server-driven UI](docs/sdui-engine.md) | Schema compatibility, component registration and safe fallback |
-| [Image loading library](docs/image-loading-library.md) | Caching, downsampling, request coalescing and cancellation |
-
-Extend the client specifications with [exclusive inventory booking](docs/backend-system-design-casebook.md#2-booking-exclusive-inventory) and [search indexing](docs/backend-system-design-casebook.md#5-search-and-autocomplete). Defend concurrent allocation, index lag and old-client compatibility.
-
-### Messaging, collaboration & productivity
-
-**Central question:** what does an acknowledgement mean, and how do multiple devices recover a consistent view?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Messaging and chat](docs/messaging-chat.md) | Pending sends, ordering, receipts, reconnection and durable history |
-| [Multi-workspace channel sync](docs/slack-channel-sync.md) | Workspace isolation, unread state and connection lifecycle |
-| [Collaborative editor](docs/collaborative-editor.md) | Concurrent editing, operation models and convergence |
-| [Offline-first sync](docs/offline-sync-engine.md) | Local persistence, conflict handling, replay and resynchronization |
-| [Calendar client](docs/google-calendar.md) | Recurrence, time zones, range queries and synchronized state |
-
-Practice [durable messaging](docs/backend-system-design-casebook.md#3-durable-messaging-and-offline-synchronization) and [distributed scheduling](docs/backend-system-design-casebook.md#10-distributed-scheduler-and-work-execution). Explain acceptance versus delivery, cursor expiry and stale worker ownership.
-
-### Mobility, delivery & real-time tracking
-
-**Central question:** how do you keep a useful live view when updates are delayed, devices sleep or connectivity disappears?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Geospatial tracking](docs/realtime-location-tracking.md) | Location updates, transport lifecycle, interpolation and battery use |
-| [Delivery order tracking](docs/doordash-delivery-tracker.md) | Order transitions, realtime updates and Live Activities |
-| [Push notification system](docs/push-notification-system.md) | Device registration, provider responses and background update limits |
-| [Deep linking and universal links](docs/deep-linking-universal-links.md) | Routing, cold starts, domain association and authorization |
-
-Use the [notification backend exercise](docs/backend-system-design-casebook.md#7-notification-delivery) to defend preference checks, expiry, retries and token cleanup. Provider acceptance is not proof that the device received or displayed a message.
-
-### Social feeds, growth & analytics
-
-**Central question:** how do you deliver relevant content and derive trustworthy measurements without losing control of freshness, privacy or cost?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Social feed](docs/social-feed.md) | Pagination, optimistic state and impression tracking |
-| [User analytics event pipeline](docs/user-analytics-event-pipeline.md) | Event contracts, identity, aggregation and retention |
-| [Analytics SDK](docs/analytics-sdk.md) | Durable collection, batching, retries and lifecycle constraints |
-| [Feature flags](docs/feature-flag-system.md) | Local evaluation, defaults, configuration updates and recovery |
-| [A/B testing SDK](docs/ab-testing-experimentation-sdk.md) | Assignment, exposure tracking and experiment compatibility |
-
-Pair these with [feed and recommendation design](docs/backend-system-design-casebook.md#4-social-feed-and-recommendations) and [telemetry ingestion](docs/backend-system-design-casebook.md#6-analytics-and-telemetry-ingestion). Discuss late events, replay, sampling and deletion before trusting the resulting metric.
-
-### Backend platforms & distributed systems
-
-**Central question:** which invariants survive concurrency, overload, replication lag and regional failure?
-
-| Resource | What it provides |
-| :--- | :--- |
-| [Backend interview track: basics to complete apps](docs/backend-interview-track.md) | Ten stages with plain-language concepts, spoken responses, exit questions and app mappings |
-| [Backend EM, staff and leadership master guide](docs/backend-engineering-manager-guide.md) | Consistency, transactions, caching, CDC, security, capacity, migrations and organizational ownership |
-| [Backend system design casebook](docs/backend-system-design-casebook.md) | Twelve authored exercises with data-model questions, failure drills and role-specific follow-ups |
-| [Networking layer](docs/networking-layer.md) | The client side of API contracts, credential refresh, request handling and recovery |
-
-The casebook also includes [multi-tenant reporting](docs/backend-system-design-casebook.md#9-multi-tenant-csat-and-reporting-platform) and [regional recovery](docs/backend-system-design-casebook.md#11-regional-failure-and-data-recovery). Start with authoritative state and access paths; add infrastructure only when its purpose and failure consequences are clear.
-
-### AI applications & inference
-
-**Central question:** how do you make model-backed features measurable, authorized and recoverable?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [On-device AI architecture](docs/on-device-llm-ai-engine.md) | Runtime choice, weight and working memory, cancellation, retrieval and cloud routing |
-| [Summarization systems](docs/how-ai-summarization-agents-work.md) | Tokenization, generation, context selection, provenance and output evaluation |
-| [Primary AI reading map](docs/history-of-agentic-loops.md) | Distinguishing training, inference, search and tool orchestration through published research |
-
-Practice the [AI inference gateway](docs/backend-system-design-casebook.md#12-ai-inference-gateway-and-evaluation-platform). Evaluate task quality separately from availability and speed. This material does not substitute for ML research or distributed-training expertise.
-
-### Developer platforms, reliability & release engineering
-
-**Central question:** how do you improve delivery while making failures easier to detect, contain and recover from?
-
-| Resource | Decisions to practice |
-| :--- | :--- |
-| [Mobile platform leadership](docs/mobile-platform-engineering-em.md) | Module ownership, release coordination and incident response |
-| [App modularization and dependency injection](docs/app-modularization.md) | Dependency boundaries, interfaces and adoption |
-| [Mobile CI/CD](docs/mobile-ci-cd-pipeline.md) | Build pipelines, signing, validation and distribution |
-| [App performance monitoring](docs/app-performance-monitoring.md) | Startup, responsiveness, resource usage and metric definitions |
-| [Crash reporting and observability](docs/crash-reporting-sdk.md) | Diagnostics, breadcrumbs and abnormal termination analysis |
-
-Connect these to the [backend guide's reliability and release sections](docs/backend-engineering-manager-guide.md). A backend rollback, an App Store rollout pause and a remote feature flag have different recovery capabilities.
-
-### Leadership, behavioral preparation & reference
-
-| Resource | How to use it |
-| :--- | :--- |
-| [Leadership and behavioral guide](docs/behavioral-engineering-manager-staff-guide.md) | Reconstruct actual decisions, people outcomes, conflicts, failures and learning |
-| [Rahul's preparation plan](docs/rahul-backend-interview-plan.md) | See a resume-grounded evidence bank, scope assessment and preparation sequence |
-| [Client architecture cheatsheet](docs/cheatsheet.md) | Recall patterns after studying their constraints |
-| [Generic mobile problems](docs/generic-mobile-problems.md) | Practice cross-cutting client design |
-| [Evidence standard and sources](docs/evidence-and-sources.md) | Check published behavior and distinguish measurements from proposed targets |
-| [Repository review record](docs/repository-review.md) | Understand repairs, validation scope and remaining limitations |
-
 ## Turn reading into interview practice
 
 1. **Choose a domain and role.** Read one client specification and its corresponding backend exercise.
@@ -225,7 +91,245 @@ Practice prompts are authored exercises, not leaked company questions. Use the a
 
 Official preparation references: [Amazon SDM](https://amazon.jobs/content/en/how-we-hire/sdm-interview-prep), [Google hiring](https://www.google.com/about/careers/applications/how-we-hire/), [Google DeepMind](https://deepmind.google/careers/) and [SpaceX careers](https://www.spacex.com/careers/).
 
+## Explore by industry and domain
+
+Find your domain, then expand its reading list. Every topic includes the decisions to practice, with links into deeper exercises.
+
+| Customer-facing systems | Platforms and leadership |
+| :--- | :--- |
+| [Payments](#payments) - correctness and reconciliation | [Backend systems](#backend) - concurrency, data and recovery |
+| [Streaming and media](#streaming) - playback, ads and access | [AI applications](#ai) - inference, evaluation and authorization |
+| [E-commerce and booking](#commerce) - discovery and inventory | [Developer platforms](#platforms) - reliability and releases |
+| [Messaging and collaboration](#messaging) - ordering and sync | [Leadership and reference](#leadership) - decisions and evidence |
+| [Mobility and delivery](#mobility) - live state and connectivity | [Social and analytics](#social) - freshness and measurement |
+
+Product names in document titles identify familiar design problems. They do not imply access to those companies' internal architectures or private interview questions.
+
+<a id="payments"></a>
+
+### Payments & financial workflows
+
+**Central question:** how do you preserve a correct money movement when the client, service or provider can fail independently?
+
+<details>
+<summary>Checkout, identity, security and reconciliation</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [Payment checkout](docs/payment-checkout.md) | Stable request identity, pending outcomes, authentication challenges, persisted client state and reconciliation |
+| [Authentication, OAuth and biometrics](docs/authentication-oauth-biometric.md) | Token lifecycle, credential storage and authentication recovery |
+| [Mobile security and privacy](docs/mobile-security-privacy-engine.md) | Trust boundaries, key protection, encrypted storage and certificate rotation |
+
+Pair these with the casebook's [checkout, payments and inventory exercise](docs/backend-system-design-casebook.md#1-checkout-payments-and-inventory). Be ready to explain why a timeout is not proof of failure and where duplicate-effect protection actually lives.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="streaming"></a>
+
+### Streaming, media & live experiences
+
+**Central question:** how do you sustain playback quality across device constraints, variable networks and service failures?
+
+<details>
+<summary>Business models, video, audio and WebRTC</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [FAST, SVOD, AVOD and TVOD guide](docs/streaming-business-and-architecture.md) | Business models plus detailed DRM, ad measurement, live latency, CDN failover and entitlement failure walkthroughs |
+| [Long-form video player](docs/video-streaming-player.md) | Playback lifecycle, adaptive streaming, DRM and downloads |
+| [Short-form video feed](docs/video-feed-streaming.md) | Player reuse, prefetching, cancellation and memory pressure |
+| [Audio player and offline mode](docs/spotify-audio-player.md) | Playback queues, background audio, system integration and offline media |
+| [Video calling and WebRTC](docs/google-meet-webrtc.md) | Connection establishment, relay fallback, media sessions and thermal constraints |
+
+Pair client behavior with the [live-event backend exercise](docs/backend-system-design-casebook.md#8-streaming-platform-and-live-event-control-plane). Separate media delivery from entitlement and metadata, and distinguish playback success from server request success.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="commerce"></a>
+
+### E-commerce, marketplaces & booking
+
+**Central question:** how do you keep discovery responsive while inventory and order state remain correct?
+
+<details>
+<summary>Catalog, booking, search, server-driven UI and images</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [Product catalog and discovery](docs/e-commerce-catalog.md) | Pagination, image-heavy screens and local cart state |
+| [Property search and booking](docs/airbnb-search-booking.md) | Search coordination, reservations and booking state |
+| [Search and autocomplete](docs/search-autocomplete.md) | Debounce, cancellation, stale results and local search |
+| [Server-driven UI](docs/sdui-engine.md) | Schema compatibility, component registration and safe fallback |
+| [Image loading library](docs/image-loading-library.md) | Caching, downsampling, request coalescing and cancellation |
+
+Extend the client specifications with [exclusive inventory booking](docs/backend-system-design-casebook.md#2-booking-exclusive-inventory) and [search indexing](docs/backend-system-design-casebook.md#5-search-and-autocomplete). Defend concurrent allocation, index lag and old-client compatibility.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="messaging"></a>
+
+### Messaging, collaboration & productivity
+
+**Central question:** what does an acknowledgement mean, and how do multiple devices recover a consistent view?
+
+<details>
+<summary>Chat, channel sync, collaborative editing and calendars</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [Messaging and chat](docs/messaging-chat.md) | Pending sends, ordering, receipts, reconnection and durable history |
+| [Multi-workspace channel sync](docs/slack-channel-sync.md) | Workspace isolation, unread state and connection lifecycle |
+| [Collaborative editor](docs/collaborative-editor.md) | Concurrent editing, operation models and convergence |
+| [Offline-first sync](docs/offline-sync-engine.md) | Local persistence, conflict handling, replay and resynchronization |
+| [Calendar client](docs/google-calendar.md) | Recurrence, time zones, range queries and synchronized state |
+
+Practice [durable messaging](docs/backend-system-design-casebook.md#3-durable-messaging-and-offline-synchronization) and [distributed scheduling](docs/backend-system-design-casebook.md#10-distributed-scheduler-and-work-execution). Explain acceptance versus delivery, cursor expiry and stale worker ownership.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="mobility"></a>
+
+### Mobility, delivery & real-time tracking
+
+**Central question:** how do you keep a useful live view when updates are delayed, devices sleep or connectivity disappears?
+
+<details>
+<summary>Location, delivery, notifications and deep links</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [Geospatial tracking](docs/realtime-location-tracking.md) | Location updates, transport lifecycle, interpolation and battery use |
+| [Delivery order tracking](docs/doordash-delivery-tracker.md) | Order transitions, realtime updates and Live Activities |
+| [Push notification system](docs/push-notification-system.md) | Device registration, provider responses and background update limits |
+| [Deep linking and universal links](docs/deep-linking-universal-links.md) | Routing, cold starts, domain association and authorization |
+
+Use the [notification backend exercise](docs/backend-system-design-casebook.md#7-notification-delivery) to defend preference checks, expiry, retries and token cleanup. Provider acceptance is not proof that the device received or displayed a message.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="social"></a>
+
+### Social feeds, growth & analytics
+
+**Central question:** how do you deliver relevant content and derive trustworthy measurements without losing control of freshness, privacy or cost?
+
+<details>
+<summary>Feeds, analytics, feature flags and experiments</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [Social feed](docs/social-feed.md) | Pagination, optimistic state and impression tracking |
+| [User analytics event pipeline](docs/user-analytics-event-pipeline.md) | Event contracts, identity, aggregation and retention |
+| [Analytics SDK](docs/analytics-sdk.md) | Durable collection, batching, retries and lifecycle constraints |
+| [Feature flags](docs/feature-flag-system.md) | Local evaluation, defaults, configuration updates and recovery |
+| [A/B testing SDK](docs/ab-testing-experimentation-sdk.md) | Assignment, exposure tracking and experiment compatibility |
+
+Pair these with [feed and recommendation design](docs/backend-system-design-casebook.md#4-social-feed-and-recommendations) and [telemetry ingestion](docs/backend-system-design-casebook.md#6-analytics-and-telemetry-ingestion). Discuss late events, replay, sampling and deletion before trusting the resulting metric.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="backend"></a>
+
+### Backend platforms & distributed systems
+
+**Central question:** which invariants survive concurrency, overload, replication lag and regional failure?
+
+<details>
+<summary>Progressive backend track, leadership guide and casebook</summary>
+
+| Resource | What it provides |
+| :--- | :--- |
+| [Backend interview track: basics to complete apps](docs/backend-interview-track.md) | Ten stages with plain-language concepts, spoken responses, exit questions and app mappings |
+| [Backend EM, staff and leadership master guide](docs/backend-engineering-manager-guide.md) | Consistency, transactions, caching, CDC, security, capacity, migrations and organizational ownership |
+| [Backend system design casebook](docs/backend-system-design-casebook.md) | Twelve authored exercises with data-model questions, failure drills and role-specific follow-ups |
+| [Networking layer](docs/networking-layer.md) | The client side of API contracts, credential refresh, request handling and recovery |
+
+The casebook also includes [multi-tenant reporting](docs/backend-system-design-casebook.md#9-multi-tenant-csat-and-reporting-platform) and [regional recovery](docs/backend-system-design-casebook.md#11-regional-failure-and-data-recovery). Start with authoritative state and access paths; add infrastructure only when its purpose and failure consequences are clear.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="ai"></a>
+
+### AI applications & inference
+
+**Central question:** how do you make model-backed features measurable, authorized and recoverable?
+
+<details>
+<summary>On-device AI, summarization and research references</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [On-device AI architecture](docs/on-device-llm-ai-engine.md) | Runtime choice, weight and working memory, cancellation, retrieval and cloud routing |
+| [Summarization systems](docs/how-ai-summarization-agents-work.md) | Tokenization, generation, context selection, provenance and output evaluation |
+| [Primary AI reading map](docs/history-of-agentic-loops.md) | Distinguishing training, inference, search and tool orchestration through published research |
+
+Practice the [AI inference gateway](docs/backend-system-design-casebook.md#12-ai-inference-gateway-and-evaluation-platform). Evaluate task quality separately from availability and speed. This material does not substitute for ML research or distributed-training expertise.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="platforms"></a>
+
+### Developer platforms, reliability & release engineering
+
+**Central question:** how do you improve delivery while making failures easier to detect, contain and recover from?
+
+<details>
+<summary>Platform leadership, modularization, CI/CD and observability</summary>
+
+| Resource | Decisions to practice |
+| :--- | :--- |
+| [Mobile platform leadership](docs/mobile-platform-engineering-em.md) | Module ownership, release coordination and incident response |
+| [App modularization and dependency injection](docs/app-modularization.md) | Dependency boundaries, interfaces and adoption |
+| [Mobile CI/CD](docs/mobile-ci-cd-pipeline.md) | Build pipelines, signing, validation and distribution |
+| [App performance monitoring](docs/app-performance-monitoring.md) | Startup, responsiveness, resource usage and metric definitions |
+| [Crash reporting and observability](docs/crash-reporting-sdk.md) | Diagnostics, breadcrumbs and abnormal termination analysis |
+
+Connect these to the [backend guide's reliability and release sections](docs/backend-engineering-manager-guide.md). A backend rollback, an App Store rollout pause and a remote feature flag have different recovery capabilities.
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
+<a id="leadership"></a>
+
+### Leadership, behavioral preparation & reference
+
+<details>
+<summary>Behavioral preparation, resume plan, cheatsheets and evidence</summary>
+
+| Resource | How to use it |
+| :--- | :--- |
+| [Leadership and behavioral guide](docs/behavioral-engineering-manager-staff-guide.md) | Reconstruct actual decisions, people outcomes, conflicts, failures and learning |
+| [Rahul's preparation plan](docs/rahul-backend-interview-plan.md) | See a resume-grounded evidence bank, scope assessment and preparation sequence |
+| [Client architecture cheatsheet](docs/cheatsheet.md) | Recall patterns after studying their constraints |
+| [Generic mobile problems](docs/generic-mobile-problems.md) | Practice cross-cutting client design |
+| [Evidence standard and sources](docs/evidence-and-sources.md) | Check published behavior and distinguish measurements from proposed targets |
+| [Repository review record](docs/repository-review.md) | Understand repairs, validation scope and remaining limitations |
+
+</details>
+
+[Back to domain map](#explore-by-industry-and-domain)
+
 ## Streaming terminology to prepare
+
+<details>
+<summary>FAST, SVOD, AVOD, TVOD, ad insertion and media delivery terminology</summary>
 
 Streaming interviews can span both product economics and media infrastructure. The [streaming business and architecture guide](docs/streaming-business-and-architecture.md) connects the following concepts to design exercises and primary sources:
 
@@ -241,6 +345,9 @@ Streaming interviews can span both product economics and media infrastructure. T
 | DRM / CDN / QoE | Content protection, cache and origin behavior, and defined playback outcomes |
 
 Definitions: [Amazon Ads VOD guide](https://advertising.amazon.com/library/guides/avod-svod-tvod-video-on-demand), [AWS FAST channel architecture](https://aws.amazon.com/blogs/media/deploying-virtual-linear-ott-channels-using-aws-media-services/). Use the linked guide for the technical references and failure drills.
+
+
+</details>
 
 ## Architecture decision reference
 
@@ -326,6 +433,8 @@ Built and maintained by **Rahul Goel**, an engineering manager with experience a
 - **Career background:** [public resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf)
 
 If this helps your preparation, star the repository so other engineers can discover it. Corrections, deeper failure analysis and verified implementations are welcome through [the contribution guide](CONTRIBUTING.md).
+
+[Back to top](#top)
 
 ## License
 
