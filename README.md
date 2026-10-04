@@ -2,9 +2,9 @@
 
 ![Distributed systems and mobile architecture](assets/banner.jpg)
 
-# System Design & Engineering Leadership
+# System Design Interview Prep
 
-### Backend correctness. Mobile architecture. Engineering judgment.
+### Know what to cover. Practice how to answer. Defend the follow-ups.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -12,27 +12,54 @@
 
 [LinkedIn](https://www.linkedin.com/in/therahulgoel/) · [X / Twitter @therahulgoel](https://x.com/therahulgoel) · [Resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf)
 
-A domain-based preparation library for senior iOS engineers, staff engineers, Engineering Managers and Software Development Managers.
+Interview preparation for **Senior iOS, Staff / Principal, EM / SDM and engineering leadership** roles.
 
-[Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md) · [Streaming business models](docs/streaming-business-and-architecture.md) · [Reference library](#primary-source-reference-library) · [About the author](#about-the-author)
+Study a domain, build an answer, stress-test it with failure questions, and connect your decisions to real experience.
+
+[Start here](#your-first-visit-start-here) · [How to answer](docs/interview-answer-playbook.md) · [Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md) · [Streaming business models](docs/streaming-business-and-architecture.md) · [Reference library](#primary-source-reference-library) · [About the author](#about-the-author)
 
 </div>
 
 ---
 
-## What makes this repository useful
+## Your first visit: start here
 
-The distinguishing feature is the connection between **client behavior, backend correctness and engineering leadership**. Follow a payment from a disconnected phone to an ambiguous provider outcome, a message from local persistence to durable acceptance, or a streaming decision from device constraints to service reliability and cost.
+| What you need today | Open this | Leave with |
+| :--- | :--- | :--- |
+| A clear way to answer | [Interview answer playbook](docs/interview-answer-playbook.md) | An opening structure, worked responses and follow-up practice |
+| A system to design | [Choose an industry](#explore-by-industry-and-domain) | A focused problem and the decisions to defend |
+| Backend design practice | [Twelve-case backend workbook](docs/backend-system-design-casebook.md) | APIs, invariants, failure drills and role-specific probes |
+| EM or leadership stories | [Behavioral preparation](docs/behavioral-engineering-manager-staff-guide.md) | Real examples structured around decisions, actions and evidence |
+| Streaming interview depth | [FAST / SVOD / AVOD / TVOD](docs/streaming-business-and-architecture.md) | Business-model implications, architecture questions and failure responses |
 
-| What you can practice here | Where the depth comes from |
+**One useful practice session:** choose a problem, explain your design aloud, inject a failure, answer the follow-up, then record what you could not defend.
+
+## Why this is interview preparation
+
+The material connects **what to design**, **how to explain it**, and **what happens when the interviewer challenges it**. Its distinguishing combination is client behavior, backend correctness and engineering leadership in the same preparation path.
+
+| Preparation need | What this repository contains |
 | :--- | :--- |
-| Client-to-service architecture | Mobile contracts, offline state, retries, compatibility and backend acknowledgement boundaries |
-| Correctness under failure | Explicit invariants, transaction boundaries, duplicate events, stale workers and recovery drills |
-| Domain-specific trade-offs | Payments, streaming, commerce, messaging, search, analytics and AI each have different failure consequences |
-| Staff and EM perspectives | Implementation and cross-team adoption alongside ownership, staffing, delivery and incident leadership |
-| Evidence-based communication | Primary references, metric definitions and a resume-based example of separating personal ownership from product scale |
+| Explain a design | [Worked answer walkthroughs](docs/interview-answer-playbook.md), API/data-model discussions and architecture diagrams |
+| Go beyond the happy path | Timeouts, concurrent requests, duplicate events, stale workers and recovery drills |
+| Defend a decision | Domain-specific trade-offs and questions about the rejected alternative |
+| Handle technical probes | Backend casebook follow-ups and mock Q&A in the client specifications |
+| Adapt to seniority | Staff implementation/influence depth, EM people/operations depth and leadership scope |
+| Tell a credible career story | STAR-style structure, probing questions and an evidence bank based on the author's resume |
 
-These are concrete features of this checkout, not a claim that competing repositories lack them. The value comes from defending decisions and failure behavior, rather than memorizing a technology list.
+A payment timeout, a lost message acknowledgement and a failed ad decision have different consequences. Practice explaining those differences through an actual contract, state model and recovery action.
+
+The diagrams and sketches support reasoning. Worked responses describe proposed designs; career answers must come from your own experience. The repo does not supply invented success stories or guaranteed hiring scripts.
+
+## See the answer style before you browse
+
+**Practice prompt: What if the payment request times out?**
+
+> A timeout leaves the outcome unknown. I would retain the operation identity, show pending state, and reconcile through status lookup or provider events. The backend must atomically bind the identity to the caller and request, so concurrent retries do not create separate operations.
+
+**Expect the follow-up:** what if the provider accepted the payment before the worker crashed? Trace the persisted attempt, external idempotency contract and reconciliation path. Then add the EM lens: ownership, exception handling and customer communication.
+
+[Read the full walkthrough and streaming example](docs/interview-answer-playbook.md).
 
 ## Choose your preparation track
 
@@ -215,6 +242,9 @@ Definitions: [Amazon Ads VOD guide](https://advertising.amazon.com/library/guide
 
 ## Architecture decision reference
 
+<details>
+<summary>Open the architecture decision reference</summary>
+
 Use this to recall decisions, then defend them for the actual workload. There is no single mandatory architecture or cache budget.
 
 | Area | Options and judgment to explain |
@@ -228,6 +258,8 @@ Use this to recall decisions, then defend them for the actual workload. There is
 | Mutating APIs | Durable operation identity, request fingerprint, atomic enforcement and ambiguous-outcome recovery |
 | Async work | Durable acceptance, replay-safe effects, bounded queues and observable recovery |
 | Release safety | Compatibility, measured canaries and a recovery action that actually works for installed clients |
+
+</details>
 
 ## A design conversation framework
 
@@ -243,6 +275,9 @@ Adapt the pacing to the actual interview; this is a rehearsal sequence, not a co
 | Lead | Ownership, staffing, delivery or cross-team adoption appropriate to the role |
 
 ## Primary-source reference library
+
+<details>
+<summary>Open the primary-source reading library</summary>
 
 Read for a specific decision. A product overview alone is not evidence for a performance number.
 
@@ -261,6 +296,8 @@ Read for a specific decision. A product overview alone is not evidence for a per
 | AI mechanics and runtime | [Transformer paper](https://arxiv.org/abs/1706.03762), [ReAct](https://arxiv.org/abs/2210.03629), [ExecuTorch](https://docs.pytorch.org/executorch/stable/index.html), [Apple Foundation Models](https://developer.apple.com/documentation/foundationmodels) | Model computation versus orchestration and actual platform support |
 
 Use [the evidence standard](docs/evidence-and-sources.md) for how to cite and qualify results. Verify provider and platform versions when implementing a design.
+
+</details>
 
 ## Evidence, verification & contribution
 
