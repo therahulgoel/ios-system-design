@@ -1,4 +1,4 @@
-# Master Guide: Senior Backend Engineering Management (EM / SDM) — Distributed Systems & Client Architecture
+# Master Guide: Senior Backend Engineering Management (EM / SDM) - Distributed Systems & Client Architecture
 ### The End-to-End Blueprint for Leading High-Scale Backend Teams, Governing Mobile-to-Cloud APIs, Scaling Distributed Systems, and Cracking Tier-1 EM / SDM System Design Interviews
 
 ---
@@ -84,32 +84,32 @@ In Senior Engineering Manager (Senior EM, M1/M2) and Software Development Manage
 ### The 45-Minute Senior EM System Design Framework
 
 ```ascii
-[00:00 – 05:00]  Phase 1: Scope, Clarify Requirements & Define Business / Technical SLAs
+[00:00 - 05:00]  Phase 1: Scope, Clarify Requirements & Define Business / Technical SLAs
                  - Functional: Core user journeys from app perspective.
                  - Non-Functional: Throughput (QPS), p99 latency target (< 100ms), availability (99.99%).
                  - Clarify constraints: Data consistency (Strong vs Eventual), mobile network variability.
 
-[05:00 – 10:00]  Phase 2: High-Level API Contracts & Data Flow
+[05:00 - 10:00]  Phase 2: High-Level API Contracts & Data Flow
                  - Define REST / gRPC endpoint signatures.
                  - Request/response payloads tailored for mobile (avoid over-fetching).
                  - Core entity schema models & persistence choices (RDBMS vs NoSQL).
 
-[10:00 – 25:00]  Phase 3: Deep Dive into Critical Subsystems & Scaling Architecture
+[10:00 - 25:00]  Phase 3: Deep Dive into Critical Subsystems & Scaling Architecture
                  - Component architecture: Ingress, BFF, Microservices, Caching, Event Bus.
                  - Scaling bottlenecks: Cache stampede mitigation, DB sharding, async decoupling.
                  - Mobile edge considerations: Delta synchronization, cursor pagination, idempotency.
 
-[25:00 – 35:00]  Phase 4: Fault Tolerance, Failure Modes & Graceful Degradation
+[25:00 - 35:00]  Phase 4: Fault Tolerance, Failure Modes & Graceful Degradation
                  - What happens when DB or downstream microservice fails?
                  - Circuit breakers, bulkheads, exponential backoff with jitter, fallback feeds.
                  - Zero data loss guarantees (Outbox pattern, Saga distributed transactions).
 
-[35:00 – 42:00]  Phase 5: Operational Excellence, SRE & Team Governance (The EM Differentiator)
+[35:00 - 42:00]  Phase 5: Operational Excellence, SRE & Team Governance (The EM Differentiator)
                  - Observability: SLI/SLO definitions, RED/USE metrics, distributed tracing.
                  - Deployment: Canary releases, automated rollbacks, zero-downtime DB migrations.
                  - Team ownership: Domain-Driven Design (DDD) boundaries, team staffing, on-call rotation.
 
-[42:00 – 45:00]  Phase 6: Summary, Trade-offs & Future Scaling Roadmaps
+[42:00 - 45:00]  Phase 6: Summary, Trade-offs & Future Scaling Roadmaps
                  - Key architectural compromises accepted (e.g., eventual consistency for latency).
                  - Cost model & cloud infrastructure optimization (FinOps).
 ```
@@ -256,11 +256,11 @@ graph TD
 +----------------------+---------------------------+-------------------------------------------------+
 | Token Type           | Lifetime                  | Storage & Transmission                          |
 +----------------------+---------------------------+-------------------------------------------------+
-| **Access Token**     | Short (10 – 15 minutes)   | Stateless Signed JWT (RS256 / Ed25519).         |
+| **Access Token**     | Short (10 - 15 minutes)   | Stateless Signed JWT (RS256 / Ed25519).         |
 |                      |                           | Verified locally at API Gateway using public key|
 |                      |                           | without database hits. Never stored in DB.      |
 +----------------------+---------------------------+-------------------------------------------------+
-| **Refresh Token**    | Long (30 – 90 days)       | High-entropy cryptographically random UUIDv4.   |
+| **Refresh Token**    | Long (30 - 90 days)       | High-entropy cryptographically random UUIDv4.   |
 |                      |                           | Stored hashed (SHA-256) in Redis + Postgres.    |
 |                      |                           | Bound to exact `device_id` and `client_id`.     |
 +----------------------+---------------------------+-------------------------------------------------+
@@ -641,7 +641,7 @@ graph TD
 ```
 
 #### How to Handle Replication Lag (Read-Your-Own-Writes Consistency):
-* In asynchronous replication, write-to-replica propagation takes 50ms – 500ms.
+* In asynchronous replication, write-to-replica propagation takes 50ms - 500ms.
 * **The Mobile Problem**: User posts a comment, the screen refreshes, the app reads from a replica that has not synced yet, and the user's comment disappears! User files a bug report.
 * **Senior EM Solutions**:
   1. **Session Pinning / Write Forwarding**: When a user performs a write, set a temporary cookie/header flag pinning their reads to the **Master DB** for the next 3 seconds.

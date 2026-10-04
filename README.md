@@ -12,7 +12,7 @@
 [![Stars](https://img.shields.io/github/stars/therahulgoel/ios-system-design?style=social)](https://github.com/therahulgoel/ios-system-design/stargazers)
 [![Twitter Follow](https://img.shields.io/badge/Twitter-@therahulgoel-1DA1F2?logo=x&style=flat)](https://x.com/therahulgoel)
 
-**If this helps you land your dream role — give it a ⭐ so others can find it too.**
+**If this helps you land your dream role - give it a ⭐ so others can find it too.**
 
 [📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Behavioral EM Guide](docs/behavioral-engineering-manager-staff-guide.md) · [🛡 Backend EM Guide](docs/backend-engineering-manager-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author) · [🐦 Twitter @therahulgoel](https://x.com/therahulgoel)
 
@@ -29,7 +29,7 @@ You are a **senior mobile engineer, architect, or engineering leader** preparing
 - **Director of Engineering, Senior Director & AVP / VP** executive system design, organizational scaling & behavioral loops
 - Roles requiring mobile system design depth, people leadership, and organizational scaling at **100M+ user scale**
 
-This is **not** a LeetCode repo. This teaches you to architect production systems on iOS and lead high-performing engineering organizations — the way hiring committees, Bar Raisers, and VP interview panels at top tech companies actually evaluate candidates.
+This is **not** a LeetCode repo. This teaches you to architect production systems on iOS and lead high-performing engineering organizations - the way hiring committees, Bar Raisers, and VP interview panels at top tech companies actually evaluate candidates.
 
 ---
 
@@ -69,7 +69,7 @@ Every spec includes:
 | :--- | :--- | :--- |
 | [🤖 On-Device LLM & Mobile AI Assistant Engine](docs/on-device-llm-ai-engine.md) | INT4 quantization, CoreML/ExecuTorch runtime, local RAG (USearch/SQLite VSS), token streaming, thermal throttling | Apple, Meta, Google, Microsoft, Snap |
 | [📝 How AI Text Summarization Agents Work Under the Hood](docs/how-ai-summarization-agents-work.md) | BPE tokenization, vector embeddings, Self-Attention equations, KV-cache math, Map-Reduce chunking | All FAANG, OpenAI, Anthropic |
-| [📜 Complete History & Evolution of Agentic AI (1950–2026)](docs/history-of-agentic-loops.md) | Game Theory (Deep Blue, AlphaGo), Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) | All AI & Tech Companies |
+| [📜 Complete History & Evolution of Agentic AI (1950-2026)](docs/history-of-agentic-loops.md) | Game Theory (Deep Blue, AlphaGo), Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) | All AI & Tech Companies |
 
 ---
 
@@ -146,7 +146,6 @@ Every spec includes:
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
 | [🏛 Mobile Platform Eng, Release & Governance (EM)](docs/mobile-platform-engineering-em.md) | Interface vs Implementation graph, 7-day canary train, Sev-1 triage & remote kill switch | Uber, Meta, Airbnb, Stripe |
-| [🛡 Senior Backend EM & Distributed Systems (SDM)](docs/backend-engineering-manager-guide.md) | Mobile BFF & Federation, Auth/Identity, Reco feed (<60ms SLA), Search CDC, Saga Checkout, Push, Scaling Playbook, SRE & FinOps | Meta, Google, Amazon, Stripe, Uber, Netflix |
 | [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
 | [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |
 | [📊 Mobile Analytics & Telemetry SDK](docs/analytics-sdk.md) | Ring buffer, SQLite journal, battery-aware batching, crash recovery, sampling | Uber, Meta, Google |
@@ -170,6 +169,18 @@ Every spec includes:
 
 ---
 
+### 🛡 Backend, Cloud & Distributed Systems (Senior EM / SDM / Staff Architecture)
+
+| Resource / System | Architecture & Key Concepts | Target Roles & Companies |
+| :--- | :--- | :--- |
+| [🛡 Senior Backend EM & Distributed Systems Master Guide](docs/backend-engineering-manager-guide.md) | **End-to-End Backend EM Leadership from an Apps Standpoint**: Mobile BFF & GraphQL federation, Auth/Identity (JWT + Redis Blacklist), Recommendation feeds (Two-stage Retrieval + ML Ranking SLA < 60ms), Search (CDC Debezium + OpenSearch + Trie), Checkout/Payments (Saga Orchestration + Transactional Outbox + Idempotency), Push Engine, Scaling Playbook (Cache Stampede, DB Sharding, Read-Your-Own-Writes), SRE Error Budgets, Sev-1 Incident Command, Zero-Downtime DB Migrations (Expand-Contract), Cloud FinOps & Capacity math. | Senior Engineering Manager (Senior EM / SDM / M1 / M2), Staff/Principal Backend Architect at Meta, Google, Amazon, Stripe, Uber, Netflix |
+| [📈 High-Throughput Analytics Event Pipeline](docs/user-analytics-event-pipeline.md) | Kafka topic partitioning, Apache Flink real-time stream aggregation, ClickHouse/Druid OLAP columnar storage, consumer group lag & backpressure handling. | Meta, Google, Uber, Snowflake |
+| [🔔 High-Volume Notification & Push Engine](docs/push-notification-system.md) | Multiplexed HTTP/2 persistent connection pools for APNs, Google FCM dispatch workers, per-user rate limiting, sliding window deduplication, invalid token cleanup. | All FAANG, Airbnb, Spotify |
+| [💳 Distributed Checkout & Payment Gateway](docs/payment-checkout.md) | Saga Orchestrator pattern, compensating rollback actions, Transactional Outbox with CDC, distributed idempotency ledger, 3DS and PCI DSS compliance. | Stripe, Square, PayPal, Amazon |
+| [💬 Real-Time Messaging Gateway & Presence Tier](docs/messaging-chat.md) | Distributed WebSocket gateway cluster, ScyllaDB/Cassandra message partition keys, Redis Pub/Sub ephemeral presence cluster, offline sync queue. | Meta, Slack, Discord, Google |
+| [🗺 Geospatial Stream Ingestion & Tracking Engine](docs/realtime-location-tracking.md) | Uber H3 / Google S2 spatial indexing, write-heavy Redis streams, geospatial geofencing, dead reckoning trajectory estimation. | Uber, DoorDash, Lyft |
+| [📡 Streaming Cloud Infrastructure & CDN Master Guide](streaming-guide/streaming_media_apps_em_master_guide.md) | Hardware transcoders, ABR encoding ladders, CMAF fMP4 packaging, SSAI manifest manipulation, Multi-CDN origin shield, Conviva QoE telemetry. | Netflix, Disney+, Hotstar, Max, YouTube |
+
 ### 🎯 Engineering Leadership, Behavioral & Executive Master Guide
 
 | Resource | Scope & Key Concepts | Target Roles & Companies |
@@ -184,7 +195,7 @@ Every spec includes:
 | Resource | What's In It |
 | :--- | :--- |
 | [📊 Master Cheatsheet](docs/cheatsheet.md) | All key numbers, decisions, and anti-patterns in one page |
-| [📜 Complete History & Evolution of Agentic AI (1950–2026)](docs/history-of-agentic-loops.md) | Deep Blue, AlphaGo, Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) |
+| [📜 Complete History & Evolution of Agentic AI (1950-2026)](docs/history-of-agentic-loops.md) | Deep Blue, AlphaGo, Transformers, Claude XML, MCP, Test-Time Compute (o1/o3, DeepSeek-R1) |
 | [📝 How AI Text Summarization Agents Work Under the Hood](docs/how-ai-summarization-agents-work.md) | BPE tokenization, vector embeddings, Self-Attention equations, KV-cache math, Map-Reduce chunking |
 | [🧩 Generic Mobile Problems](docs/generic-mobile-problems.md) | Cross-cutting patterns applicable to any mobile system design |
 
@@ -196,11 +207,11 @@ Every spec includes:
 ┌─────────────────────────────────────────────────────────────────────┐
 │  Phase             │  Time      │  What You Must Achieve             │
 ├─────────────────────────────────────────────────────────────────────┤
-│  1. Clarify        │  0–5 min   │  Scope, scale (DAU), offline?, platform │
-│  2. HLD            │  5–15 min  │  Full client-server component map  │
-│  3. Data & API     │  15–25 min │  Entities, endpoints, pagination   │
-│  4. Deep Dives     │  25–40 min │  Own 2–3 hardest subsystems        │
-│  5. Ops & Scale    │  40–45 min │  Failures, metrics, rollout plan   │
+│  1. Clarify        │  0-5 min   │  Scope, scale (DAU), offline?, platform │
+│  2. HLD            │  5-15 min  │  Full client-server component map  │
+│  3. Data & API     │  15-25 min │  Entities, endpoints, pagination   │
+│  4. Deep Dives     │  25-40 min │  Own 2-3 hardest subsystems        │
+│  5. Ops & Scale    │  40-45 min │  Failures, metrics, rollout plan   │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -208,9 +219,9 @@ Every spec includes:
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  View Layer         (SwiftUI — zero business logic)           │
+│  View Layer         (SwiftUI - zero business logic)           │
 ├──────────────────────────────────────────────────────────────┤
-│  Presentation Layer (ViewModel — state, user events)          │
+│  Presentation Layer (ViewModel - state, user events)          │
 ├──────────────────────────────────────────────────────────────┤
 │  Domain / Use Case  (Business rules, repository protocols)    │
 ├──────────────────────────────────────────────────────────────┤
@@ -315,7 +326,7 @@ Built by a mobile & distributed systems engineering leader with **12+ years** sc
 - 💼 Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**  
 - 🐦 Follow on X / Twitter: **[@therahulgoel](https://x.com/therahulgoel)** (or [twitter.com/therahulgoel](https://twitter.com/therahulgoel))
 
-If this helped you level up or land an offer — a ⭐ takes one second and helps this reach engineers who need it.
+If this helped you level up or land an offer - a ⭐ takes one second and helps this reach engineers who need it.
 
 ---
 
