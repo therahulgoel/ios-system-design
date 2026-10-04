@@ -79,13 +79,15 @@ For a worked preparation path grounded in the author's experience, see [Rahul's 
 
 ## Turn reading into interview practice
 
-1. **Choose a domain and role.** Read one client specification and its corresponding backend exercise.
-2. **State the invariant.** Identify what must remain correct and which component enforces it.
-3. **Draw the normal path.** Include APIs, authoritative data, persistence and acknowledgement boundaries.
-4. **Inject a failure.** Try a timeout, concurrent request, duplicate event, stale worker or unavailable dependency.
-5. **Defend the trade-off.** Explain the customer consequence, recovery, operational burden and cost using traceable inputs.
-6. **Add your role's evidence.** Staff: implementation and influence. EM: people, ownership and execution. Leadership: portfolio and organizational decisions.
-7. **Get feedback.** Record the incorrect assumption or unsupported claim, repair it and repeat the walkthrough.
+| Step | What to do | What to produce |
+| :---: | :--- | :--- |
+| **1** | Choose a domain and role | One client specification and its corresponding backend exercise |
+| **2** | State the invariant | What must remain correct and which component enforces it |
+| **3** | Draw the normal path | APIs, authoritative data, persistence and acknowledgement boundaries |
+| **4** | Inject a failure | A walkthrough of a timeout, concurrent request, duplicate event, stale worker or unavailable dependency |
+| **5** | Defend the trade-off | Customer consequences, recovery, operational burden and cost using traceable inputs |
+| **6** | Add your role's evidence | Staff: implementation and influence. EM: people, ownership and execution. Leadership: portfolio and organizational decisions |
+| **7** | Get feedback and repeat | A repaired answer to the incorrect assumption or unsupported claim |
 
 Practice prompts are authored exercises, not leaked company questions. Use the actual posting and recruiter packet to decide which coding, design, management and writing rounds to rehearse.
 
@@ -93,7 +95,7 @@ Official preparation references: [Amazon SDM](https://amazon.jobs/content/en/how
 
 ## Explore by industry and domain
 
-Find your domain, then expand its reading list. Every topic includes the decisions to practice, with links into deeper exercises.
+Use the domain map to jump to a reading list. Each list connects a design problem to the decisions and follow-ups to practice.
 
 | Customer-facing systems | Platforms and leadership |
 | :--- | :--- |
@@ -111,9 +113,6 @@ Product names in document titles identify familiar design problems. They do not 
 
 **Central question:** how do you preserve a correct money movement when the client, service or provider can fail independently?
 
-<details>
-<summary>Checkout, identity, security and reconciliation</summary>
-
 | Resource | Decisions to practice |
 | :--- | :--- |
 | [Payment checkout](docs/payment-checkout.md) | Stable request identity, pending outcomes, authentication challenges, persisted client state and reconciliation |
@@ -122,18 +121,11 @@ Product names in document titles identify familiar design problems. They do not 
 
 Pair these with the casebook's [checkout, payments and inventory exercise](docs/backend-system-design-casebook.md#1-checkout-payments-and-inventory). Be ready to explain why a timeout is not proof of failure and where duplicate-effect protection actually lives.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="streaming"></a>
 
 ### Streaming, media & live experiences
 
 **Central question:** how do you sustain playback quality across device constraints, variable networks and service failures?
-
-<details>
-<summary>Business models, video, audio and WebRTC</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -145,18 +137,11 @@ Pair these with the casebook's [checkout, payments and inventory exercise](docs/
 
 Pair client behavior with the [live-event backend exercise](docs/backend-system-design-casebook.md#8-streaming-platform-and-live-event-control-plane). Separate media delivery from entitlement and metadata, and distinguish playback success from server request success.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="commerce"></a>
 
 ### E-commerce, marketplaces & booking
 
 **Central question:** how do you keep discovery responsive while inventory and order state remain correct?
-
-<details>
-<summary>Catalog, booking, search, server-driven UI and images</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -168,18 +153,11 @@ Pair client behavior with the [live-event backend exercise](docs/backend-system-
 
 Extend the client specifications with [exclusive inventory booking](docs/backend-system-design-casebook.md#2-booking-exclusive-inventory) and [search indexing](docs/backend-system-design-casebook.md#5-search-and-autocomplete). Defend concurrent allocation, index lag and old-client compatibility.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="messaging"></a>
 
 ### Messaging, collaboration & productivity
 
 **Central question:** what does an acknowledgement mean, and how do multiple devices recover a consistent view?
-
-<details>
-<summary>Chat, channel sync, collaborative editing and calendars</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -191,18 +169,11 @@ Extend the client specifications with [exclusive inventory booking](docs/backend
 
 Practice [durable messaging](docs/backend-system-design-casebook.md#3-durable-messaging-and-offline-synchronization) and [distributed scheduling](docs/backend-system-design-casebook.md#10-distributed-scheduler-and-work-execution). Explain acceptance versus delivery, cursor expiry and stale worker ownership.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="mobility"></a>
 
 ### Mobility, delivery & real-time tracking
 
 **Central question:** how do you keep a useful live view when updates are delayed, devices sleep or connectivity disappears?
-
-<details>
-<summary>Location, delivery, notifications and deep links</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -213,18 +184,11 @@ Practice [durable messaging](docs/backend-system-design-casebook.md#3-durable-me
 
 Use the [notification backend exercise](docs/backend-system-design-casebook.md#7-notification-delivery) to defend preference checks, expiry, retries and token cleanup. Provider acceptance is not proof that the device received or displayed a message.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="social"></a>
 
 ### Social feeds, growth & analytics
 
 **Central question:** how do you deliver relevant content and derive trustworthy measurements without losing control of freshness, privacy or cost?
-
-<details>
-<summary>Feeds, analytics, feature flags and experiments</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -236,18 +200,11 @@ Use the [notification backend exercise](docs/backend-system-design-casebook.md#7
 
 Pair these with [feed and recommendation design](docs/backend-system-design-casebook.md#4-social-feed-and-recommendations) and [telemetry ingestion](docs/backend-system-design-casebook.md#6-analytics-and-telemetry-ingestion). Discuss late events, replay, sampling and deletion before trusting the resulting metric.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="backend"></a>
 
 ### Backend platforms & distributed systems
 
 **Central question:** which invariants survive concurrency, overload, replication lag and regional failure?
-
-<details>
-<summary>Progressive backend track, leadership guide and casebook</summary>
 
 | Resource | What it provides |
 | :--- | :--- |
@@ -258,18 +215,11 @@ Pair these with [feed and recommendation design](docs/backend-system-design-case
 
 The casebook also includes [multi-tenant reporting](docs/backend-system-design-casebook.md#9-multi-tenant-csat-and-reporting-platform) and [regional recovery](docs/backend-system-design-casebook.md#11-regional-failure-and-data-recovery). Start with authoritative state and access paths; add infrastructure only when its purpose and failure consequences are clear.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="ai"></a>
 
 ### AI applications & inference
 
 **Central question:** how do you make model-backed features measurable, authorized and recoverable?
-
-<details>
-<summary>On-device AI, summarization and research references</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -279,18 +229,11 @@ The casebook also includes [multi-tenant reporting](docs/backend-system-design-c
 
 Practice the [AI inference gateway](docs/backend-system-design-casebook.md#12-ai-inference-gateway-and-evaluation-platform). Evaluate task quality separately from availability and speed. This material does not substitute for ML research or distributed-training expertise.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="platforms"></a>
 
 ### Developer platforms, reliability & release engineering
 
 **Central question:** how do you improve delivery while making failures easier to detect, contain and recover from?
-
-<details>
-<summary>Platform leadership, modularization, CI/CD and observability</summary>
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -302,16 +245,9 @@ Practice the [AI inference gateway](docs/backend-system-design-casebook.md#12-ai
 
 Connect these to the [backend guide's reliability and release sections](docs/backend-engineering-manager-guide.md). A backend rollback, an App Store rollout pause and a remote feature flag have different recovery capabilities.
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 <a id="leadership"></a>
 
 ### Leadership, behavioral preparation & reference
-
-<details>
-<summary>Behavioral preparation, resume plan, cheatsheets and evidence</summary>
 
 | Resource | How to use it |
 | :--- | :--- |
@@ -322,14 +258,7 @@ Connect these to the [backend guide's reliability and release sections](docs/bac
 | [Evidence standard and sources](docs/evidence-and-sources.md) | Check published behavior and distinguish measurements from proposed targets |
 | [Repository review record](docs/repository-review.md) | Understand repairs, validation scope and remaining limitations |
 
-</details>
-
-[Back to domain map](#explore-by-industry-and-domain)
-
 ## Streaming terminology to prepare
-
-<details>
-<summary>FAST, SVOD, AVOD, TVOD, ad insertion and media delivery terminology</summary>
 
 Streaming interviews can span both product economics and media infrastructure. The [streaming business and architecture guide](docs/streaming-business-and-architecture.md) connects the following concepts to design exercises and primary sources:
 
@@ -346,13 +275,7 @@ Streaming interviews can span both product economics and media infrastructure. T
 
 Definitions: [Amazon Ads VOD guide](https://advertising.amazon.com/library/guides/avod-svod-tvod-video-on-demand), [AWS FAST channel architecture](https://aws.amazon.com/blogs/media/deploying-virtual-linear-ott-channels-using-aws-media-services/). Use the linked guide for the technical references and failure drills.
 
-
-</details>
-
 ## Architecture decision reference
-
-<details>
-<summary>Open the architecture decision reference</summary>
 
 Use this to recall decisions, then defend them for the actual workload. There is no single mandatory architecture or cache budget.
 
@@ -368,8 +291,6 @@ Use this to recall decisions, then defend them for the actual workload. There is
 | Async work | Durable acceptance, replay-safe effects, bounded queues and observable recovery |
 | Release safety | Compatibility, measured canaries and a recovery action that actually works for installed clients |
 
-</details>
-
 ## A design conversation framework
 
 Adapt the pacing to the actual interview; this is a rehearsal sequence, not a company-prescribed duration.
@@ -384,9 +305,6 @@ Adapt the pacing to the actual interview; this is a rehearsal sequence, not a co
 | Lead | Ownership, staffing, delivery or cross-team adoption appropriate to the role |
 
 ## Primary-source reference library
-
-<details>
-<summary>Open the primary-source reading library</summary>
 
 Read for a specific decision. A product overview alone is not evidence for a performance number.
 
@@ -406,8 +324,6 @@ Read for a specific decision. A product overview alone is not evidence for a per
 
 Use [the evidence standard](docs/evidence-and-sources.md) for how to cite and qualify results. Verify provider and platform versions when implementing a design.
 
-</details>
-
 ## Evidence, verification & contribution
 
 This is a study library. Embedded client snippets are incomplete sketches rather than a compiled application, and remaining tuning choices require actual measurements. Resume results are candidate-reported. No hiring outcome, company level equivalence or universal production benchmark is promised.
@@ -426,11 +342,11 @@ Contribute a better failure walkthrough, a substantiated correction or a complet
 
 Built and maintained by **Rahul Goel**, an engineering manager with experience across streaming, social, payments and e-commerce client platforms. The [resume-based plan](docs/rahul-backend-interview-plan.md) connects those projects to interview evidence while distinguishing team contributions, personal ownership and product-wide scale.
 
-- **LinkedIn:** [linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)
-- **X / Twitter:** [@therahulgoel](https://x.com/therahulgoel), also available at [twitter.com/therahulgoel](https://twitter.com/therahulgoel)
-- **Technical writing:** [therahulgoel.medium.com](https://therahulgoel.medium.com/)
-- **GitHub:** [therahulgoel](https://github.com/therahulgoel)
-- **Career background:** [public resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf)
+| Connect | Read more |
+| :--- | :--- |
+| [LinkedIn](https://www.linkedin.com/in/therahulgoel/) | [Career background and resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf) |
+| [X @therahulgoel](https://x.com/therahulgoel) / [Twitter](https://twitter.com/therahulgoel) | [Technical writing on Medium](https://therahulgoel.medium.com/) |
+| [GitHub @therahulgoel](https://github.com/therahulgoel) | [Resume-based interview preparation plan](docs/rahul-backend-interview-plan.md) |
 
 If this helps your preparation, star the repository so other engineers can discover it. Corrections, deeper failure analysis and verified implementations are welcome through [the contribution guide](CONTRIBUTING.md).
 
