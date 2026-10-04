@@ -2,11 +2,15 @@
 
 <div align="center">
 
-![Distributed systems and mobile architecture](assets/banner.jpg)
+![System Design Interview Prep: client architecture, backend systems and engineering leadership](assets/interview-prep-banner.svg)
 
 # System Design Interview Prep
 
 ### Know what to cover. Practice how to answer. Defend the follow-ups.
+
+[![Backend track](https://img.shields.io/badge/LEARN-Backend-0284c7?style=for-the-badge)](docs/backend-interview-track.md)
+[![Client architecture](https://img.shields.io/badge/DESIGN-Client_Architecture-7c3aed?style=for-the-badge)](#explore-by-industry-and-domain)
+[![Leadership](https://img.shields.io/badge/LEAD-EM_%2F_SDM-059669?style=for-the-badge)](docs/behavioral-engineering-manager-staff-guide.md)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
@@ -34,7 +38,10 @@ Choose one route. Each route leads to concepts, an answer structure and question
 | **Client architecture**<br>[Choose an industry below](#explore-by-industry-and-domain)<br>State, networking, persistence and device constraints. | **Design a backend system**<br>[Open the twelve-case workbook](docs/backend-system-design-casebook.md)<br>APIs, invariants and recovery drills. |
 | **Streaming depth**<br>[Explore FAST / SVOD / AVOD / TVOD](docs/streaming-business-and-architecture.md)<br>DRM, ads, live latency, CDN and entitlement. | **Prepare EM and leadership stories**<br>[Build your evidence bank](docs/behavioral-engineering-manager-staff-guide.md)<br>Real decisions, people outcomes and lessons. |
 
+> [!TIP]
 > **Your first session:** pick one problem, explain your design aloud, inject a failure, answer the follow-up, then record what you could not defend.
+
+---
 
 ## What makes this repository different
 
@@ -75,7 +82,8 @@ The diagrams and sketches support reasoning. Worked responses describe proposed 
 
 For a worked preparation path grounded in the author's experience, see [Rahul's resume-based plan](docs/rahul-backend-interview-plan.md). It identifies evidence already present and gaps that require real examples or hands-on work.
 
-**Coverage boundary:** the frontend material focuses on iOS and mobile. Web frontend candidates need additional browser, JavaScript/TypeScript, accessibility and framework preparation. Backend candidates need implementation and operational practice beyond reading these documents.
+> [!NOTE]
+> **Coverage boundary:** the frontend material focuses on iOS and mobile. Web frontend candidates need additional browser, JavaScript/TypeScript, accessibility and framework preparation. Backend candidates need implementation and operational practice beyond reading these documents.
 
 ## Turn reading into interview practice
 
@@ -93,25 +101,34 @@ Practice prompts are authored exercises, not leaked company questions. Use the a
 
 Official preparation references: [Amazon SDM](https://amazon.jobs/content/en/how-we-hire/sdm-interview-prep), [Google hiring](https://www.google.com/about/careers/applications/how-we-hire/), [Google DeepMind](https://deepmind.google/careers/) and [SpaceX careers](https://www.spacex.com/careers/).
 
+---
+
 ## Explore by industry and domain
 
 Use the domain map to jump to a reading list. Each list connects a design problem to the decisions and follow-ups to practice.
 
-| Customer-facing systems | Platforms and leadership |
-| :--- | :--- |
-| [Payments](#payments) - correctness and reconciliation | [Backend systems](#backend) - concurrency, data and recovery |
-| [Streaming and media](#streaming) - playback, ads and access | [AI applications](#ai) - inference, evaluation and authorization |
-| [E-commerce and booking](#commerce) - discovery and inventory | [Developer platforms](#platforms) - reliability and releases |
-| [Messaging and collaboration](#messaging) - ordering and sync | [Leadership and reference](#leadership) - decisions and evidence |
-| [Mobility and delivery](#mobility) - live state and connectivity | [Social and analytics](#social) - freshness and measurement |
+| Industry / domain | The question you must defend | Explore |
+| :--- | :--- | :--- |
+| 💳 **Payments** | Can retries move money twice? | [Checkout, identity and reconciliation](#payments) |
+| 🎬 **Streaming and media** | Can playback continue when a dependency fails? | [DRM, ads, live delivery and entitlement](#streaming) |
+| 🛍️ **E-commerce and booking** | Who owns the last available item? | [Catalog, search and inventory](#commerce) |
+| 💬 **Messaging and collaboration** | What does an acknowledgement guarantee? | [Ordering, convergence and offline sync](#messaging) |
+| 📍 **Mobility and delivery** | How useful is a delayed location update? | [Tracking, notifications and device lifecycle](#mobility) |
+| 📊 **Social and analytics** | Can you trust the feed and its measurements? | [Freshness, events and experimentation](#social) |
+| 🗄️ **Backend systems** | Which invariant survives concurrency and failover? | [Foundations, leadership and design cases](#backend) |
+| 🧠 **AI applications** | How do you evaluate and recover model-backed features? | [Inference, retrieval and evaluation](#ai) |
+| 🛠️ **Developer platforms** | Can teams detect, contain and recover a bad release? | [Modularity, observability and delivery](#platforms) |
+| 🧭 **Engineering leadership** | What did you decide, own and learn? | [Behavioral evidence and preparation plans](#leadership) |
 
 Product names in document titles identify familiar design problems. They do not imply access to those companies' internal architectures or private interview questions.
 
 <a id="payments"></a>
 
-### Payments & financial workflows
+<a id="payments--financial-workflows"></a>
 
-**Central question:** how do you preserve a correct money movement when the client, service or provider can fail independently?
+### 💳 Payments & financial workflows
+
+> **Design challenge:** how do you preserve a correct money movement when the client, service or provider can fail independently?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -123,9 +140,11 @@ Pair these with the casebook's [checkout, payments and inventory exercise](docs/
 
 <a id="streaming"></a>
 
-### Streaming, media & live experiences
+<a id="streaming-media--live-experiences"></a>
 
-**Central question:** how do you sustain playback quality across device constraints, variable networks and service failures?
+### 🎬 Streaming, media & live experiences
+
+> **Design challenge:** how do you sustain playback quality across device constraints, variable networks and service failures?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -139,9 +158,11 @@ Pair client behavior with the [live-event backend exercise](docs/backend-system-
 
 <a id="commerce"></a>
 
-### E-commerce, marketplaces & booking
+<a id="e-commerce-marketplaces--booking"></a>
 
-**Central question:** how do you keep discovery responsive while inventory and order state remain correct?
+### 🛍️ E-commerce, marketplaces & booking
+
+> **Design challenge:** how do you keep discovery responsive while inventory and order state remain correct?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -155,9 +176,11 @@ Extend the client specifications with [exclusive inventory booking](docs/backend
 
 <a id="messaging"></a>
 
-### Messaging, collaboration & productivity
+<a id="messaging-collaboration--productivity"></a>
 
-**Central question:** what does an acknowledgement mean, and how do multiple devices recover a consistent view?
+### 💬 Messaging, collaboration & productivity
+
+> **Design challenge:** what does an acknowledgement mean, and how do multiple devices recover a consistent view?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -171,9 +194,11 @@ Practice [durable messaging](docs/backend-system-design-casebook.md#3-durable-me
 
 <a id="mobility"></a>
 
-### Mobility, delivery & real-time tracking
+<a id="mobility-delivery--real-time-tracking"></a>
 
-**Central question:** how do you keep a useful live view when updates are delayed, devices sleep or connectivity disappears?
+### 📍 Mobility, delivery & real-time tracking
+
+> **Design challenge:** how do you keep a useful live view when updates are delayed, devices sleep or connectivity disappears?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -186,9 +211,11 @@ Use the [notification backend exercise](docs/backend-system-design-casebook.md#7
 
 <a id="social"></a>
 
-### Social feeds, growth & analytics
+<a id="social-feeds-growth--analytics"></a>
 
-**Central question:** how do you deliver relevant content and derive trustworthy measurements without losing control of freshness, privacy or cost?
+### 📊 Social feeds, growth & analytics
+
+> **Design challenge:** how do you deliver relevant content and derive trustworthy measurements without losing control of freshness, privacy or cost?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -202,9 +229,11 @@ Pair these with [feed and recommendation design](docs/backend-system-design-case
 
 <a id="backend"></a>
 
-### Backend platforms & distributed systems
+<a id="backend-platforms--distributed-systems"></a>
 
-**Central question:** which invariants survive concurrency, overload, replication lag and regional failure?
+### 🗄️ Backend platforms & distributed systems
+
+> **Design challenge:** which invariants survive concurrency, overload, replication lag and regional failure?
 
 | Resource | What it provides |
 | :--- | :--- |
@@ -217,9 +246,11 @@ The casebook also includes [multi-tenant reporting](docs/backend-system-design-c
 
 <a id="ai"></a>
 
-### AI applications & inference
+<a id="ai-applications--inference"></a>
 
-**Central question:** how do you make model-backed features measurable, authorized and recoverable?
+### 🧠 AI applications & inference
+
+> **Design challenge:** how do you make model-backed features measurable, authorized and recoverable?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -231,9 +262,11 @@ Practice the [AI inference gateway](docs/backend-system-design-casebook.md#12-ai
 
 <a id="platforms"></a>
 
-### Developer platforms, reliability & release engineering
+<a id="developer-platforms-reliability--release-engineering"></a>
 
-**Central question:** how do you improve delivery while making failures easier to detect, contain and recover from?
+### 🛠️ Developer platforms, reliability & release engineering
+
+> **Design challenge:** how do you improve delivery while making failures easier to detect, contain and recover from?
 
 | Resource | Decisions to practice |
 | :--- | :--- |
@@ -247,7 +280,9 @@ Connect these to the [backend guide's reliability and release sections](docs/bac
 
 <a id="leadership"></a>
 
-### Leadership, behavioral preparation & reference
+<a id="leadership-behavioral-preparation--reference"></a>
+
+### 🧭 Leadership, behavioral preparation & reference
 
 | Resource | How to use it |
 | :--- | :--- |
@@ -257,6 +292,8 @@ Connect these to the [backend guide's reliability and release sections](docs/bac
 | [Generic mobile problems](docs/generic-mobile-problems.md) | Practice cross-cutting client design |
 | [Evidence standard and sources](docs/evidence-and-sources.md) | Check published behavior and distinguish measurements from proposed targets |
 | [Repository review record](docs/repository-review.md) | Understand repairs, validation scope and remaining limitations |
+
+---
 
 ## Streaming terminology to prepare
 
@@ -337,6 +374,8 @@ python3 scripts/check_docs.py
 It checks local links and anchors, code-fence balance, the ASCII hyphen rule and coverage of every document in this README. It does not compile Swift, benchmark systems or certify all technical claims.
 
 Contribute a better failure walkthrough, a substantiated correction or a complete verified implementation. Follow [CONTRIBUTING.md](CONTRIBUTING.md), [REPO_SPEC.md](REPO_SPEC.md) and the [evidence standard](docs/evidence-and-sources.md).
+
+---
 
 ## About the author
 

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="390" viewBox="0 0 1200 390" role="img" aria-labelledby="title desc">
+<title id="title">System Design Interview Prep</title>
+<desc id="desc">Client architecture, backend systems and engineering leadership. Learn the concepts, explain decisions and defend failure recovery.</desc>
+<defs>
+<linearGradient id="bg" x2="1" y2="1"><stop stop-color="#0b1226"/><stop offset="1" stop-color="#172b49"/></linearGradient>
+<linearGradient id="accent"><stop stop-color="#38bdf8"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+<pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M32 0H0V32" fill="none" stroke="#94a3b8" stroke-opacity=".08"/></pattern>
+</defs>
+<rect width="1200" height="390" rx="24" fill="url(#bg)"/>
+<rect width="1200" height="390" rx="24" fill="url(#grid)"/>
+<rect x="48" y="45" width="5" height="194" rx="2" fill="url(#accent)"/>
+<g font-family="Arial, Helvetica, sans-serif">
+<text x="76" y="66" fill="#7dd3fc" font-size="14" font-weight="700" letter-spacing="3">THE INTERVIEW PREPARATION LIBRARY</text>
+<text x="74" y="123" fill="#f8fafc" font-size="47" font-weight="700">System Design</text>
+<text x="74" y="177" fill="#f8fafc" font-size="47" font-weight="700">Interview Prep</text>
+<text x="76" y="217" fill="#cbd5e1" font-size="19">Explain the design. Defend the decision.</text>
+<text x="76" y="247" fill="#cbd5e1" font-size="19">Walk through the failure.</text>
+<g fill="#14243e" stroke="#38516f">
+<rect x="705" y="65" width="425" height="58" rx="12"/>
+<rect x="705" y="145" width="425" height="58" rx="12"/>
+<rect x="705" y="225" width="425" height="58" rx="12"/>
+</g>
+<path d="M730 123V145M730 203V225" stroke="#7dd3fc" stroke-width="2"/>
+<g font-size="12" font-weight="700"><text x="725" y="99" fill="#7dd3fc">01</text><text x="725" y="179" fill="#c4b5fd">02</text><text x="725" y="259" fill="#6ee7b7">03</text></g>
+<g fill="#f1f5f9" font-size="18" font-weight="700"><text x="765" y="101">CLIENT ARCHITECTURE</text><text x="765" y="181">BACKEND SYSTEMS</text><text x="765" y="261">ENGINEERING LEADERSHIP</text></g>
+<path d="M76 304H1128" stroke="#38516f"/>
+<text x="76" y="342" fill="#cbd5e1" font-size="15">SENIOR  /  STAFF  /  PRINCIPAL  /  EM  /  SDM</text>
+<text x="840" y="342" fill="#94a3b8" font-size="15">Curated by Rahul Goel</text>
+</g>
+</svg>
