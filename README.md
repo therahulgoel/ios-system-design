@@ -10,10 +10,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Stars](https://img.shields.io/github/stars/therahulgoel/ios-system-design?style=social)](https://github.com/therahulgoel/ios-system-design/stargazers)
+[![Twitter Follow](https://img.shields.io/badge/Twitter-@therahulgoel-1DA1F2?logo=x&style=flat)](https://x.com/therahulgoel)
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Behavioral EM Guide](docs/behavioral-engineering-manager-staff-guide.md) · [🛡 Backend EM Guide](docs/backend-engineering-manager-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
+[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Behavioral EM Guide](docs/behavioral-engineering-manager-staff-guide.md) · [🛡 Backend EM Guide](docs/backend-engineering-manager-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author) · [🐦 Twitter @therahulgoel](https://x.com/therahulgoel)
 
 </div>
 
@@ -58,7 +59,7 @@ Every spec includes:
 
 ## 🗂 Complete Problem Catalog
 
-**33 production-grade specs** across 10 domains. **13,000+ lines** of real content.
+**40 production-grade specs & master guides** across 10 domains. **17,500+ lines** of real content.
 
 ---
 
@@ -79,6 +80,7 @@ Every spec includes:
 | [📺 Long-form Video Streaming Player](docs/video-streaming-player.md) | HLS/DASH, AVPlayer, adaptive bitrate, FairPlay DRM, offline download | Google, Apple, Netflix |
 | [🎞 Short-form Video Feed](docs/video-feed-streaming.md) | AVPlayer pool (3-item), prefetch engine, low-bandwidth 240p, memory guard | Google, Meta, Snap |
 | [🎵 Spotify / Apple Music Audio Player](docs/spotify-audio-player.md) | AVQueuePlayer gapless, AVAssetDownloadURLSession DRM offline, MPNowPlayingInfoCenter, FairPlay | Apple, Spotify |
+| [📡 Streaming Media at Scale EM Master Guide](streaming-guide/streaming_media_apps_em_master_guide.md) | Ingest & ABR encoding ladder, CMAF fMP4, FairPlay/Widevine DRM, SSAI manifest manipulation, Multi-CDN origin shield, Conviva QoE telemetry | Netflix, Disney+, Hotstar, Max, YouTube |
 
 ---
 
@@ -308,10 +310,10 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for quality standards and the spe
 
 ## 👤 About the Author
 
-Built by a mobile engineering leader with **12+ years** scaling iOS apps to **100M+ users** across streaming, social, payments, and e-commerce.
+Built by a mobile & distributed systems engineering leader with **12+ years** scaling iOS apps and backend platforms to **100M+ users** across streaming, social, payments, and e-commerce.
 
-Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**  
-Follow on X / Twitter: **[@therahulgoel](https://x.com/therahulgoel)**
+- 💼 Connect on LinkedIn: **[linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)**  
+- 🐦 Follow on X / Twitter: **[@therahulgoel](https://x.com/therahulgoel)** (or [twitter.com/therahulgoel](https://twitter.com/therahulgoel))
 
 If this helped you level up or land an offer — a ⭐ takes one second and helps this reach engineers who need it.
 
@@ -319,8 +321,8 @@ If this helped you level up or land an offer — a ⭐ takes one second and help
 
 <div align="center">
 
-**📱 iOS Mobile System Design · 33 Production-Grade Specs · 13,000+ Lines of Real Content**
+**📱 iOS Mobile System Design · 40 Production-Grade Specs & Master Guides · 17,500+ Lines of Real Content**
 
-[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Share on Twitter](https://twitter.com/intent/tweet?text=The+most+comprehensive+iOS+mobile+system+design+resource+for+Staff+%26+EM+interviews.+33+production-grade+specs+with+real+numbers.&url=https://github.com/therahulgoel/ios-system-design)
+[⭐ Star this repo](https://github.com/therahulgoel/ios-system-design) · [🔗 Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design) · [🐦 Follow @therahulgoel on Twitter](https://x.com/therahulgoel)
 
 </div>
