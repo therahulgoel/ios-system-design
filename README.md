@@ -6,9 +6,15 @@
 
 ### Backend correctness. Mobile architecture. Engineering judgment.
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![GitHub stars](https://img.shields.io/github/stars/therahulgoel/ios-system-design?style=social)](https://github.com/therahulgoel/ios-system-design)
+
+[LinkedIn](https://www.linkedin.com/in/therahulgoel/) · [X / Twitter @therahulgoel](https://x.com/therahulgoel) · [Resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf)
+
 A domain-based preparation library for senior iOS engineers, staff engineers, Engineering Managers and Software Development Managers.
 
-[Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md)
+[Explore domains](#explore-by-industry-and-domain) · [Choose your role](#choose-your-preparation-track) · [Practice backend design](docs/backend-system-design-casebook.md) · [Prepare leadership stories](docs/behavioral-engineering-manager-staff-guide.md) · [Streaming business models](docs/streaming-business-and-architecture.md) · [Reference library](#primary-source-reference-library) · [About the author](#about-the-author)
 
 </div>
 
@@ -64,6 +70,7 @@ Pair these with the casebook's [checkout, payments and inventory exercise](docs/
 
 | Resource | Decisions to practice |
 | :--- | :--- |
+| [FAST, SVOD, AVOD and TVOD guide](docs/streaming-business-and-architecture.md) | Business models, entitlement, channel schedules, ad insertion, measurement and leadership drills |
 | [Long-form video player](docs/video-streaming-player.md) | Playback lifecycle, adaptive streaming, DRM and downloads |
 | [Short-form video feed](docs/video-feed-streaming.md) | Player reuse, prefetching, cancellation and memory pressure |
 | [Audio player and offline mode](docs/spotify-audio-player.md) | Playback queues, background audio, system integration and offline media |
@@ -189,6 +196,72 @@ Practice prompts are authored exercises, not leaked company questions. Use the a
 
 Official preparation references: [Amazon SDM](https://amazon.jobs/content/en/how-we-hire/sdm-interview-prep), [Google hiring](https://www.google.com/about/careers/applications/how-we-hire/), [Google DeepMind](https://deepmind.google/careers/) and [SpaceX careers](https://www.spacex.com/careers/).
 
+## Streaming terminology to prepare
+
+Streaming interviews can span both product economics and media infrastructure. The [streaming business and architecture guide](docs/streaming-business-and-architecture.md) connects the following concepts to design exercises and primary sources:
+
+| Topic | Preparation focus |
+| :--- | :--- |
+| FAST | Free ad-supported streaming TV: scheduled channels, program guides, playout and ad breaks |
+| SVOD | Subscription VOD: billing lifecycle, entitlement, access restoration and session policy |
+| AVOD | Advertising-supported VOD: ad decisions, consent, measurement and playback continuity |
+| TVOD | Transactional VOD: purchases, rentals, rights windows and payment reconciliation |
+| Hybrid tiers | Separating subscription state, advertising policy and content rights |
+| CSAI / SSAI | Client-side versus server-side insertion, timing, fallback and measurement responsibilities |
+| HLS / DASH / CMAF | Delivery manifests, renditions, media compatibility and supported player behavior |
+| DRM / CDN / QoE | Content protection, cache and origin behavior, and defined playback outcomes |
+
+Definitions: [Amazon Ads VOD guide](https://advertising.amazon.com/library/guides/avod-svod-tvod-video-on-demand), [AWS FAST channel architecture](https://aws.amazon.com/blogs/media/deploying-virtual-linear-ott-channels-using-aws-media-services/). Use the linked guide for the technical references and failure drills.
+
+## Architecture decision reference
+
+Use this to recall decisions, then defend them for the actual workload. There is no single mandatory architecture or cache budget.
+
+| Area | Options and judgment to explain |
+| :--- | :--- |
+| App layers | SwiftUI view, ObservableObject ViewModel and injected domain/data services under [the repo convention](REPO_SPEC.md) |
+| Structured local state | SQLite or Core Data according to access, concurrency and migration needs |
+| Credentials | Appropriate Keychain access policy; never rely on ordinary preferences for secrets |
+| Media and images | Persistent versus purgeable storage, decoding size, retention and cancellation |
+| Realtime transport | WebSocket for interactive sessions; HTTP for request/response; push as a system-controlled hint |
+| Pagination | A stable order, matching index and explicit snapshot/expiry semantics |
+| Mutating APIs | Durable operation identity, request fingerprint, atomic enforcement and ambiguous-outcome recovery |
+| Async work | Durable acceptance, replay-safe effects, bounded queues and observable recovery |
+| Release safety | Compatibility, measured canaries and a recovery action that actually works for installed clients |
+
+## A design conversation framework
+
+Adapt the pacing to the actual interview; this is a rehearsal sequence, not a company-prescribed duration.
+
+| Phase | Concrete output |
+| :--- | :--- |
+| Clarify | Customer journey, scope, workload inputs, authorization and correctness invariant |
+| Model | APIs, entities, indexes, authoritative state and acknowledgement boundary |
+| Design | Normal request path and justified component boundaries |
+| Deep dive | Concurrency, timeout, retry, replay, stale state and dependency failure |
+| Operate | User-outcome metrics, overload, recovery, rollout, security and cost |
+| Lead | Ownership, staffing, delivery or cross-team adoption appropriate to the role |
+
+## Primary-source reference library
+
+Read for a specific decision. A product overview alone is not evidence for a performance number.
+
+| Area | Primary material | What to extract |
+| :--- | :--- | :--- |
+| Streaming delivery | [Apple HLS](https://developer.apple.com/streaming/), [HLS authoring](https://developer.apple.com/documentation/http-live-streaming/hls-authoring-specification-for-apple-devices/), [DASH-IF](https://dashif.org/guidelines/iop-v5/) | Supported media profiles, playlist behavior and compatibility |
+| Streaming monetization | [VOD models](https://advertising.amazon.com/library/guides/avod-svod-tvod-video-on-demand), [FAST channels](https://aws.amazon.com/blogs/media/deploying-virtual-linear-ott-channels-using-aws-media-services/) | Revenue/access model versus channel and playback behavior |
+| Advertising | [IAB Tech Lab VAST 4.3](https://iabtechlab.com/wp-content/uploads/2022/09/VAST_4.3.pdf), [IVS SSAI](https://docs.aws.amazon.com/ivs/latest/LowLatencyUserGuide/server-side-ad-insertion.html), [MediaTailor](https://docs.aws.amazon.com/mediatailor/latest/ug/what-is.html) | Ad contracts, insertion and integration responsibilities |
+| Media distribution | [CloudFront streaming](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/on-demand-streaming-video.html) | Encoding, packaging, origin and delivery boundaries |
+| Reliability | [Google SRE objectives](https://sre.google/sre-book/service-level-objectives/), [overload](https://sre.google/sre-book/handling-overload/), [incident management](https://sre.google/sre-book/managing-incidents/) | Defined SLIs, admission control and coordinated recovery |
+| Transactions and replication | [PostgreSQL isolation](https://www.postgresql.org/docs/current/transaction-iso.html), [replication](https://www.postgresql.org/docs/current/warm-standby.html), [DDL](https://www.postgresql.org/docs/current/sql-altertable.html) | Actual guarantees, stale reads, failover and locking |
+| Events and payments | [Kafka design](https://kafka.apache.org/41/design/design/), [AWS outbox](https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html), [Stripe idempotency](https://docs.stripe.com/api/idempotent_requests) | Ordering, replay and external-effect boundaries |
+| HTTP and identity | [HTTP semantics](https://www.rfc-editor.org/rfc/rfc9110.html), [WebSocket](https://www.rfc-editor.org/rfc/rfc6455), [OAuth security BCP](https://www.rfc-editor.org/rfc/rfc9700), [PKCE](https://www.rfc-editor.org/rfc/rfc7636) | Protocol behavior, authentication and retry implications |
+| Mobile persistence | [SQLite WAL](https://sqlite.org/wal.html), [SQLCipher design](https://www.zetetic.net/sqlcipher/design/) | Writer concurrency, checkpoints, durability and encryption behavior |
+| Mobile operations | [Jetsam diagnostics](https://developer.apple.com/documentation/xcode/identifying-high-memory-use-with-jetsam-event-reports), [background push](https://developer.apple.com/documentation/usernotifications/pushing-background-updates-to-your-app), [phased release](https://developer.apple.com/help/app-store-connect/update-your-app/release-a-version-update-in-phases) | Device-specific evidence and recovery limitations |
+| AI mechanics and runtime | [Transformer paper](https://arxiv.org/abs/1706.03762), [ReAct](https://arxiv.org/abs/2210.03629), [ExecuTorch](https://docs.pytorch.org/executorch/stable/index.html), [Apple Foundation Models](https://developer.apple.com/documentation/foundationmodels) | Model computation versus orchestration and actual platform support |
+
+Use [the evidence standard](docs/evidence-and-sources.md) for how to cite and qualify results. Verify provider and platform versions when implementing a design.
+
 ## Evidence, verification & contribution
 
 This is a study library. Embedded client snippets are incomplete sketches rather than a compiled application, and remaining tuning choices require actual measurements. Resume results are candidate-reported. No hiring outcome, company level equivalence or universal production benchmark is promised.
@@ -203,8 +276,26 @@ It checks local links and anchors, code-fence balance, the ASCII hyphen rule and
 
 Contribute a better failure walkthrough, a substantiated correction or a complete verified implementation. Follow [CONTRIBUTING.md](CONTRIBUTING.md), [REPO_SPEC.md](REPO_SPEC.md) and the [evidence standard](docs/evidence-and-sources.md).
 
-## Author & license
+## About the author
 
-Maintained by **Rahul Goel**. [Resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf) · [GitHub](https://github.com/therahulgoel)
+Built and maintained by **Rahul Goel**, an engineering manager with experience across streaming, social, payments and e-commerce client platforms. The [resume-based plan](docs/rahul-backend-interview-plan.md) connects those projects to interview evidence while distinguishing team contributions, personal ownership and product-wide scale.
+
+- **LinkedIn:** [linkedin.com/in/therahulgoel](https://www.linkedin.com/in/therahulgoel/)
+- **X / Twitter:** [@therahulgoel](https://x.com/therahulgoel), also available at [twitter.com/therahulgoel](https://twitter.com/therahulgoel)
+- **Technical writing:** [therahulgoel.medium.com](https://therahulgoel.medium.com/)
+- **GitHub:** [therahulgoel](https://github.com/therahulgoel)
+- **Career background:** [public resume](https://therahulgoel.github.io/Rahul_Goel_Resume.pdf)
+
+If this helps your preparation, star the repository so other engineers can discover it. Corrections, deeper failure analysis and verified implementations are welcome through [the contribution guide](CONTRIBUTING.md).
+
+## License
 
 Licensed under [MIT](LICENSE).
+
+---
+
+<div align="center">
+
+[Star this repository](https://github.com/therahulgoel/ios-system-design) · [Connect on LinkedIn](https://www.linkedin.com/in/therahulgoel/) · [Follow on X / Twitter](https://x.com/therahulgoel) · [Share on LinkedIn](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/therahulgoel/ios-system-design)
+
+</div>
