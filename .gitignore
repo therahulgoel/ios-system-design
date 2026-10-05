@@ -65,3 +65,6 @@ fastlane/test_output
 streaming-guide/
 streaming_guide/
 streaming_media_apps_em_master_guide.md
+
+# Private Candidate and Interview Materials (Local Only)
+local/
