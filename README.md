@@ -13,7 +13,7 @@
 
 **If this helps you land your dream role — give it a ⭐ so others can find it too.**
 
-[📖 Browse All Specs](#-complete-problem-catalog) · [🎯 Leadership & Behavioral Guide](docs/behavioral-engineering-manager-staff-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
+[📖 Browse All Specs](#-complete-problem-catalog) · [🍏 Swift & Concurrency Guide](docs/swift-language-concurrency-modern-swiftui.md) · [🎯 Leadership & Behavioral Guide](docs/behavioral-engineering-manager-staff-guide.md) · [📊 Cheatsheet](docs/cheatsheet.md) · [🚀 Interview Framework](#-the-45-minute-interview-framework) · [🤝 Contribute](CONTRIBUTING.md) · [👤 Author](#-about-the-author)
 
 </div>
 
@@ -143,6 +143,7 @@ Every spec includes:
 
 | Problem | Key Concepts | Target Companies |
 | :--- | :--- | :--- |
+| [🍏 Swift Language, Concurrency & Modern SwiftUI Guide](docs/swift-language-concurrency-modern-swiftui.md) | Swift 6 strict concurrency, Actors, ARC & side tables, Method Dispatch, SwiftUI layout protocol, @Observable macro | Apple, Meta, Google, Uber, Stripe |
 | [🏛 Mobile Platform Eng, Release & Governance (EM)](docs/mobile-platform-engineering-em.md) | Interface vs Implementation graph, 7-day canary train, Sev-1 triage & remote kill switch | Uber, Meta, Airbnb, Stripe |
 | [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
 | [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |

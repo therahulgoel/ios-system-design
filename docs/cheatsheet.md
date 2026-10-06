@@ -2,6 +2,8 @@
 ### One-page reference for Staff, EM, Principal, Director & AVP interviews. All numbers are real and sourced.
 
 > 🎯 **Preparing for Leadership & Behavioral Rounds?** Review the [FAANG & Tier-1 Behavioral Master Guide for EM, Staff, Director & AVP](behavioral-engineering-manager-staff-guide.md) covering the STAR framework, probing follow-ups, and real questions from Google, Meta, Amazon, Netflix, Apple & Salesforce.
+>
+> 🍏 **Preparing for Swift Concurrency & Architecture Rounds?** Review the [Swift Language, Concurrency & Modern SwiftUI Master Guide](swift-language-concurrency-modern-swiftui.md) covering Swift 6 strict mode, Actors & reentrancy, memory & ARC internals, Method Dispatch, and SwiftUI layout negotiation.
 
 ---
 
