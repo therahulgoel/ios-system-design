@@ -4,7 +4,7 @@
 A Feature Flag (Remote Config) and Experimentation System allows mobile teams to dynamically alter app behavior, roll out features gradually, and execute A/B experiments without submitting new builds to the App Store. At scale, this is an infrastructure-critical SDK: a bad configuration or a crashing evaluation loop can brick the application for millions of users.
 
 ### The Core System Design Question:
-> *"Design a generic, extensible Feature Flag SDK in iOS that provides synchronous O(1) flag evaluation, supports a multi-tier fallback chain, tracks A/B test impressions, and strictly adheres to the Open/Closed Principle (open for extension, closed for modification without relying on a rigid, untestable singleton)."*
+> *"Design a generic, extensible Feature Flag SDK in iOS that provides synchronous O(1) flag evaluation, supports a multi-tier fallback chain, tracks A/B test impressions, allows passing dynamic endpoint URLs and targeting parameters from the outside, and strictly adheres to the Open/Closed Principle (open for extension, closed for modification without relying on a rigid, untestable singleton)."*
 
 ---
 
@@ -22,17 +22,18 @@ A Feature Flag (Remote Config) and Experimentation System allows mobile teams to
 ## Scope & Constraints
 
 ### In Scope
-- **Interface-Driven Architecture**: Clean protocols adhering to SOLID principles (Open/Closed Principle & Dependency Inversion).
+- **High-Level Design (HLD)**: End-to-end system topology separating client device, edge ingress, cloud evaluation microservices, and analytics data pipelines.
+- **Low-Level Design (LLD)**: Interface-driven architecture adhering to SOLID principles (Open/Closed Principle & Dependency Inversion).
+- **Dynamic Configuration Injection**: Passing endpoint URL, user targeting attributes (userId, appVersion, country), and requested flag key subsets from outside the SDK.
 - **Composite Provider Pattern**: Extensible source chain (Debug Overrides -> Remote Config Cache -> Bundled Defaults -> In-Code Defaults).
 - **Synchronous O(1) Evaluation**: Thread-safe reads executing in < 0.1ms without blocking the main thread or requiring `await`.
-- **Strongly-Typed Flag Descriptors**: Generic `Flag<T>` tokens preventing string typo bugs.
 - **Impression Tracking**: Session-deduplicated exposure logging for accurate A/B test data pipelines.
 - **Activation Lifecycle**: Hybrid SLA launch strategy balancing consistency and freshness.
-- **Emergency Kill Switch**: Fast remote invalidation via APNs silent push.
+- **Emergency Kill Switch**: Fast remote invalidation via APNs high-priority silent push.
 
 ### Out of Scope
-- Backend ML assignment engine or web experimentation dashboards.
-- Continuous real-time WebSocket streaming (unnecessary battery and socket overhead for mobile config).
+- Backend machine-learning statistical models for automated experiment termination.
+- Web-based feature flag management UI portal.
 
 ---
 
@@ -40,10 +41,11 @@ A Feature Flag (Remote Config) and Experimentation System allows mobile teams to
 
 ### Functional Requirements
 1. The SDK must evaluate flags synchronously and return typed values (`Bool`, `Int`, `Double`, `String`, `JSON`).
-2. The SDK must support plugging in new flag sources (e.g., QA debug menu, MDM config, third-party provider) without modifying core classes.
-3. The SDK must never crash or block UI if a flag key is missing or corrupted (4-tier fallback guarantee).
-4. When a user experiences an A/B test variant, a single deduplicated impression event must be sent to analytics.
-5. In-flight network updates must not cause jarring mid-session UI shifts.
+2. The SDK must allow the host application to configure the target endpoint URL and contextual parameters (`userId`, `appVersion`, `country`, `tier`) from the outside.
+3. The SDK must support plugging in new flag sources (QA debug menu, MDM config, third-party provider) without modifying core classes.
+4. The SDK must never crash or block UI if a flag key is missing or corrupted (4-tier fallback guarantee).
+5. When a user experiences an A/B test variant, a single deduplicated impression event must be sent to analytics.
+6. In-flight network updates must not cause jarring mid-session UI shifts.
 
 ### Non-Functional Requirements & Budgets
 | Requirement | Target SLA | Production Benchmark / Source |
@@ -57,63 +59,97 @@ A Feature Flag (Remote Config) and Experimentation System allows mobile teams to
 
 ---
 
-## High-Level Architecture (HLD)
+## 🏛️ 4. High-Level Design (HLD): The System Design Whiteboard
 
-### 1. Component & Layer Architecture Diagram
+*Note: In an interview, the High-Level Design (HLD) represents the complete end-to-end system topology across Client Device, Network, Edge, and Cloud Infrastructure. This is fundamentally different from Low-Level Design (LLD), which details concrete Swift classes and protocols.*
+
+### The Whiteboard System Architecture Canvas
+
+```ascii
++-----------------------------------------------------------------------------------------------------------------------------------------------+
+|                                                SYSTEM DESIGN WHITEBOARD ARCHITECTURE CANVAS                                                    |
++-----------------------------------------------------------------------------------------------------------------------------------------------+
+| CLIENT DEVICE LAYER (iOS / iPadOS)                                            | CLOUD & EDGE INFRASTRUCTURE (BACKEND & PIPELINE)              |
+|                                                                               |                                                               |
+|  [HOST APPLICATION CONSUMERS]                                                 |  [EDGE INGRESS & GATEWAY TIER]                                |
+|  +-------------------------------------------------------------------------+  |  +---------------------------------------------------------+  |
+|  | SwiftUI Views / ViewModels / Feature Coordinators                       |  |  | Cloudflare / Fastly Anycast CDN (Edge Cache)            |  |
+|  | (Calls: featureFlags.value(for: .newCheckout) -> O(1) synchronous read) |  |  | - Evaluates ETag / 304 Not Modified for global flags       |  |
+|  +------------------------------------+------------------------------------+  |  | - DDoS mitigation & TLS 1.3 termination                    |  |
+|                                       |                                       |  +----------------------------+----------------------------+  |
+|                                       | 1. Read Flag                          |                               |                               |
+|                                       v                                       |                               | Forward Request               |
+|  [FEATURE FLAG CLIENT SDK SUBSYSTEM]                                          |                               v                               |
+|  +-------------------------------------------------------------------------+  |  +---------------------------------------------------------+  |
+|  | Evaluation & Orchestration Engine                                       |  |  | Envoy API Gateway / Reverse Proxy                       |  |
+|  | - Priority Chain: Debug (P0) -> Remote (P1) -> Bundled (P2) -> Default  |  |  | - Authenticates request token                           |  |
+|  | - Thread-safe lock-free memory cache (< 0.1ms latency)                  |  |  | - Routes to Config Service based on tenant / platform     |  |
+|  | - Impression Deduplicator (Set<String> per session)                     |  |  +----------------------------+----------------------------+  |
+|  +--------------------+--------------------------------+-------------------+  |                               |                               |
+|                       |                                |                      |                               | gRPC Internal RPC             |
+|                       | 2. Persist / Read              | 4. Log Exposure      |                               v                               |
+|                       v                                v                      |  [REMOTE EXPERIMENTATION MICROSERVICES]                       |
+|  +---------------------------+        +------------------------------------+  |  +---------------------------------------------------------+  |
+|  | Local Storage Engine      |        | Analytics & Telemetry Tracker      |  |  | Feature Flag & Targeting Microservice                   |  |
+|  | - /Library/Application    |        | - Queues exposure events           |  |  | - Parses query params: userId, country, appVersion      |  |
+|  |   Support/flags.json      |        | - Flushes batched analytics to     |  |  | - Evaluates segmentation rules & MurmurHash3 bucketing  |  |
+|  | - Atomic file replacement |        |   Data Pipeline                    |  |  | - Filters response by requested flag keys subset        |  |
+|  +---------------------------+        +------------------+-----------------+  |  +--------------+---------------------------+--------------+  |
+|                                                          |                    |                 |                           |                 |
+|  [DYNAMIC NETWORK FETCHER & LISTENER]                    |                    |                 v                           v                 |
+|  +----------------------------------------------------+  |                    |  [PERSISTENCE TIER]         [EMERGENCY KILL-SWITCH]           |
+|  | ConfigFetcher Engine                               |  |                    |  +-----------------------+  +-------------------------------+ |
+|  | - Injected Base URL: https://api.app.com/v1/flags  |  |                    |  | Redis Cluster         |  | APNs Silent Push Gateway      | |
+|  | - Injected Query Params: userId, country, version  |  |                    |  | (< 5ms hot rule cache)|  | - Dispatches high-priority    | |
+|  | - Injected Flag Subset: ["checkout_v2", "limit"]   |  |                    |  |                       |  |   silent push to invalidation  | |
+|  | - Strict 1.5s launch timeout SLA                   |  |                    |  | Aurora PostgreSQL     |  |   endpoints in < 5 minutes    | |
+|  +--------------------------+-------------------------+  |                    |  | (Authoritative DB)    |  +---------------+---------------+ |
+|                             |                            |                    |  +-----------------------+                  |                 |
+|                             | 3. Dynamic HTTP GET Fetch  |                    |                                             |                 |
+|                             v                            |                    |                                             v                 |
+|  [APNs SILENT PUSH LISTENER]|                            | 5. Stream Events   |                            [Apple Push Notification Network]  |
+|  +--------------------------+-------------------------+  |                    |                                             |                 |
+|  | SilentPushReceiver                                 |  |                    |                                             | 6. Silent Push  |
+|  | - Receives Sev-1 kill switch push payload          |  |                    |                                             v                 |
+|  | - Immediately flips memory and disk flags to false |  |                    |             +-------------------------------+                 |
+|  +----------------------------------------------------+  |                    |             | (Delivered to iOS Client Device)                |
+|                                                          |                    |             +-------------------------------------------------+
+|                                                          v                    |
+|                                           +---------------------------------+ |
+|                                           | Kafka Stream -> ClickHouse / DW | |
+|                                           | (A/B Test Experiment Analytics) | |
+|                                           +---------------------------------+ |
++-----------------------------------------------------------------------------------------------------------------------------------------------+
+```
+
+### The 4 Primary Data Flows to Explain on the Whiteboard
 
 ```ascii
 +----------------------------------------------------------------------------------------------------+
-|                         EXTENSIBLE FEATURE FLAG SDK (SOLID / OCP DESIGN)                           |
-+----------------------------------------------------------------------------------------------------+
-| LAYER 1: CLIENT CONSUMPTION TIER                                                                   |
-|                                                                                                    |
-|  [SwiftUI Views / ViewModels / Presenters]                                                         |
-|         |                                                                                          |
-|         | Calls: featureFlags.value(for: .newCheckout)                                             |
-|         v                                                                                          |
-|  <<Protocol>> FeatureFlagProviding                                                                 |
-|  + value<T>(for flag: Flag<T>) -> T                                                                |
-|                                                                                                    |
-| ================================================================================================== |
-| LAYER 2: ORCHESTRATION & EVALUATION TIER                                                           |
-|                                                                                                    |
-|  +-----------------------------------------------------------------------------------------------+ |
-|  | CompositeFeatureFlagService (Closed for Modification)                                          | |
-|  |  - Injected with ordered list of: [FeatureFlagSourceProvider]                                   | |
-|  |  - Coordinates fallback chain priority                                                         | |
-|  |  - Deduplicates and triggers impression events via ImpressionTracking                          | |
-|  +-----------------------------------------------+-----------------------------------------------+ |
-|                                                  |                                                 |
-|                                                  | Evaluates in Priority Order (P0 -> P1 -> P2)    |
-|                                                  v                                                 |
-|  <<Protocol>> FeatureFlagSourceProvider (Open for Extension)                                       |
-|  + var name: String { get }                                                                        |
-|  + func value(forKey key: String) -> Any?                                                          |
-|                                                                                                    |
-| ================================================================================================== |
-| LAYER 3: PLUGGABLE SOURCE PROVIDERS (EXTENSIBLE PIPELINE)                                          |
-|                                                                                                    |
-|  +-----------------------+  +------------------------+  +--------------------+  +----------------+ |
-|  | DebugOverrideProvider |  | RemoteConfigStore      |  | BundledDefaults    |  | MDMConfig /    | |
-|  | (Priority 0)          |  | Provider (Priority 1)  |  | Provider (P2)      |  | Custom (P3)    | |
-|  | - QA / Dev toggles    |  | - Downloaded network   |  | - Shipped JSON in  |  | - Open to      | |
-|  | - In-memory overrides |  |   cache & disk storage |  |   IPA bundle       |  |   extend!      | |
-|  +-----------------------+  +-----------+------------+  +--------------------+  +----------------+ |
-|                                         |                                                          |
-| ======================================= | ======================================================== |
-| LAYER 4: NETWORK & PERSISTENCE TIER     v                                                          |
-|                                                                                                    |
-|  +-----------------------------------------------------------------------------------------------+ |
-|  | ConfigFetcher (URLSession with 1.5s timeout, ETag caching, exponential backoff)                | |
-|  | Local Storage (/Library/Application Support/cached_flags.json - Atomic write)                  | |
-|  | SilentPushReceiver (APNs handler for instant Sev-1 kill switch invalidation)                   | |
-|  +-----------------------------------------------------------------------------------------------+ |
-+----------------------------------------------------------------------------------------------------+
+|                               THE 4 PRIMARY SYSTEM DATA FLOWS                                      |
++--------------------------+-------------------------------------------------------------------------+
+| Flow 1: Synchronous Read | App UI calls SDK -> In-memory lock checks P0 -> P1 -> P2 -> Default.     |
+| (Hot Path: < 0.1ms)      | Immediate O(1) return. Zero network wait. Never blocks main thread.     |
++--------------------------+-------------------------------------------------------------------------+
+| Flow 2: Dynamic Fetch    | Launch triggers ConfigFetcher with injected URL, queryParams (userId,   |
+| (Cold Path: 1.5s SLA)    | country), and requestedKeys. Updates disk atomically & stages for next  |
+|                          | session (or activates if before splash screen dismisses).               |
++--------------------------+-------------------------------------------------------------------------+
+| Flow 3: Kill Switch      | Severity-1 bug filed -> Backend triggers APNs high-priority silent push |
+| (Emergency: < 5 mins)    | -> SilentPushReceiver updates memory & disk cache immediately.          |
++--------------------------+-------------------------------------------------------------------------+
+| Flow 4: Exposure Logging | First time user sees feature -> SDK checks session Set<String> -> If new|
+| (Analytics Pipeline)     | -> Dispatches exposure event to Kafka/ClickHouse for data scientists.   |
++--------------------------+-------------------------------------------------------------------------+
 ```
 
 ---
 
-### 2. Mermaid Class & Protocol Diagram
+## 🛠️ 5. Low-Level Design (LLD): Extensible Architecture & Swift Implementation
+
+*Note: The Low-Level Design (LLD) details the classes, protocols, thread synchronization primitives, and design patterns conforming to the Open/Closed Principle (OCP).*
+
+### 1. Mermaid Class & Interface Diagram
 
 ```mermaid
 classDiagram
@@ -135,7 +171,7 @@ classDiagram
 
     class ConfigFetching {
         <<protocol>>
-        +fetchConfiguration(completion)
+        +fetchConfiguration(request, completion)
     }
 
     class CompositeFeatureFlagService {
@@ -144,6 +180,19 @@ classDiagram
         -trackedImpressions: Set~String~
         -lock: NSLock
         +value(flag) T
+    }
+
+    class ConfigFetchRequest {
+        +endpointURL: URL
+        +queryParams: Dictionary
+        +requestedKeys: Array
+        +headers: Dictionary
+        +timeoutInterval: TimeInterval
+    }
+
+    class RemoteConfigFetcher {
+        -urlSession: URLSession
+        +fetchConfiguration(request, completion)
     }
 
     class DebugOverrideProvider {
@@ -157,7 +206,8 @@ classDiagram
         -memoryCache: Dictionary
         -storageURL: URL
         -lock: NSLock
-        +update(newFlags)
+        -fetcher: ConfigFetching
+        +refresh(request, completion)
         +value(key) Any
     }
 
@@ -171,61 +221,143 @@ classDiagram
     }
 
     FeatureFlagProviding <|.. CompositeFeatureFlagService
-    CompositeFeatureFlagService --> FeatureFlagSourceProvider : evaluates
+    CompositeFeatureFlagService --> FeatureFlagSourceProvider : evaluates in priority
     CompositeFeatureFlagService --> ImpressionTracking : tracks exposure
     FeatureFlagSourceProvider <|.. DebugOverrideProvider
     FeatureFlagSourceProvider <|.. RemoteConfigStoreProvider
     FeatureFlagSourceProvider <|.. BundledDefaultsProvider
     FeatureFlagSourceProvider <|.. MDMManagedConfigProvider
+    RemoteConfigStoreProvider --> ConfigFetching : delegates network fetch
+    ConfigFetching <|.. RemoteConfigFetcher
+    RemoteConfigFetcher ..> ConfigFetchRequest : executes
 ```
 
 ---
 
-### 3. End-to-End Sequence Diagram (Evaluation & Impression Flow)
+### 2. Mermaid Sequence Diagram: Dynamic Fetch & Evaluation
 
 ```mermaid
 sequenceDiagram
     autonumber
-    actor User as User / App Code
-    participant View as CheckoutView / ViewModel
+    actor HostApp as Host Application (AppDelegate / ViewModel)
     participant Service as CompositeFeatureFlagService
-    participant Debug as DebugOverrideProvider (P0)
-    participant Remote as RemoteConfigStoreProvider (P1)
-    participant Bundled as BundledDefaultsProvider (P2)
-    participant Tracker as ImpressionTracker
+    participant RemoteStore as RemoteConfigStoreProvider (P1)
+    participant Fetcher as RemoteConfigFetcher
+    participant Cloud as Remote Backend API
+    participant Disk as Local File (/Application Support)
 
-    User->>View: Opens Checkout Screen
-    View->>Service: value(for: .newCheckout)
-    
-    Service->>Debug: value(forKey: "checkout_v2_enabled")
-    Debug-->>Service: nil (no local override active)
-    
-    Service->>Remote: value(forKey: "checkout_v2_enabled")
-    Remote-->>Service: true (found in memory cache)
-    
-    Note over Service: Value resolved! Skips BundledDefaults (Short-Circuit)
-    
-    Service->>Service: Check if already tracked this session?
-    alt First Evaluation in Session
-        Service->>Tracker: logExposure("checkout_v2_enabled", "true")
-        Tracker->>Tracker: Queue analytics event
-    else Already Tracked
-        Note over Service,Tracker: Deduplicated - skips analytics event
-    end
+    Note over HostApp,Cloud: STEP 1: DYNAMIC CONFIGURATION & FETCH (LAUNCH)
+    HostApp->>RemoteStore: refresh(request: ConfigFetchRequest(url, queryParams, keys))
+    RemoteStore->>Fetcher: fetchConfiguration(request)
+    Fetcher->>Cloud: HTTP GET /v1/flags?userId=123&country=US&keys=checkout_v2
+    Cloud-->>Fetcher: 200 OK: {"checkout_v2_enabled": true}
+    Fetcher-->>RemoteStore: Success(json)
+    RemoteStore->>RemoteStore: Update in-memory cache (under NSLock)
+    RemoteStore->>Disk: Asynchronously write atomic JSON
 
-    Service-->>View: Returns true
-    View-->>User: Renders Modern Checkout Screen
+    Note over HostApp,RemoteStore: STEP 2: SYNCHRONOUS O(1) EVALUATION (UI PATH)
+    HostApp->>Service: value(for: .newCheckout)
+    Service->>RemoteStore: value(forKey: "checkout_v2_enabled")
+    RemoteStore-->>Service: true
+    Service-->>HostApp: true (< 0.1ms return)
 ```
 
 ---
 
-## Clean Swift Implementation (No `Sendable` / Pure OCP)
+### 3. Production Swift Implementation (Clean Protocols, Dynamic Params, No Sendable)
 
-### 1. Strongly-Typed Flag Descriptor
+#### Step 1: Dynamic Request Model & Network Protocol
 ```swift
 import Foundation
 
-// A generic descriptor coupling key with its default fallback value
+// Injected from outside by the host application
+public struct ConfigFetchRequest {
+    public let endpointURL: URL
+    public let queryParams: [String: String]
+    public let requestedKeys: [String]? // Optional: filter specific flags
+    public let headers: [String: String]
+    public let timeoutInterval: TimeInterval
+
+    public init(
+        endpointURL: URL,
+        queryParams: [String: String] = [:],
+        requestedKeys: [String]? = nil,
+        headers: [String: String] = [:],
+        timeoutInterval: TimeInterval = 1.5
+    ) {
+        self.endpointURL = endpointURL
+        self.queryParams = queryParams
+        self.requestedKeys = requestedKeys
+        self.headers = headers
+        self.timeoutInterval = timeoutInterval
+    }
+}
+
+public protocol ConfigFetching {
+    func fetchConfiguration(
+        request: ConfigFetchRequest,
+        completion: @escaping (Result<[String: Any], Error>) -> Void
+    )
+}
+
+public final class RemoteConfigFetcher: ConfigFetching {
+    private let urlSession: URLSession
+
+    public init(urlSession: URLSession = .shared) {
+        self.urlSession = urlSession
+    }
+
+    public func fetchConfiguration(
+        request: ConfigFetchRequest,
+        completion: @escaping (Result<[String: Any], Error>) -> Void
+    ) {
+        guard var components = URLComponents(url: request.endpointURL, resolvingAgainstBaseURL: false) else {
+            completion(.failure(URLError(.badURL)))
+            return
+        }
+
+        var queryItems = request.queryParams.map { URLQueryItem(name: $0.key, value: $0.value) }
+        if let keys = request.requestedKeys, !keys.isEmpty {
+            queryItems.append(URLQueryItem(name: "keys", value: keys.joined(separator: ",")))
+        }
+        components.queryItems = queryItems.isEmpty ? nil : queryItems
+
+        guard let finalURL = components.url else {
+            completion(.failure(URLError(.badURL)))
+            return
+        }
+
+        var urlRequest = URLRequest(url: finalURL)
+        urlRequest.httpMethod = "GET"
+        urlRequest.timeoutInterval = request.timeoutInterval
+        for (headerKey, headerValue) in request.headers {
+            urlRequest.setValue(headerValue, forHTTPHeaderField: headerKey)
+        }
+
+        let task = urlSession.dataTask(with: urlRequest) { data, response, error in
+            if let error = error {
+                completion(.failure(error))
+                return
+            }
+
+            guard let data = data,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                completion(.failure(URLError(.cannotParseResponse)))
+                return
+            }
+
+            completion(.success(json))
+        }
+        task.resume()
+    }
+}
+```
+
+---
+
+#### Step 2: Strongly-Typed Flag Descriptor & Core Abstractions
+```swift
+// Strongly-typed flag token preventing string typo bugs
 public struct Flag<T> {
     public let key: String
     public let defaultValue: T
@@ -236,7 +368,7 @@ public struct Flag<T> {
     }
 }
 
-// Centralized type-safe flag definitions
+// Common flag definitions
 public extension Flag where T == Bool {
     static let newCheckout = Flag<Bool>(key: "checkout_v2_enabled", defaultValue: false)
     static let biometricQuickLogin = Flag<Bool>(key: "biometric_quick_login", defaultValue: true)
@@ -246,43 +378,25 @@ public extension Flag where T == Int {
     static let maxCartItems = Flag<Int>(key: "cart_max_limit", defaultValue: 50)
 }
 
-public extension Flag where T == String {
-    static let promoBannerText = Flag<String>(key: "promo_banner_text", defaultValue: "Welcome!")
-}
-```
-
----
-
-### 2. Core Protocols (Abstractions)
-```swift
-// 1. What application code depends on
 public protocol FeatureFlagProviding {
     func value<T>(for flag: Flag<T>) -> T
 }
 
-// 2. The extension point: ANY source conforms to this to provide values
 public protocol FeatureFlagSourceProvider {
     var name: String { get }
     func value(forKey key: String) -> Any?
 }
 
-// 3. Analytics abstraction for experiment exposure tracking
 public protocol ImpressionTracking {
     func logExposure(flagKey: String, value: String)
-}
-
-// 4. Remote network fetching abstraction
-public protocol ConfigFetching {
-    func fetchConfiguration(completion: @escaping (Result<[String: Any], Error>) -> Void)
 }
 ```
 
 ---
 
-### 3. Pluggable Source Providers (Open for Extension)
-
-#### Provider 1: Local Debug Overrides (Priority 0: QA & Developers)
+#### Step 3: Pluggable Providers (Open for Extension)
 ```swift
+// P0: Local Debug Overrides (QA & Developer Menu)
 public final class DebugOverrideProvider: FeatureFlagSourceProvider {
     public let name = "DebugOverride"
     private var overrides: [String: Any] = [:]
@@ -296,30 +410,24 @@ public final class DebugOverrideProvider: FeatureFlagSourceProvider {
         overrides[key] = value
     }
 
-    public func clearAll() {
-        lock.lock()
-        defer { lock.unlock() }
-        overrides.removeAll()
-    }
-
     public func value(forKey key: String) -> Any? {
         lock.lock()
         defer { lock.unlock() }
         return overrides[key]
     }
 }
-```
 
-#### Provider 2: Remote Config & Disk Cache (Priority 1: Production Flags)
-```swift
+// P1: Remote Config & Disk Storage Provider
 public final class RemoteConfigStoreProvider: FeatureFlagSourceProvider {
     public let name = "RemoteConfig"
     private var memoryCache: [String: Any] = [:]
     private let lock = NSLock()
     private let storageURL: URL
+    private let fetcher: ConfigFetching
 
-    public init(storageURL: URL) {
+    public init(storageURL: URL, fetcher: ConfigFetching = RemoteConfigFetcher()) {
         self.storageURL = storageURL
+        self.fetcher = fetcher
         loadFromDisk()
     }
 
@@ -329,31 +437,39 @@ public final class RemoteConfigStoreProvider: FeatureFlagSourceProvider {
         return memoryCache[key]
     }
 
-    public func update(newFlags: [String: Any]) {
-        lock.lock()
-        self.memoryCache = newFlags
-        lock.unlock()
+    public func refresh(request: ConfigFetchRequest, completion: ((Bool) -> Void)? = nil) {
+        fetcher.fetchConfiguration(request: request) { [weak self] result in
+            guard let self = self else { return }
+            switch result {
+            case .success(let newFlags):
+                self.lock.lock()
+                for (key, val) in newFlags {
+                    self.memoryCache[key] = val
+                }
+                let snapshot = self.memoryCache
+                self.lock.unlock()
 
-        // Background write so UI thread is never blocked
-        DispatchQueue.global(qos: .utility).async { [storageURL] in
-            if let data = try? JSONSerialization.data(withJSONObject: newFlags) {
-                try? data.write(to: storageURL, options: .atomic)
+                DispatchQueue.global(qos: .utility).async {
+                    if let data = try? JSONSerialization.data(withJSONObject: snapshot) {
+                        try? data.write(to: self.storageURL, options: .atomic)
+                    }
+                }
+                completion?(true)
+
+            case .failure:
+                completion?(false)
             }
         }
     }
 
     private func loadFromDisk() {
         guard let data = try? Data(contentsOf: storageURL),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return
-        }
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
         self.memoryCache = json
     }
 }
-```
 
-#### Provider 3: Bundled Defaults (Priority 2: Shipped `defaults.json` in IPA)
-```swift
+// P2: Bundled Defaults Provider (Factory JSON shipped in IPA)
 public final class BundledDefaultsProvider: FeatureFlagSourceProvider {
     public let name = "BundledDefaults"
     private let defaults: [String: Any]
@@ -376,7 +492,7 @@ public final class BundledDefaultsProvider: FeatureFlagSourceProvider {
 
 ---
 
-### 4. The Composite Orchestrator (`CompositeFeatureFlagService`)
+#### Step 4: Composite Orchestrator (`CompositeFeatureFlagService`)
 ```swift
 public final class CompositeFeatureFlagService: FeatureFlagProviding {
     private let providers: [FeatureFlagSourceProvider]
@@ -392,9 +508,7 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
         self.impressionTracker = impressionTracker
     }
 
-    // O(1) Synchronous resolution through the fallback chain
     public func value<T>(for flag: Flag<T>) -> T {
-        // 1. Iterate through providers in registered priority order
         for provider in providers {
             if let rawValue = provider.value(forKey: flag.key),
                let castedValue = rawValue as? T {
@@ -403,7 +517,6 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
             }
         }
 
-        // 2. Final Fallback: In-code default
         trackImpressionIfNeeded(for: flag.key, value: flag.defaultValue)
         return flag.defaultValue
     }
@@ -418,7 +531,6 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
         }
         lock.unlock()
 
-        // Deduplicate: Only record one impression event per session
         if !alreadyTracked {
             impressionTracker.logExposure(flagKey: key, value: String(describing: value))
         }
@@ -428,7 +540,42 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
 
 ---
 
-## Why Avoiding Direct Singletons Wins in Staff & EM Interviews
+#### Step 5: How the Host App Wires It From the Outside
+```swift
+// Host App Assembly (AppDelegate / Composition Root)
+let appSupportURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+let flagFile = appSupportURL.appendingPathComponent("cached_flags.json")
+
+let debugProvider = DebugOverrideProvider()
+let remoteStore = RemoteConfigStoreProvider(storageURL: flagFile)
+let bundledDefaults = BundledDefaultsProvider()
+
+let featureFlagService = CompositeFeatureFlagService(
+    providers: [debugProvider, remoteStore, bundledDefaults]
+)
+
+// Dynamic Configuration injected from outside!
+let request = ConfigFetchRequest(
+    endpointURL: URL(string: "https://api.mycompany.com/v1/config/resolve")!,
+    queryParams: [
+        "userId": "usr_88291",
+        "appVersion": "5.2.0",
+        "country": "US",
+        "tier": "enterprise"
+    ],
+    requestedKeys: ["checkout_v2_enabled", "cart_max_limit"],
+    headers: ["Authorization": "Bearer session_token_abc"],
+    timeoutInterval: 1.5
+)
+
+remoteStore.refresh(request: request) { success in
+    print("Flags updated from remote: \(success)")
+}
+```
+
+---
+
+## ⚖️ 6. Why Avoiding Direct Singletons Wins in Staff & EM Interviews
 
 | Dimension | Hardcoded Singleton (`FeatureFlag.shared`) | Interface-Driven Composite (Our Design) |
 |:---|:---|:---|
@@ -439,7 +586,7 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
 
 ---
 
-## Key Architectural Trade-offs & Dilemmas
+## 🔄 7. Key Architectural Trade-offs & Dilemmas
 
 ### 1. The Activation Dilemma: When Do New Flags Take Effect?
 - **Immediate In-Flight Activation**: Network response updates memory cache immediately.
@@ -468,7 +615,7 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
 
 ---
 
-## The EM Dimension: Governance & Operations
+## 👔 8. The EM Dimension: Governance & Operations
 
 ### 1. Preventing "Flag Rot" (Technical Debt Governance)
 - **The Problem**: After 6-12 months, an enterprise codebase accumulates hundreds of dead feature flags. Engineers leave, nobody knows if a flag is safe to delete, and apps suffer from nested `if/else` complexity.
@@ -486,27 +633,23 @@ public final class CompositeFeatureFlagService: FeatureFlagProviding {
 
 ---
 
-## Mock Interview Q&A
+## ❓ 9. Mock Interview Q&A (Staff & EM Level)
 
-### Q1: Why should we avoid a direct singleton for the Feature Flag SDK, and how do you design it to be open for extension?
-**Answer**: A direct singleton couples calling code to a global mutable state, making parallel unit testing impossible, breaking SwiftUI preview isolation, and violating the Open/Closed Principle whenever a new source (like QA debug overrides or MDM profiles) is added. We replace it by defining a `FeatureFlagProviding` interface and implementing a `CompositeFeatureFlagService` that evaluates an array of `FeatureFlagSourceProvider` objects. Adding a new source requires writing a new conforming class and registering it during app composition, with zero changes to existing SDK classes.
+### Q1: What is the difference between your HLD and your LLD in this design?
+**Answer**: Our HLD captures the end-to-end system topology: dividing the client device (host app, SDK memory cache, disk persistence) from the edge tier (CDN / ETag validation) and cloud infrastructure (remote rule microservice, Redis hot cache, APNs silent push gateway, and Kafka analytics pipeline). Our LLD zooms into the client SDK internals: defining the `FeatureFlagProviding` interface, the `FeatureFlagSourceProvider` chain conforming to the Open/Closed Principle, the dynamic `ConfigFetchRequest` injection, and `NSLock` thread safety for sub-0.1ms reads.
 
-### Q2: How do you ensure flag evaluation is synchronous and doesn't block the main thread?
-**Answer**: Flag evaluations occur on the hot path (including SwiftUI `body` and table view cell dequeuing) where `await` is forbidden. We keep the active configuration in an in-memory dictionary protected by an `NSLock` (or `os_unfair_lock`). Reading a value is a sub-0.1ms O(1) dictionary lookup. All network fetches, JSON deserialization, and disk writes occur asynchronously on background utility queues.
+### Q2: Why should we avoid a direct singleton for the Feature Flag SDK?
+**Answer**: A direct singleton couples calling code to global mutable state, making parallel unit testing impossible, breaking SwiftUI preview multi-variant isolation, and violating the Open/Closed Principle whenever a new source (like QA debug overrides or MDM profiles) is added. We replace it by defining an interface and a composite service that evaluates an array of providers.
 
-### Q3: What happens if the network request fails on a cold start?
-**Answer**: The SDK executes a 4-tier fallback chain:
-1. It attempts to read from memory cache.
-2. If empty, it reads the last-known-good configuration from disk (`cached_flags.json`).
-3. If fresh install with no disk cache, it reads from `BundledDefaultsProvider` (`defaults.json` shipped in the IPA).
-4. If the key is absent in all tiers, it returns the in-code `defaultValue` defined on the `Flag<T>` token. The app never crashes.
+### Q3: How do you support passing dynamic endpoints and targeting parameters from the outside?
+**Answer**: We decouple the network engine using a `ConfigFetchRequest` model passed into `RemoteConfigStoreProvider.refresh(request:)`. The host application injects the base URL (allowing staging vs production switches), query parameters (userId, country, appVersion), and an optional subset of requested keys with a strict 1.5-second timeout.
 
 ### Q4: How do you prevent over-counting A/B test impressions?
-**Answer**: We implement session-level impression deduplication inside the composite service. When a flag is evaluated, we check an in-memory `Set<String>`. If the flag has already been logged during the current session, we suppress further events. Furthermore, we decouple evaluation from exposure: flags used for background pre-warming do not log impressions until the user navigates to the view displaying the feature.
+**Answer**: We implement session-level impression deduplication inside the composite service using an in-memory `Set<String>`. Furthermore, we decouple evaluation from exposure: background pre-warming checks do not log impressions until the user actually renders the view displaying the feature.
 
 ---
 
-## Related Specs
+## 🔗 Related Specs
 | Spec | Description |
 | :--- | :--- |
 | [A/B Testing & Experimentation SDK](ab-testing-experimentation-sdk.md) | Deep dive into MurmurHash bucketing, variance analysis, and statistical significance. |
