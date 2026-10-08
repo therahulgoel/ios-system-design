@@ -9,113 +9,193 @@ In mobile system design interviews at top tech companies (Uber, Meta, Airbnb, Go
 
 ---
 
-## 📋 2. Whiteboard Canvas (What You Actually Draw in an Interview)
+## 📋 2. Requirements & Production SLAs (Whiteboard Section A)
 
-This is the exact, unified whiteboard layout that a Senior Engineer, Staff Architect, or Engineering Manager draws on the board during a 45-minute virtual or on-site system design session:
+### Functional Requirements (FR)
+1. **Synchronous O(1) Evaluation**: Calling code in a SwiftUI `body` or UIKit `viewDidLoad` evaluates flags instantly without `await` or thread blocking.
+2. **Dynamic Configuration**: The host app injects custom target URLs, environment switches, query parameters (`userId`, `country`, `appVersion`), and requested flag subsets from the outside.
+3. **Resilient 4-Tier Fallback Chain**: Memory -> Disk -> Bundled Plist -> In-Code Default (the app must never crash if a key is missing or network fails).
+4. **A/B Test Impression Tracking**: Automatically logs a deduplicated exposure event to analytics only when the user actually views or interacts with the feature.
+5. **Emergency Sev-1 Kill Switch**: Remote capability to instantly deactivate a broken feature in < 5 minutes via high-priority silent push.
 
-```ascii
-+-----------------------------------------------------------------------------------------------------------------------------------------------+
-|                                                FEATURE FLAG SDK: WHITEBOARD DESIGN CANVAS                                                     |
-+-----------------------------------------------------------------------------------------------------------------------------------------------+
-| SECTION A: REQUIREMENTS & SLAS                | SECTION B: END-TO-END WHITEBOARD ARCHITECTURE                                                 |
-|                                               |                                                                                               |
-| [FUNCTIONAL REQUIREMENTS - FR]                |   [HOST APPLICATION TIER]                                                                     |
-| 1. Synchronous O(1) typed reads (Bool, Int,   |   +----------------------------------------------------------------------------------------+  |
-|    String, JSON) in UI code without await.    |   | SwiftUI Views / UIKit Controllers / ViewModels / Feature Modules                       |  |
-| 2. Dynamic Config: Host app passes target URL |   +-------------------------------------------+--------------------------------------------+  |
-|    and params (userId, country, appVersion).  |                                               |                                               |
-| 3. Multi-tier fallback chain (Zero crash).    |                                               | 1. value(for: .newCheckout) [Sync O(1)]       |
-| 4. Deduplicated A/B test impression tracking. |                                               v                                               |
-| 5. Emergency Sev-1 kill switch (< 5 mins).    |   [FEATURE FLAG CLIENT SDK BOUNDARY]                                                          |
-|                                               |   +----------------------------------------------------------------------------------------+  |
-| [NON-FUNCTIONAL REQUIREMENTS - NFR]           |   | <<Protocol>> FeatureFlagProviding                                                      |  |
-| - Read Latency   : < 0.1ms (in-memory lock)   |   | CompositeFeatureFlagService (Orchestrator - Closed for Modification)                   |  |
-| - Launch Timeout : 1.5s strict SLA            |   | - Coordinates priority chain under NSLock thread safety                                |  |
-| - Memory Footprint: < 5MB resident RAM        |   | - Session Impression Deduplicator (Set<String> prevents over-counting)                  |  |
-| - Disk Storage   : < 100KB atomic JSON file   |   +-------------------------------------------+--------------------------------------------+  |
-| - Crash Budget   : 0% unhandled errors        |                                               |                                               |
-|                                               |                                               | 2. Evaluate in Priority Order (P0->P1->P2)     |
-| [OUT OF SCOPE]                                |                                               v                                               |
-| - Server-side ML experimentation models       |   [PLUGGABLE SOURCE PROVIDER CHAIN (OPEN FOR EXTENSION)]                                      |
-| - Web-based flag admin management dashboard   |   +----------------------------------------------------------------------------------------+  |
-|                                               |   | <<Protocol>> FeatureFlagSourceProvider                                                 |  |
-|                                               |   |                                                                                        |  |
-|                                               |   |  +-------------------+  +--------------------+  +-------------------+  +------------+  |  |
-|                                               |   |  | DebugOverride     |  | RemoteConfigStore  |  | BundledDefaults   |  | MDM/Custom |  |  |
-|                                               |   |  | Provider (P0)     |  | Provider (P1)      |  | Provider (P2)     |  | Provider   |  |  |
-|                                               |   |  | (Local QA menu)   |  | (Network/Disk)     |  | (defaults.json)   |  | (P3 - OCP) |  |  |
-|                                               |   |  +-------------------+  +---------+----------+  +-------------------+  +------------+  |  |
-|                                               |   +-----------------------------------|----------------------------------------------------+  |
-|                                               |                                       |                                                       |
-|                                               |             +-------------------------+-------------------------+                             |
-|                                               |             | 3. Dynamic Fetch Request (URL, params, keys)      | 4. Log Exposure             |
-|                                               |             v                                                   v                             |
-|                                               |   +-----------------------------------+               +------------------------------------+  |
-|                                               |   | ConfigFetcher Engine              |               | Analytics & Impression Tracker     |  |
-|                                               |   | - Injected Base URL               |               | - Dispatches exposure events       |  |
-|                                               |   | - Injected Query Params (userId..) |               | - Integrates with Analytics SDK    |  |
-|                                               |   | - Injected Key Subset (Optional)  |               +------------------+-----------------+  |
-|                                               |   | - Strict 1.5s launch timeout SLA  |                                  |                    |
-|                                               |   +-----------------+-----------------+                                  |                    |
-|                                               |                     |                                                    | 6. Batch Events    |
-|                                               |                     | 3b. HTTP GET (ETag)                                |                    |
-|                                               |                     v                                                    v                    |
-|                                               |   [EDGE & CLOUD INFRASTRUCTURE]                       [DATA PIPELINE TIER]                    |
-|                                               |   +-----------------------------------+               +------------------------------------+  |
-|                                               |   | Cloudflare CDN / Envoy Gateway    |               | Kafka Stream -> ClickHouse DW      |  |
-|                                               |   | - Edge ETag / 304 validation      |               | (A/B Test Variant Analysis)        |  |
-|                                               |   +-----------------+-----------------+               +------------------------------------+  |
-|                                               |                     |                                                                         |
-|                                               |                     v                                                                         |
-|                                               |   +-----------------------------------+               [EMERGENCY KILL SWITCH]                 |
-|                                               |   | Remote Config Microservice        |               +------------------------------------+  |
-|                                               |   | - Evaluates segmentation rules    |               | APNs High-Priority Silent Push     |  |
-|                                               |   | - Returns evaluated JSON flat map |               | - Dispatches to client in < 5 mins |  |
-|                                               |   +-----------------------------------+               +------------------------------------+  |
-+-----------------------------------------------------------------------------------------------------------------------------------------------+
+### Non-Functional Requirements & Budgets (NFR)
+| Requirement | Target SLA | Production Benchmark / Source |
+| :--- | :--- | :--- |
+| **Evaluation Latency** | **< 0.1ms** | In-memory synchronous dictionary read under `NSLock` |
+| **Launch Fetch Timeout**| **1.5 - 2.0s** | Firebase Remote Config recommended mobile SLA |
+| **Payload Size** | **< 50 KB** | Compressed JSON config payload |
+| **Disk Storage** | **< 100 KB** | Atomic file write in Application Support directory |
+| **Kill Switch Propagation** | **< 5-10 minutes** | APNs high-priority silent push delivery |
+| **Crash Budget** | **0% crash rate** | Fallback chain must catch all missing/corrupt keys |
+
+### Out of Scope
+- Backend machine-learning models for automated experiment termination.
+- Web-based feature flag management UI portal.
+
+---
+
+## 🏛️ 3. High-Level Design (HLD): System Architecture Flowchart
+
+Below is the complete system design flowchart that you draw on the whiteboard, detailing the interaction between the **Host App**, the **Client SDK Subsystems**, and the **Edge & Cloud Backend**:
+
+```mermaid
+flowchart TD
+    subgraph HostApp["1. Host Application Tier (Client App)"]
+        UI["SwiftUI Views / UIKit Controllers"]
+        VM["ViewModels / Coordinators"]
+        Init["App Launch (AppDelegate)"]
+    end
+
+    subgraph SDK["2. Feature Flag SDK (Client Subsystem)"]
+        Interface(["<<FeatureFlagProviding>>
+Public Interface"])
+        Composite["CompositeFeatureFlagService
+(Orchestrator - Closed for Modification)"]
+        
+        subgraph PriorityChain["Priority Fallback Chain (Open for Extension)"]
+            CheckDebug{"1. Debug Override
+Active?"}
+            DebugStore["DebugOverrideProvider (P0)
+Local QA / Dev Toggles"]
+            
+            CheckMemory{"2. In-Memory Cache
+Hit?"}
+            MemoryStore["RemoteConfigStoreProvider (P1)
+Hot Memory Cache (< 0.1ms)"]
+            
+            CheckDisk{"3. Local Disk
+Cache Valid?"}
+            DiskStore[("Application Support/
+cached_flags.json")]
+            
+            CheckBundle{"4. Bundled Defaults
+Available?"}
+            BundleStore["BundledDefaultsProvider (P2)
+Factory defaults.json"]
+            
+            CodeDefault["In-Code Fallback
+Flag.defaultValue"]
+        end
+        
+        subgraph NetEngine["Dynamic Network Engine"]
+            ConfigReq["ConfigFetchRequest
+(URL, Query Params, Keys, SLA 1.5s)"]
+            Fetcher["RemoteConfigFetcher
+URLSession + ETag"]
+        end
+        
+        subgraph ImpressionEngine["Experiment Tracking"]
+            Dedup{"Already Logged
+This Session?"}
+            ImpressionSet[("Session Set<String>
+Deduplicator")]
+            AnalyticsHook(["ImpressionTracker
+Analytics Interface"])
+        end
+
+        PushReceiver(["SilentPushReceiver
+APNs Kill Switch Handler"])
+    end
+
+    subgraph Backend["3. Edge & Cloud Infrastructure"]
+        CDN["Cloudflare Anycast CDN
+(Edge ETag Cache)"]
+        Gateway["Envoy API Gateway
+(mTLS & Auth)"]
+        ConfigSvc["Remote Config Microservice
+(Segmentation & Targeting Engine)"]
+        RedisCluster[("Redis Cluster
+Hot Flag Cache")]
+        APNsGateway["APNs Push Gateway
+(High-Priority Silent Push)"]
+        KafkaAnalytics[("Kafka -> ClickHouse
+Experiment Data Pipeline")]
+    end
+
+    %% Interactions & Flows
+    UI --> VM
+    VM -->|"1. value(for: .newCheckout)
+Sync O(1) Read"| Interface
+    Interface --> Composite
+    
+    Composite --> CheckDebug
+    CheckDebug -- Yes --> DebugStore --> ReturnValue(["Return Value
+< 0.1ms"])
+    CheckDebug -- No --> CheckMemory
+    
+    CheckMemory -- Yes --> MemoryStore --> ReturnValue
+    CheckMemory -- No --> CheckDisk
+    
+    CheckDisk -- Yes --> DiskStore --> MemoryStore
+    CheckDisk -- No --> CheckBundle
+    
+    CheckBundle -- Yes --> BundleStore --> ReturnValue
+    CheckBundle -- No --> CodeDefault --> ReturnValue
+    
+    ReturnValue --> Dedup
+    Dedup -- No --> ImpressionSet
+    ImpressionSet --> AnalyticsHook
+    AnalyticsHook -->|"Stream Exposure Events"| KafkaAnalytics
+    Dedup -- Yes -->|"Suppress Duplicate"| EndNode((End))
+    
+    %% Dynamic Launch Fetch
+    Init -->|"Passes URL, userId, country,
+version, requested keys"| ConfigReq
+    ConfigReq --> Fetcher
+    Fetcher -->|"2. HTTP GET /v1/config
+(1.5s Timeout SLA)"| CDN
+    CDN --> Gateway
+    Gateway --> ConfigSvc
+    ConfigSvc <--> RedisCluster
+    ConfigSvc -- "200 OK (New Flags)" --> Fetcher
+    Fetcher -->|"Update Cache & Atomic Write"| DiskStore
+    DiskStore -.->|"Promote to Active"| MemoryStore
+    
+    %% Emergency Kill Switch
+    APNsGateway -.->|"3. Emergency Silent Push
+(< 5 mins)"| PushReceiver
+    PushReceiver -.->|"Instant Disable"| MemoryStore
+    PushReceiver -.->|"Atomic Write"| DiskStore
 ```
 
 ---
 
-## 🔄 3. The 4 Core Whiteboard Execution Flows
+## 🔄 4. The 4 Whiteboard Data Flows to Explain
 
-When presenting your whiteboard in an interview, walk the interviewer through these **4 numbered flows** in order:
+When walking the interviewer through the flowchart, explain the **4 numbered lifecycle paths**:
 
-### Flow 1: Synchronous Hot Path Read (`< 0.1ms`)
-1. App code (SwiftUI `body` or ViewModel) calls `featureFlags.value(for: .newCheckout)`.
-2. `CompositeFeatureFlagService` acquires an in-memory `NSLock` and queries the registered provider list in priority order:
-   - **P0: DebugOverrideProvider**: Returns developer/QA overrides if set; otherwise `nil`.
-   - **P1: RemoteConfigStoreProvider**: Returns the downloaded and cached flag from memory; otherwise `nil`.
-   - **P2: BundledDefaultsProvider**: Returns factory defaults shipped in the app bundle (`defaults.json`).
-   - **Fallback**: If all providers return `nil`, the SDK returns the in-code `defaultValue` defined on the `Flag<T>` token.
-3. The method returns immediately on the main thread without requiring `await`.
+### 1. Synchronous Hot Path Read (`< 0.1ms`)
+* App code (SwiftUI `body` or ViewModel) calls `featureFlags.value(for: .newCheckout)`.
+* `CompositeFeatureFlagService` queries registered providers in priority order under an `NSLock`:
+  1. **DebugOverrideProvider (P0)**: Returns local QA/developer override if active.
+  2. **RemoteConfigStoreProvider (P1)**: Returns downloaded flag from hot memory cache.
+  3. **BundledDefaultsProvider (P2)**: Returns factory default shipped in `defaults.json`.
+  4. **Code Fallback**: Returns `flag.defaultValue` defined on the `Flag<T>` token.
+* Returns immediately on the calling thread without requiring `await`.
 
-### Flow 2: Dynamic Cold-Start Fetch (`1.5s SLA Timeout`)
-1. On app launch (`didFinishLaunchingWithOptions`), the host app instantiates a `ConfigFetchRequest` passing:
-   - Target Base URL (e.g., `https://api.mycompany.com/v1/config/resolve`)
-   - Contextual targeting parameters: `["userId": "usr_102", "country": "US", "appVersion": "5.4.0", "tier": "premium"]`
-   - Optional requested flag key subset: `["checkout_v2_enabled", "cart_max_limit"]`
-   - Custom session/auth headers and a strict **1.5-second timeout**.
-2. `RemoteConfigFetcher` executes the HTTP GET request with an `If-None-Match` ETag header.
-3. If the server responds with HTTP 304 Not Modified, the SDK retains the current cache.
-4. If HTTP 200 OK arrives before the launch timeout, the SDK updates the in-memory cache and writes the new configuration atomically to `/Library/Application Support/cached_flags.json`.
-5. If the request times out ($> 1.5	ext{ s}$) or encounters a network error, the SDK fails silently and uses the cached disk configuration.
+### 2. Dynamic Cold-Start Fetch (`1.5s SLA Timeout`)
+* During app launch, the host app passes a `ConfigFetchRequest` with:
+  - Custom target URL (`https://api.mycompany.com/v1/config/resolve`)
+  - Target attributes: `["userId": "usr_99182", "country": "US", "appVersion": "5.4.0"]`
+  - Optional requested flag subset: `["checkout_v2_enabled", "cart_max_limit"]`
+  - Custom headers and strict **1.5-second timeout**.
+* `RemoteConfigFetcher` executes an HTTP GET with an `If-None-Match` ETag header.
+* If 304 Not Modified, the existing cache is retained.
+* If 200 OK arrives before the timeout, it updates the memory cache and writes to disk atomically.
+* If it times out, the app proceeds seamlessly using the cached disk configuration.
 
-### Flow 3: A/B Test Impression Tracking (Exposure Deduplication)
-1. When a user navigates to a screen that reads an experimentation flag (e.g., `new_search_algorithm`), the composite service checks an in-memory `Set<String>` of already-tracked keys for the current session.
-2. If the key has not been seen this session, the SDK records the key in the set and dispatches an exposure event to `ImpressionTracking`:
-   `analytics.logExposure(flagKey: "new_search_algorithm", value: "variant_b")`.
-3. If the flag is read 100 times during scrolling or list recycling, subsequent calls are deduplicated, preventing phantom analytics events.
+### 3. A/B Test Impression Tracking (Session Deduplication)
+* When a user views a flagged feature, the SDK checks an in-memory `Set<String>`.
+* If it is the first exposure of the session, it flushes an analytics event to Kafka/ClickHouse for data scientists.
+* Subsequent calls (e.g., during list scrolling) are deduplicated, preventing phantom analytics events.
 
-### Flow 4: Severity-1 Emergency Kill Switch (`< 5 Minutes`)
-1. If a newly released feature causes crash loops in production, operators toggle the flag to `false` in the backend dashboard.
-2. The backend sends an APNs high-priority silent push payload: `{"action": "kill_flag", "key": "new_checkout_enabled"}`.
-3. The host app's background push delegate forwards the payload to `RemoteConfigStoreProvider`, which immediately updates the in-memory dictionary and writes `false` to disk.
-4. The feature is deactivated globally across active devices within 5 minutes without requiring an app relaunch.
+### 4. Severity-1 Emergency Kill Switch (`< 5 Minutes`)
+* If a newly released feature causes crash loops in production, backend operators update the flag and send a high-priority **APNs Silent Push**.
+* `SilentPushReceiver` on the device immediately writes `false` to disk and memory without requiring an app launch.
 
 ---
 
-## 🛠️ 4. Low-Level Design (LLD): Class Architecture & Swift Implementation
+## 🛠️ 5. Low-Level Design (LLD): Class Architecture & Swift Implementation
 
 ### 1. Mermaid Class & Interface Diagram
 
@@ -520,7 +600,7 @@ remoteStore.refresh(request: request) { success in
 
 ---
 
-## ⚖️ 5. Why Avoiding Direct Singletons Wins in Staff & EM Interviews
+## ⚖️ 6. Why Avoiding Direct Singletons Wins in Staff & EM Interviews
 
 | Dimension | Hardcoded Singleton (`FeatureFlag.shared`) | Interface-Driven Composite (Our Design) |
 |:---|:---|:---|
@@ -531,7 +611,7 @@ remoteStore.refresh(request: request) { success in
 
 ---
 
-## 🔄 6. Critical Architectural Dilemmas to Defend
+## 🔄 7. Critical Architectural Dilemmas to Defend
 
 ### 1. The Activation Dilemma: When Do New Flags Take Effect?
 - **Immediate In-Flight Activation**: Network response updates memory cache immediately.
@@ -560,7 +640,7 @@ remoteStore.refresh(request: request) { success in
 
 ---
 
-## 👔 7. The EM Dimension: Governance & Operations
+## 👔 8. The EM Dimension: Governance & Operations
 
 ### 1. Preventing "Flag Rot" (Technical Debt Governance)
 - **The Problem**: After 6-12 months, an enterprise codebase accumulates hundreds of dead feature flags. Engineers leave, nobody knows if a flag is safe to delete, and apps suffer from nested `if/else` complexity.
@@ -578,7 +658,7 @@ remoteStore.refresh(request: request) { success in
 
 ---
 
-## ❓ 8. Mock Interview Q&A (Staff & EM Level)
+## ❓ 9. Mock Interview Q&A (Staff & EM Level)
 
 ### Q1: What is the difference between your HLD and your LLD in this design?
 **Answer**: Our HLD captures the end-to-end system topology: dividing the client device (host app, SDK memory cache, disk persistence) from the edge tier (CDN / ETag validation) and cloud infrastructure (remote rule microservice, Redis hot cache, APNs silent push gateway, and Kafka analytics pipeline). Our LLD zooms into the client SDK internals: defining the `FeatureFlagProviding` interface, the `FeatureFlagSourceProvider` chain conforming to the Open/Closed Principle, the dynamic `ConfigFetchRequest` injection, and `NSLock` thread safety for sub-0.1ms reads.
