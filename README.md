@@ -148,7 +148,7 @@ Every spec includes:
 | [🖼 Image Loading Library](docs/image-loading-library.md) | 3-tier cache (NSCache → Disk → Network), downsampling, request deduplication | Any image-heavy app |
 | [🌐 Networking Layer / HTTP Client SDK](docs/networking-layer.md) | Protocol-based endpoints, auth interceptor, atomic token refresh, SPKI pinning | All companies |
 | [📊 Mobile Analytics & Telemetry SDK](docs/analytics-sdk.md) | Ring buffer, SQLite journal, battery-aware batching, crash recovery, sampling | Uber, Meta, Google |
-| [🚩 Feature Flag & Experimentation System](docs/feature-flag-system.md) | Fallback chain, synchronous local eval, kill switch (<5min), A/B tracking | Uber, Airbnb, Meta |
+| [🚩 Feature Flag & Experimentation System](docs/feature-flag-system.md) | Extensible OCP composite providers, dynamic URL/params injection, HLD whiteboard topology, 4-tier fallback, kill switch | Uber, Airbnb, Meta, Google, Stripe |
 | [🔄 Offline-First Data Sync Engine](docs/offline-sync-engine.md) | Local-first architecture, dirty-flag sync, LWW conflict resolution, BGTaskScheduler | Google, Apple, Dropbox |
 | [🧩 App Modularization & DI System](docs/app-modularization.md) | Module hierarchy, interface modules, DI (Needle pattern), build time, SPM | Uber, Google, Grab |
 | [🔔 Push Notification System](docs/push-notification-system.md) | APNs token lifecycle + FCM HTTP v1 cross-platform, silent push, deferred deep links | All FAANG, Airbnb, Spotify |
